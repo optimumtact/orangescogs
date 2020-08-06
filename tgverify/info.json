@@ -1,0 +1,15 @@
+{
+    "author": ["oranges"],
+    "install_msg": "Thank you for installing tgverify.",
+    "name": "SS13 verification module",
+    "short": "The tgverify cog",
+    "description": "This cog uses tgdb cog to allow the automated linking/verification and role application to users",
+    "permissions" : ["Manage Messages", "Manage Roles"],
+    "tags": [
+        "Space Station 13",
+        "Game",
+        "Administration",
+        "Utility",
+        "SS13"
+    ]
+}
