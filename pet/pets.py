@@ -1,8 +1,4 @@
 #Standard Imports
-import socket
-import ipaddress
-import re
-import logging
 import random
 
 #Discord Imports
@@ -13,8 +9,6 @@ from redbot.core import commands
 
 __version__ = "1.2.1"
 __author__ = "oranges"
-
-log = logging.getLogger("red.SS13GetNotes")
 
 BaseCog = getattr(commands, "Cog", object)
 
