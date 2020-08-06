@@ -1,0 +1,18 @@
+{
+    "author": ["oranges"],
+    "install_msg": "Thank you for installing tgdb.",
+    "name": "SS13 tgdb module",
+    "short": "Numerous helper modules for a discord bot that can be linked to a tgstation database instance",
+    "requirements": [
+        "aiomysql>=0.0.20"
+    ],
+    "description": "Interoperability plugin for a discord bot, connects to any database using the latest tg schema",
+    "permissions" : ["Manage Messages", "Embed Links"],
+    "tags": [
+        "Space Station 13",
+        "Game",
+        "Administration",
+        "Utility",
+        "SS13"
+    ]
+}
