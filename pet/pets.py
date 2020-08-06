@@ -11,7 +11,7 @@ import discord
 #Redbot Imports
 from redbot.core import commands
 
-__version__ = "1.2.0"
+__version__ = "1.2.1"
 __author__ = "oranges"
 
 log = logging.getLogger("red.SS13GetNotes")
