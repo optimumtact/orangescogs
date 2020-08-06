@@ -9,7 +9,7 @@ import random
 import discord
 
 #Redbot Imports
-from redbot.core import commands, checks, Config
+from redbot.core import commands
 
 __version__ = "1.2.0"
 __author__ = "oranges"
@@ -46,11 +46,25 @@ class Pets(BaseCog):
         """
         Pet a user
         """
-        message = await ctx.send("{} pets {} gently on the head".format(ctx.author.name, name))
+        await ctx.send("{} pets {} gently on the head".format(ctx.author.name, name))
+
+    @commands.command(aliases=["tailpull"])
+    async def pull(self, ctx, *, name: str):
+        """
+        Tail pulling
+        """
+        await ctx.send("pulls {}'s tail".format(name))
+
+    @commands.command(aliases=["tailbrush"])
+    async def brush(self, ctx, *, name: str):
+        """
+        Tail brushing
+        """
+        await ctx.send("brushes {}'s tail gently".format(name))
 
     @commands.command()
     async def coffee(self, ctx, *, name: str):
         """
         Give a user a nice coffee
         """
-        message = await ctx.send("{} serves {} a steaming hot {}".format(ctx.author.name, name, random.choice(self.coffee)))
+        await ctx.send("{} serves {} a steaming hot {}".format(ctx.author.name, name, random.choice(self.coffee)))
