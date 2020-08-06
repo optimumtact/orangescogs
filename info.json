@@ -1,0 +1,9 @@
+{
+    "author" : ["oranges"],
+    "install_msg" : "Utility cogs for tg station",
+    "name" : "oranges",
+    "short" : "tg cogs",
+    "requirements": [],
+    "description" : "Random cogs tg is using",
+    "tags" : ["Fun", "SS13", "Utility", "Administration"]
+}
