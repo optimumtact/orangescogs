@@ -34,31 +34,36 @@ class Pets(BaseCog):
 	    "Lungo",
 	    "Ristretto",
 	]
+		self.temps = [
+		"n iced",
+		" steaming hot",
+		" disappointingly lukewarm"
+		]
 
     @commands.command()
     async def pet(self, ctx, *, name: str):
         """
         Pet a user
         """
-        await ctx.send("{} pets {} gently on the head".format(ctx.author.name, name))
+        await ctx.send("*{} pets {} gently on the head*".format(ctx.author.name, name))
 
     @commands.command(aliases=["tailpull"])
     async def pull(self, ctx, *, name: str):
         """
         Tail pulling
         """
-        await ctx.send("pulls {}'s tail".format(name))
+        await ctx.send("*pulls {}'s tail*".format(name))
 
     @commands.command(aliases=["tailbrush"])
     async def brush(self, ctx, *, name: str):
         """
         Tail brushing
         """
-        await ctx.send("brushes {}'s tail gently".format(name))
+        await ctx.send("*brushes {}'s tail gently*".format(name))
 
     @commands.command()
     async def coffee(self, ctx, *, name: str):
         """
         Give a user a nice coffee
         """
-        await ctx.send("{} serves {} a steaming hot {}".format(ctx.author.name, name, random.choice(self.coffee)))
+        await ctx.send("*{} serves {} a{} {}*".format(ctx.author.name, name, random.choice(self.temps), random.choice(self.coffee)))
