@@ -34,6 +34,11 @@ class Pets(BaseCog):
 	    "Lungo",
 	    "Ristretto",
 	]
+		self.temps = [
+		"n iced",
+		" steaming hot",
+		" disappointingly lukewarm"
+		]
 
     @commands.command()
     async def pet(self, ctx, *, name: str):
@@ -61,4 +66,4 @@ class Pets(BaseCog):
         """
         Give a user a nice coffee
         """
-        await ctx.send("*{} serves {} a steaming hot {}*".format(ctx.author.name, name, random.choice(self.coffee)))
+        await ctx.send("*{} serves {} a{} {}*".format(ctx.author.name, name, random.choice(self.temps), random.choice(self.coffee)))
