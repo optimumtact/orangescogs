@@ -8,6 +8,8 @@ import discord
 #Redbot Imports
 from redbot.core import commands, checks, Config
 
+from tgcommon.errors import TGRecoverableError, TGUnrecoverableError
+from tgcommon.util import normalise_to_ckey
 
 __version__ = "1.1.0"
 __author__ = "oranges"
@@ -15,13 +17,6 @@ __author__ = "oranges"
 log = logging.getLogger("red.oranges_tgverify")
 
 BaseCog = getattr(commands, "Cog", object)
-
-#Subtype the commands checkfailure
-class TGRecoverableError(commands.CheckFailure):
-    pass
-
-class TGUnrecoverableError(commands.CheckFailure):
-    pass
 
 class TGverify(BaseCog):
     """
@@ -127,22 +122,20 @@ class TGverify(BaseCog):
             await ctx.send("There was a problem setting the verified role")    
 
     @tgverify.command()
-    async def list_discords(self, ctx, ckey: str):
-        TGDB = self.bot.get_cog("TGDB")
-        if not TGDB:
-            raise TGUnrecoverableError("TGDB must exist and be configured for tgverify cog to work")
-
+    async def discords(self, ctx, ckey: str):
+        tgdb = self.get_tgdb()
+        ckey = normalise_to_ckey(ckey)
         message = await ctx.send("Collecting discord accounts for ckey....")
         async with ctx.typing():
             embed=discord.Embed(color=await ctx.embed_color())
             embed.set_author(name=f"Discord accounts historically linked to {str(ckey).title()}")
-            links = await TGDB.get_all_links_to_ckey(ctx, ckey)
+            links = await tgdb.get_all_links_to_ckey(ctx, ckey)
             if len(links) <= 0:
                 return await message.edit("No discord accounts found for this ckey")
 
             names = ""
             for link in links:
-                names += f"User has linked <@{link.discord_id}> on {link.timestamp}\n"
+                names += f"User linked <@{link.discord_id}> on {link.timestamp}\n"
 
             embed.add_field(name="__Discord accounts__", value=names, inline=False)
             await message.edit(content=None, embed=embed)
@@ -150,14 +143,12 @@ class TGverify(BaseCog):
     
     @tgverify.command()
     async def whois(self, ctx, discord_user: discord.User):
-        TGDB = self.bot.get_cog("TGDB")
-        if not TGDB:
-            raise TGUnrecoverableError("TGDB must exist and be configured for tgverify cog to work")
+        tgdb = self.get_tgdb()
 
         message = await ctx.send("Finding out the ckey of user....")
         async with ctx.typing():
             # Attempt to find the discord ids based on the one time token passed in.
-            discord_link = await TGDB.discord_link_for_discord_id(ctx, discord_user.id)
+            discord_link = await tgdb.discord_link_for_discord_id(ctx, discord_user.id)
             if discord_link:
                 message = await message.edit(content=f"This discord user is linked to the ckey {discord_link.ckey}")
             else:
@@ -179,9 +170,7 @@ class TGverify(BaseCog):
         instructions_link = await self.config.guild(ctx.guild).instructions_link()
         role = await self.config.guild(ctx.guild).verified_role()
         role = ctx.guild.get_role(role)
-        TGDB = self.bot.get_cog("TGDB")
-        if not TGDB:
-            raise TGUnrecoverableError("TGDB must exist and be configured for tgverify cog to work")
+        tgdb = self.get_tgdb()
 
         if not role:
             raise TGUnrecoverableError("No verification role is configured, configure it with .tgverify_config role")
@@ -199,12 +188,12 @@ class TGverify(BaseCog):
             
             if one_time_token:
                 # Attempt to find the user based on the one time token passed in.
-                ckey = await TGDB.lookup_ckey_by_token(ctx, one_time_token)
+                ckey = await tgdb.lookup_ckey_by_token(ctx, one_time_token)
                 
             # they haven't specified a one time token, see if we already have a linked ckey for them, that's valid as a fast path
             else:
-                discord_link = await TGDB.discord_link_for_discord_id(ctx, ctx.author.id)
-                if(discord_link and await TGDB.is_latest_link(ctx, discord_link)):
+                discord_link = await tgdb.discord_link_for_discord_id(ctx, ctx.author.id)
+                if(discord_link and await tgdb.is_latest_link(ctx, discord_link)):
                     # we have a fast path, just reapply the linked role and bail
                     await ctx.author.add_roles(role, reason="User has verified against their in game living minutes")
                     return await message.edit(content=f"Congrats {ctx.author} your verification is complete")
@@ -217,7 +206,7 @@ class TGverify(BaseCog):
             
             log.info(f"Verification request by {ctx.author.id}, for ckey {ckey}")
             # Now look for the user based on the ckey
-            player = await TGDB.get_player_by_ckey(ctx, ckey)
+            player = await tgdb.get_player_by_ckey(ctx, ckey)
             
             if player is None:
                 raise TGRecoverableError(f"Sorry {ctx.author} looks like we couldn't look up your user, ask the verification team for support!")
@@ -230,7 +219,7 @@ class TGverify(BaseCog):
 
 
         # Record that the user is linked against a discord id
-        await TGDB.update_discord_link(ctx, one_time_token, ctx.author.id)
+        await tgdb.update_discord_link(ctx, one_time_token, ctx.author.id)
         return await message.edit(content=f"Congrats {ctx.author} your verification is complete", color=0xff0000)
 
     @verify.error
@@ -256,3 +245,11 @@ class TGverify(BaseCog):
             # now pretend everything is fine to the user :>
             embed=discord.Embed(title=f"System error occurred", description=f"Contact the server admins for assistance", color=0xff0000)
             await ctx.send(content=f"", embed=embed)
+
+    def get_tgdb(self):
+        tgdb = self.bot.get_cog("TGDB")
+        if not tgdb:
+            raise TGUnrecoverableError("TGDB must exist and be configured for tgverify cog to work")
+
+        return tgdb
+ 
