@@ -5,8 +5,6 @@ import socket
 import ipaddress
 import re
 import logging
-from typing import Union
-from collections import namedtuple
 
 #Discord Imports
 import discord
@@ -16,8 +14,7 @@ from redbot.core import commands, checks, Config
 from redbot.core.utils.chat_formatting import pagify, box, humanize_list, warning
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 
-#Util Imports
-from .util import key_to_ckey
+from tgcommon.models import DiscordLink
 
 __version__ = "1.0.0"
 __author__ = "oranges"
@@ -25,8 +22,6 @@ __author__ = "oranges"
 log = logging.getLogger("red.oranges_tgdb")
 
 BaseCog = getattr(commands, "Cog", object)
-
-DiscordLink = namedtuple('DiscordLink', 'id, ckey, discord_id, timestamp, one_time_token')
 
 class TGDB(BaseCog):
     """
@@ -51,7 +46,7 @@ class TGDB(BaseCog):
 
         self.config.register_guild(**default_guild)
         self.loop = asyncio.get_event_loop()
-    
+        self.pool = None
 
     @commands.guild_only()
     @commands.group()
@@ -62,6 +57,20 @@ class TGDB(BaseCog):
         """
         pass
     
+    @tgdb_config.command()
+    @checks.is_owner()
+    async def reconnect(self, ctx):
+        """
+        Sets the MySQL host, defaults to localhost (127.0.0.1)
+        """
+        db = await self.config.guild(ctx.guild).mysql_db()
+        db_host = socket.gethostbyname(await self.config.guild(ctx.guild).mysql_host())
+        db_port = await self.config.guild(ctx.guild).mysql_port()
+        db_user = await self.config.guild(ctx.guild).mysql_user()
+        db_pass = await self.config.guild(ctx.guild).mysql_password()
+        # Now we have it all, lets try to open a pool
+        await self.reconnect_to_db(db, db_host, db_port, db_user, db_pass)
+        await ctx.send(f"Database Connected")
 
     @tgdb_config.command()
     @checks.is_owner()
@@ -298,24 +307,29 @@ class TGDB(BaseCog):
         
         return results
     
-    async def query_database(self, ctx, query: str, parameters: list):
+    async def reconnect_to_db(self, db, db_host, db_port, db_user, db_pass):
         '''
-        Open a connection to the database, and pass in the given query
+        Open a connection to the database and save the pool in use
         '''
         # Database options loaded from the config
-        db = await self.config.guild(ctx.guild).mysql_db()
-        db_host = socket.gethostbyname(await self.config.guild(ctx.guild).mysql_host())
-        db_port = await self.config.guild(ctx.guild).mysql_port()
-        db_user = await self.config.guild(ctx.guild).mysql_user()
-        db_pass = await self.config.guild(ctx.guild).mysql_password()
+        if self.pool:
+            self.pool.close()
+            await self.pool.wait_closed()
+        
+        # Establish a connection with the database and pull the relevant data
+        self.pool = await aiomysql.create_pool(host=db_host,port=db_port,db=db,user=db_user,password=db_pass, connect_timeout=5)
 
-        pool = None # Since the pool variables can't actually be closed if the connection isn't properly established we set a None type here
+    async def query_database(self, ctx, query: str, parameters: list):
+        '''
+        Use our active pool to pass in the given query
+        '''
+        if not self.pool:
+            await self.reconnect_to_db()
+            raise TGUnrecoverableError("The database was not connected,  a reconnect was attempted")
 
         try:
-            # Establish a connection with the database and pull the relevant data
-            pool = await aiomysql.create_pool(host=db_host,port=db_port,db=db,user=db_user,password=db_pass, connect_timeout=5)
             log.debug(f"Executing query {query}, with parameters {parameters}")
-            async with pool.acquire() as conn:
+            async with self.pool.acquire() as conn:
                 async with conn.cursor(aiomysql.DictCursor) as cur:
                     await cur.execute(query, parameters)
                     rows = cur.fetchall()
@@ -326,7 +340,3 @@ class TGDB(BaseCog):
         except:
             raise 
 
-        finally:
-            if pool is not None:
-                pool.close()
-                await pool.wait_closed()
