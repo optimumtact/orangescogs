@@ -191,7 +191,7 @@ class TGverify(BaseCog):
 
         message = await ctx.send("Attempting to verify you....")
         async with ctx.typing():
-            # First lets try to remove their one time token
+            # First lets try to remove their message
             try:
                 await ctx.message.delete()
             except(discord.DiscordException):
@@ -201,7 +201,7 @@ class TGverify(BaseCog):
                 # Attempt to find the user based on the one time token passed in.
                 ckey = await TGDB.lookup_ckey_by_token(ctx, one_time_token)
                 
-            # they haven't specified a one time token, see if we already have a linked ckey for them, that's valid
+            # they haven't specified a one time token, see if we already have a linked ckey for them, that's valid as a fast path
             else:
                 discord_link = await TGDB.discord_link_for_discord_id(ctx, ctx.author.id)
                 if(discord_link and await TGDB.is_latest_link(ctx, discord_link)):
@@ -209,7 +209,7 @@ class TGverify(BaseCog):
                     await ctx.author.add_roles(role, reason="User has verified against their in game living minutes")
                     return await message.edit(content=f"Congrats {ctx.author} your verification is complete")
 
-                return await message.edit(content=f"You have not previously linked this account with our database, see {instructions_link} for how you carry out this process")
+                return await message.edit(content=f"You have not previously linked this account with our database so must generate a one time token to verify, see {instructions_link} for how you carry out this process")
 
             
             if ckey is None:
