@@ -16,29 +16,29 @@ class Pets(BaseCog):
     def __init__(self, bot):
         self.bot = bot
         self.coffee = [
-	    "Affogato",
-	    "Americano",
-	    "Caffè Latte",
-	    "Caffè Mocha",
-	    "Cafè Au Lait",
-	    "Cappuccino",
-	    "Double Espresso (doppio)",
-	    "Espresso",
-	    "Espresso Con Panna",
-	    "Espresso Macchiato",
-	    "Flat White",
-	    "Frappé",
-	    "Freakshake",
-	    "Irish Coffee",
-	    "Latte Macchiato",
-	    "Lungo",
-	    "Ristretto",
-	]
-		self.temps = [
-		"n iced",
-		" steaming hot",
-		" disappointingly lukewarm"
-		]
+        "Affogato",
+        "Americano",
+        "Caffè Latte",
+        "Caffè Mocha",
+        "Cafè Au Lait",
+        "Cappuccino",
+        "Double Espresso (doppio)",
+        "Espresso",
+        "Espresso Con Panna",
+        "Espresso Macchiato",
+        "Flat White",
+        "Frappé",
+        "Freakshake",
+        "Irish Coffee",
+        "Latte Macchiato",
+        "Lungo",
+        "Ristretto",
+        ]
+        self.temps = [
+        "n iced",
+        " steaming hot",
+        " disappointingly lukewarm"
+        ]
 
     @commands.command()
     async def pet(self, ctx, *, name: str):
