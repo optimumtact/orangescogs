@@ -3,7 +3,7 @@ from setuptools import setup
 
 setuptools.setup(
     name="tgcommon-oranges",
-    version="0.0.3",
+    version="0.0.5",
     author="oranges",
     author_email="email@oranges.net.nz",
     description="Common code for the tg cogs",

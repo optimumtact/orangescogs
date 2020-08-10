@@ -34,13 +34,13 @@ class TGverify(BaseCog):
         }
 
         self.config.register_guild(**default_guild)
-    
+
 
 
     @commands.guild_only()
     @commands.group()
     @checks.mod_or_permissions(administrator=True)
-    async def tgverify(self,ctx): 
+    async def tgverify(self,ctx):
         """
         SS13 Configure the settings on the verification cog
         """
@@ -49,7 +49,7 @@ class TGverify(BaseCog):
     @commands.guild_only()
     @commands.group()
     @checks.mod_or_permissions(administrator=True)
-    async def tgverify_config(self,ctx): 
+    async def tgverify_config(self,ctx):
         """
         SS13 Configure the settings on the verification cog
         """
@@ -85,7 +85,7 @@ class TGverify(BaseCog):
             else:
                 await self.config.guild(ctx.guild).min_living_minutes.set(min_living_minutes)
                 await ctx.send(f"Minimum living minutes required for verification set to: `{min_living_minutes}`")
-        
+
         except (ValueError, KeyError, AttributeError):
             await ctx.send("There was a problem setting the minimum required living minutes")
 
@@ -97,10 +97,10 @@ class TGverify(BaseCog):
         try:
             await self.config.guild(ctx.guild).instructions_link.set(instruction_link)
             await ctx.send(f"Instruction link set to: `{instruction_link}`")
-        
+
         except (ValueError, KeyError, AttributeError):
             await ctx.send("There was a problem setting the instructions link")
-    
+
     @tgverify_config.command()
     async def verified_role(self, ctx, verified_role: int = None):
         """
@@ -116,9 +116,9 @@ class TGverify(BaseCog):
             else:
                 await self.config.guild(ctx.guild).verified_role.set(verified_role)
                 await ctx.send(f"When a user meets minimum verification this role will be applied: `{verified_role}`")
-        
+
         except (ValueError, KeyError, AttributeError):
-            await ctx.send("There was a problem setting the verified role")    
+            await ctx.send("There was a problem setting the verified role")
 
     @tgverify.command()
     async def discords(self, ctx, ckey: str):
@@ -131,18 +131,18 @@ class TGverify(BaseCog):
         async with ctx.typing():
             embed=discord.Embed(color=await ctx.embed_color())
             embed.set_author(name=f"Discord accounts historically linked to {str(ckey).title()}")
-            links = await tgdb.get_all_links_to_ckey(ctx, ckey)
+            links = await tgdb.all_discord_links_for_ckey(ctx, ckey)
             if len(links) <= 0:
                 return await message.edit(content="No discord accounts found for this ckey")
 
             names = ""
             for link in links:
-                names += f"User linked <@{link.discord_id}> on {link.timestamp}\n"
+                names += f"User linked <@{link.discord_id}> on {link.timestamp}, current account: {link.validity}\n"
 
             embed.add_field(name="__Discord accounts__", value=names, inline=False)
             await message.edit(content=None, embed=embed)
-            
-    
+
+
     @tgverify.command()
     async def whois(self, ctx, discord_user: discord.User):
         """
@@ -158,7 +158,26 @@ class TGverify(BaseCog):
                 message = await message.edit(content=f"This discord user is linked to the ckey {discord_link.ckey}")
             else:
                 message = await message.edit(content=f"This discord user has no ckey linked")
-    
+
+    @tgverify.command()
+    async def deverify(self, ctx, discord_user: discord.User):
+        """
+        Deverifies the ckey linked to this user, all historical verifications will be removed, the user will have to connect to the game
+        and generate a new one time token to get their verification role
+        """
+        tgdb = self.get_tgdb()
+
+        message = await ctx.send("Finding out the ckey of user....")
+        async with ctx.typing():
+            # Attempt to find the discord link from the user
+            discord_link = await tgdb.discord_link_for_discord_id(ctx, discord_user.id)
+            if discord_link:
+                # now clear all the links for this ckey
+                await tgdb.clear_all_valid_discord_links_for_ckey(discord_link.ckey)
+                message = await message.edit(content=f"User has been devalidated")
+            else:
+                message = await message.edit(content=f"This discord user has no ckey linked")
+
     #Now the only user facing command, so this has rate limiting across the sky
     @commands.cooldown(2, 60, type=commands.BucketType.user)
     @commands.cooldown(6, 60, type=commands.BucketType.guild)
@@ -177,6 +196,11 @@ class TGverify(BaseCog):
         role = ctx.guild.get_role(role)
         tgdb = self.get_tgdb()
 
+        # First lets try to remove their message, since the one time token is technically a secret if something goes wrong
+        try:
+            await ctx.message.delete()
+        except(discord.DiscordException):
+            await ctx.send("I do not have the required permissions to delete messages, please remove/edit the one time token manually.")
         if not role:
             raise TGUnrecoverableError("No verification role is configured, configure it with .tgverify_config role")
 
@@ -185,47 +209,44 @@ class TGverify(BaseCog):
 
         message = await ctx.send("Attempting to verify you....")
         async with ctx.typing():
-            # First lets try to remove their message
-            try:
-                await ctx.message.delete()
-            except(discord.DiscordException):
-                await ctx.send("I do not have the required permissions to delete messages, please remove/edit the one time token manually.")
-            
+
             if one_time_token:
                 # Attempt to find the user based on the one time token passed in.
                 ckey = await tgdb.lookup_ckey_by_token(ctx, one_time_token)
-                
-            # they haven't specified a one time token, see if we already have a linked ckey for them, that's valid as a fast path
+
+            # they haven't specified a one time token, see if we already have a linked ckey for the user id that is still valid
             else:
                 discord_link = await tgdb.discord_link_for_discord_id(ctx, ctx.author.id)
-                if(discord_link and await tgdb.is_latest_link(ctx, discord_link)):
+                if(discord_link and discord_link.valid > 0):
                     # we have a fast path, just reapply the linked role and bail
                     await ctx.author.add_roles(role, reason="User has verified against their in game living minutes")
                     return await message.edit(content=f"Congrats {ctx.author} your verification is complete")
 
                 return await message.edit(content=f"You have not previously linked this account with our database so must generate a one time token to verify, see {instructions_link} for how you carry out this process")
 
-            
+            print(ckey, one_time_token)
             if ckey is None:
                 raise TGRecoverableError(f"Sorry {ctx.author} it looks like we don't recognise this one use token or it has expired, go back into game and try generating one another! See {instructions_link} for more information. \n\nIf it's still failing after a few tries, ask for support from the verification team, ")
-            
+
             log.info(f"Verification request by {ctx.author.id}, for ckey {ckey}")
             # Now look for the user based on the ckey
             player = await tgdb.get_player_by_ckey(ctx, ckey)
-            
+
             if player is None:
                 raise TGRecoverableError(f"Sorry {ctx.author} looks like we couldn't look up your user, ask the verification team for support!")
 
             if player['living_time'] <= min_required_living_minutes:
                 return await message.edit(content=f"Sorry {ctx.author} you only have {player['living_time']} minutes as a living player on our servers, and you require at least {min_required_living_minutes}! You will need to play more on our servers to access all the discord channels, see {instructions_link} for more information")
-    
+
+            # clear any/all previous valid links for ckey or the discord id (in case they have decided to make a new ckey)
+            await tgdb.clear_all_valid_discord_links_for_ckey(ctx, ckey)
+            await tgdb.clear_all_valid_discord_links_for_discord_id(ctx, ctx.author.id)
+            # Record that the user is linked against a discord id
+            await tgdb.update_discord_link(ctx, one_time_token, ctx.author.id)
             if role:
                 await ctx.author.add_roles(role, reason="User has verified against their in game living minutes")
 
-
-        # Record that the user is linked against a discord id
-        await tgdb.update_discord_link(ctx, one_time_token, ctx.author.id)
-        return await message.edit(content=f"Congrats {ctx.author} your verification is complete", color=0xff0000)
+            return await message.edit(content=f"Congrats {ctx.author} your verification is complete", color=0xff0000)
 
     @verify.error
     async def verify_error(self, ctx, error):
@@ -257,4 +278,3 @@ class TGverify(BaseCog):
             raise TGUnrecoverableError("TGDB must exist and be configured for tgverify cog to work")
 
         return tgdb
- 
