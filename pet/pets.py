@@ -38,7 +38,7 @@ class Pets(BaseCog):
 		"n iced",
 		" steaming hot",
 		" disappointingly lukewarm"
-		]
+	]
 
     @commands.command()
     async def pet(self, ctx, *, name: str):
