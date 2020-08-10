@@ -45,7 +45,6 @@ class TGDB(BaseCog):
         }
 
         self.config.register_guild(**default_guild)
-        self.loop = asyncio.get_event_loop()
         self.pool = None
 
     @commands.guild_only()
@@ -56,12 +55,20 @@ class TGDB(BaseCog):
         SS13 Configure the MySQL database connection settings
         """
         pass
-    
-    @tgdb_config.command()
+
+    @commands.guild_only()
+    @commands.group()
     @checks.is_owner()
+    async def tgdb(self,ctx): 
+        """
+        SS13 Configure the MySQL database connection settings
+        """
+        pass
+    
+    @tgdb.command()
     async def reconnect(self, ctx):
         """
-        Sets the MySQL host, defaults to localhost (127.0.0.1)
+        Recreate the pool (for when it dies)
         """
         db = await self.config.guild(ctx.guild).mysql_db()
         db_host = socket.gethostbyname(await self.config.guild(ctx.guild).mysql_host())
@@ -316,8 +323,8 @@ class TGDB(BaseCog):
             self.pool.close()
             await self.pool.wait_closed()
         
-        # Establish a connection with the database and pull the relevant data
-        self.pool = await aiomysql.create_pool(host=db_host,port=db_port,db=db,user=db_user,password=db_pass, connect_timeout=5)
+        # Establish a connection with the database and pull the relevant data, recycle them every 300 seconds
+        self.pool = await aiomysql.create_pool(host=db_host,port=db_port,db=db,user=db_user,password=db_pass, connect_timeout=5, pool_recycle=300)
 
     async def query_database(self, ctx, query: str, parameters: list):
         '''

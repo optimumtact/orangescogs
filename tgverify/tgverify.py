@@ -58,13 +58,12 @@ class TGverify(BaseCog):
     @tgverify_config.command()
     async def current(self, ctx):
         """
-        Gets the current settings for the notes database
+        Gets the current settings for the verification system
         """
         settings = await self.config.guild(ctx.guild).all()
         embed=discord.Embed(title="__Current settings:__")
         for k, v in settings.items():
-            # Ensures that the database password is not sent
-            # Whitelist for extra safety
+            # Hide any non whitelisted config settings (safety moment)
             if k in self.visible_config:
                 if v == "":
                     v = None
@@ -123,6 +122,9 @@ class TGverify(BaseCog):
 
     @tgverify.command()
     async def discords(self, ctx, ckey: str):
+        """
+        List all past discord accounts this ckey has verified with
+        """
         tgdb = self.get_tgdb()
         ckey = normalise_to_ckey(ckey)
         message = await ctx.send("Collecting discord accounts for ckey....")
@@ -131,7 +133,7 @@ class TGverify(BaseCog):
             embed.set_author(name=f"Discord accounts historically linked to {str(ckey).title()}")
             links = await tgdb.get_all_links_to_ckey(ctx, ckey)
             if len(links) <= 0:
-                return await message.edit("No discord accounts found for this ckey")
+                return await message.edit(content="No discord accounts found for this ckey")
 
             names = ""
             for link in links:
@@ -143,6 +145,9 @@ class TGverify(BaseCog):
     
     @tgverify.command()
     async def whois(self, ctx, discord_user: discord.User):
+        """
+        Return the ckey attached to the given discord user, if they have one
+        """
         tgdb = self.get_tgdb()
 
         message = await ctx.send("Finding out the ckey of user....")
@@ -154,7 +159,7 @@ class TGverify(BaseCog):
             else:
                 message = await message.edit(content=f"This discord user has no ckey linked")
     
-    #Now the only user facing command
+    #Now the only user facing command, so this has rate limiting across the sky
     @commands.cooldown(2, 60, type=commands.BucketType.user)
     @commands.cooldown(6, 60, type=commands.BucketType.guild)
     @commands.max_concurrency(3, per=commands.BucketType.guild, wait=False)
