@@ -1,0 +1,13 @@
+{
+    "author": ["oranges"],
+    "install_msg": "Thank you for installing the based module",
+    "name": "Based? Based on what!",
+    "short": "This is a useless cog that is bad",
+    "description": "Replies to messages starting with the word based with the phrase Based on what?",
+    "permissions" : ["Send Messages"],
+    "tags": [
+        "Space Station 13",
+        "Fun",
+        "SS13"
+    ]
+}
