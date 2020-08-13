@@ -11,11 +11,11 @@ metadata = MetaData()
 TGstation sql schema models
 
 modelname = Table("tablename", metadata
-    Column("columnname", COLUMNTYPE(), kwargs)*,
+    Column("columnname", COLUMNTYPE(), kwargs*)*,
 
-    PrimaryKeyConstraint(str)*,
+    PrimaryKeyConstraint(str),
 
-    [Index("indexname", "columnname"*)]
+    [Index("indexname", "columnname"*)]*
 )
 """
 
