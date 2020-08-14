@@ -3,7 +3,9 @@
     "install_msg" : "Utility cogs for tg station",
     "name" : "oranges",
     "short" : "tg cogs",
-    "requirements": [],
+    "requirements": [
+        "sqlalchemy>=1.3.18"
+    ],
     "description" : "Random cogs tg is using",
     "tags" : ["Fun", "SS13", "Utility", "Administration"]
 }
