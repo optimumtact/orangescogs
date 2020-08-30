@@ -67,3 +67,10 @@ class Pets(BaseCog):
         Give a user a nice coffee
         """
         await ctx.send("*{} serves {} a{} {}*".format(ctx.author.name, name, random.choice(self.temps), random.choice(self.coffee)))
+
+    @commands.command()
+    async def throw(self, ctx, *, name: str):
+        """
+        Throw a coffee at someone
+        """
+        await ctx.send("*{} makes a{} {} and then picks it up and fucking hurls it at {}'s face*".format(ctx.author.name, random.choice(self.temps), random.choice(self.coffee), name))
