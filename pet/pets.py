@@ -34,6 +34,11 @@ class Pets(BaseCog):
         "Lungo",
         "Ristretto",
         ]
+        self.ethical_alternatives = [
+            "Soy",
+            "Oat",
+            "Almond",
+        ]
         self.temps = [
         "n iced",
         " steaming hot",
@@ -74,3 +79,11 @@ class Pets(BaseCog):
         Throw a coffee at someone
         """
         await ctx.send("*{} makes a{} {} and then picks it up and fucking hurls it at {}'s face*".format(ctx.author.name, random.choice(self.temps), random.choice(self.coffee), name))
+
+    @commands.command()
+    async def sticky(self, ctx, *, name: str):
+        """
+        Give a user a smugly superior sense of self worth
+        """
+        await ctx.send("*{} serves {} a{} {} with {} milk. How ethical! Is that a hint of smug superiority on the face of {}?*".format(ctx.author.name, name, random.choice(self.temps), random.choice(self.coffee), random.choice(self.ethical_alternatives), name))
+
