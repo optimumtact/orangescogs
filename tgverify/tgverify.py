@@ -173,7 +173,7 @@ class TGverify(BaseCog):
             discord_link = await tgdb.discord_link_for_discord_id(ctx, discord_user.id)
             if discord_link:
                 # now clear all the links for this ckey
-                await tgdb.clear_all_valid_discord_links_for_ckey(discord_link.ckey)
+                await tgdb.clear_all_valid_discord_links_for_ckey(ctx, discord_link.ckey)
                 message = await message.edit(content=f"User has been devalidated")
             else:
                 message = await message.edit(content=f"This discord user has no ckey linked")
