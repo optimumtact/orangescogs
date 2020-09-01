@@ -50,7 +50,7 @@ class Pets(BaseCog):
         """
         Pet a user
         """
-        await ctx.send("*{} pets {} gently on the head*".format(ctx.author.name, name))
+        await ctx.send("*{} pets {} gently on the head*".format(ctx.author.mention, name))
 
     @commands.command(aliases=["tailpull"])
     async def pull(self, ctx, *, name: str):
@@ -71,19 +71,19 @@ class Pets(BaseCog):
         """
         Give a user a nice coffee
         """
-        await ctx.send("*{} serves {} a{} {}*".format(ctx.author.name, name, random.choice(self.temps), random.choice(self.coffee)))
+        await ctx.send("*{} serves {} a{} {}*".format(ctx.author.mention, name, random.choice(self.temps), random.choice(self.coffee)))
 
     @commands.command()
     async def throw(self, ctx, *, name: str):
         """
         Throw a coffee at someone
         """
-        await ctx.send("*{} makes a{} {} and then picks it up and fucking hurls it at {}'s face*".format(ctx.author.name, random.choice(self.temps), random.choice(self.coffee), name))
+        await ctx.send("*{} makes a{} {} and then picks it up and fucking hurls it at {}'s face*".format(ctx.author.mention, random.choice(self.temps), random.choice(self.coffee), name))
 
     @commands.command()
     async def sticky(self, ctx, *, name: str):
         """
         Give a user a smugly superior sense of self worth
         """
-        await ctx.send("*{} serves {} a{} {} with {} milk. How ethical! Is that a hint of smug superiority on the face of {}?*".format(ctx.author.name, name, random.choice(self.temps), random.choice(self.coffee), random.choice(self.ethical_alternatives), name))
+        await ctx.send("*{} serves {} a{} {} with {} milk. How ethical! Is that a hint of smug superiority on the face of {}?*".format(ctx.author.mention, name, random.choice(self.temps), random.choice(self.coffee), random.choice(self.ethical_alternatives), name))
 
