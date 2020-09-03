@@ -87,3 +87,9 @@ class Pets(BaseCog):
         """
         await ctx.send("*{} serves {} a{} {} with {} milk. How ethical! Is that a hint of smug superiority on the face of {}?*".format(ctx.author.mention, name, random.choice(self.temps), random.choice(self.coffee), random.choice(self.ethical_alternatives), name))
 
+    @commands.command()
+    async def ruffle(self, ctx, *, name: str):
+        """
+        Ruffle their hair
+        """
+        await ctx.send("*{} ruffles {}'s hair gently, mussing it up a little*".format(ctx.author.mention, name))
