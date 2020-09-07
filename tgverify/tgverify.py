@@ -195,6 +195,7 @@ class TGverify(BaseCog):
         role = await self.config.guild(ctx.guild).verified_role()
         role = ctx.guild.get_role(role)
         tgdb = self.get_tgdb()
+        ckey = None
 
         # First lets try to remove their message, since the one time token is technically a secret if something goes wrong
         try:
@@ -214,19 +215,15 @@ class TGverify(BaseCog):
                 # Attempt to find the user based on the one time token passed in.
                 ckey = await tgdb.lookup_ckey_by_token(ctx, one_time_token)
 
-            # they haven't specified a one time token, see if we already have a linked ckey for the user id that is still valid
-            else:
+            # they haven't specified a one time token or it didn't match, see if we already have a linked ckey for the user id that is still valid
+            if ckey is None:
                 discord_link = await tgdb.discord_link_for_discord_id(ctx, ctx.author.id)
                 if(discord_link and discord_link.valid > 0):
                     # we have a fast path, just reapply the linked role and bail
-                    await ctx.author.add_roles(role, reason="User has verified against their in game living minutes")
+                    await ctx.author.add_roles(role, reason="User has re-verified against their in game living minutes")
                     return await message.edit(content=f"Congrats {ctx.author} your verification is complete")
 
-                return await message.edit(content=f"You have not previously linked this account with our database so must generate a one time token to verify, see {instructions_link} for how you carry out this process")
-
-            print(ckey, one_time_token)
-            if ckey is None:
-                raise TGRecoverableError(f"Sorry {ctx.author} it looks like we don't recognise this one use token or it has expired, go back into game and try generating one another! See {instructions_link} for more information. \n\nIf it's still failing after a few tries, ask for support from the verification team, ")
+                raise TGRecoverableError(f"Sorry {ctx.author} it looks like we don't recognise this one use token or it has expired or you don't have a ckey linked to this discord account, go back into game and try generating one another! See {instructions_link} for more information. \n\nIf it's still failing after a few tries, ask for support from the verification team, ")
 
             log.info(f"Verification request by {ctx.author.id}, for ckey {ckey}")
             # Now look for the user based on the ckey
@@ -265,6 +262,9 @@ class TGverify(BaseCog):
             await ctx.send(content=f"", embed=embed)
             log.warning(f"Verification limit hit, user is being bad {ctx.author}, discord id {ctx.author.id}")
 
+        elif isinstance(error, commands.NoPrivateMessage):
+            embed=discord.Embed(title=f"Wrong channel, bud, leather club is 3 blocks down:", description=f"{format(error)}", color=0xff0000)
+            await ctx.send(content=f"", embed=embed)
         else:
             # Something went badly wrong, log to the console
             log.exception("Internal error while verifying a user")
