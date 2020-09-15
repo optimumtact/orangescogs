@@ -10,6 +10,7 @@ from redbot.core import commands, checks, Config
 
 from tgcommon.errors import TGRecoverableError, TGUnrecoverableError
 from tgcommon.util import normalise_to_ckey
+from typing import cast
 
 __version__ = "1.1.0"
 __author__ = "oranges"
@@ -25,12 +26,18 @@ class TGverify(BaseCog):
     def __init__(self, bot):
         self.bot = bot
         self.config = Config.get_conf(self, identifier=672261474290237490, force_registration=True)
-        self.visible_config = ["min_living_minutes", "verified_role"]
+        self.visible_config = ["min_living_minutes", "verified_role", "instructions_link", "welcomegreeting", "disabledgreeting", "bunkerwarning", "bunker", "welcomechannel"]
 
         default_guild = {
             "min_living_minutes": 60,
             "verified_role": None,
-            "instructions_link": ""
+            "instructions_link": "",
+            "welcomegreeting": "",
+            "disabledgreeting": "",
+            "bunkerwarning": "",
+            "bunker": False,
+            "disabled": False,
+            "welcomechannel": "",
         }
 
         self.config.register_guild(**default_guild)
@@ -47,15 +54,15 @@ class TGverify(BaseCog):
         pass
 
     @commands.guild_only()
-    @commands.group()
+    @tgverify.group()
     @checks.mod_or_permissions(administrator=True)
-    async def tgverify_config(self,ctx):
+    async def config(self,ctx):
         """
         SS13 Configure the settings on the verification cog
         """
         pass
 
-    @tgverify_config.command()
+    @config.command()
     async def current(self, ctx):
         """
         Gets the current settings for the verification system
@@ -73,7 +80,7 @@ class TGverify(BaseCog):
         await ctx.send(embed=embed)
 
 
-    @tgverify_config.command()
+    @config.command()
     async def living_minutes(self, ctx, min_living_minutes: int = None):
         """
         Sets the minimum required living minutes before this bot will apply a verification role to a user
@@ -89,7 +96,7 @@ class TGverify(BaseCog):
         except (ValueError, KeyError, AttributeError):
             await ctx.send("There was a problem setting the minimum required living minutes")
 
-    @tgverify_config.command()
+    @config.command()
     async def instructions_link(self, ctx, instruction_link: str):
         """
         Sets the link to further instructions on how to generate verification information
@@ -101,7 +108,98 @@ class TGverify(BaseCog):
         except (ValueError, KeyError, AttributeError):
             await ctx.send("There was a problem setting the instructions link")
 
-    @tgverify_config.command()
+    @config.command()
+    async def welcome_channel(self, ctx, channel: discord.TextChannel):
+        """
+        Sets the channel to send the welcome message
+        If channel isn"t specified, the guild's default channel will be used
+        """
+        guild = ctx.message.guild
+        guild_settings = await self.config.guild(guild).welcomechannel()
+        if channel is None:
+            channel = ctx.message.channel
+        if not channel.permissions_for(ctx.me).send_messages:
+            msg = "I do not have permissions to send messages to {channel}".format(
+                channel=channel.mention
+            )
+            await ctx.send(msg)
+            return
+        guild_settings = channel.id
+        await self.config.guild(guild).welcomechannel.set(guild_settings)
+        msg = "I will now send welcome messages to {channel}".format(channel=channel.mention)
+        await channel.send(msg)
+    
+    @config.command()
+    async def welcome_greeting(self, ctx, welcomegreeting: str):
+        """
+        Sets the welcoming greeting
+        """
+        try:
+            await self.config.guild(ctx.guild).welcomegreeting.set(welcomegreeting)
+            await ctx.send(f"Welcome greeting set to: `{welcomegreeting}`")
+
+        except (ValueError, KeyError, AttributeError):
+            await ctx.send("There was a problem setting the Welcome greeting")
+
+    @config.command()
+    async def disabled_greeting(self, ctx, disabledgreeting: str):
+        """
+        Sets the welcoming greeting when the verification system is disabled
+        """
+        try:
+            await self.config.guild(ctx.guild).disabledgreeting.set(disabledgreeting)
+            await ctx.send(f"Disabled greeting set to: `{disabledgreeting}`")
+
+        except (ValueError, KeyError, AttributeError):
+            await ctx.send("There was a problem setting the disabled greeting")
+
+    @config.command()
+    async def bunker_warning(self, ctx, bunkerwarning: str):
+        """
+        Sets the additional message added to the greeting message when the bunker is on
+        """
+        try:
+            await self.config.guild(ctx.guild).bunkerwarning.set(bunkerwarning)
+            await ctx.send(f"Bunker warning set to: `{bunkerwarning}`")
+
+        except (ValueError, KeyError, AttributeError):
+            await ctx.send("There was a problem setting the bunker warning")
+    
+    @tgverify.command()
+    async def bunker(self, ctx):
+        """
+        Toggle bunker status on or off
+        """
+        try:
+            bunker = await self.config.guild(ctx.guild).bunker()
+            bunker = not bunker
+            await self.config.guild(ctx.guild).bunker.set(bunker)
+            if bunker:
+                await ctx.send(f"The bunker warning is now on")
+            else:
+                await ctx.send(f"The bunker warning is now off")
+
+        except (ValueError, KeyError, AttributeError):
+            await ctx.send("There was a problem toggling the bunker")
+    
+    @tgverify.command()
+    async def broken(self, ctx):
+        """
+        For when verification breaks
+        """
+        try:
+            disabled = await self.config.guild(ctx.guild).disabled()
+            disabled = not disabled
+            await self.config.guild(ctx.guild).disabled.set(disabled)
+            if disabled:
+                await ctx.send(f"The verification system is now off")
+            else:
+                await ctx.send(f"The verification system is now on")
+
+        except (ValueError, KeyError, AttributeError):
+            await ctx.send("There was a problem toggling the disabled flag")
+
+    @config.command()
     async def verified_role(self, ctx, verified_role: int = None):
         """
         Set what role is applied when a user verifies
@@ -203,7 +301,7 @@ class TGverify(BaseCog):
         except(discord.DiscordException):
             await ctx.send("I do not have the required permissions to delete messages, please remove/edit the one time token manually.")
         if not role:
-            raise TGUnrecoverableError("No verification role is configured, configure it with .tgverify_config role")
+            raise TGUnrecoverableError("No verification role is configured, configure it with .config role")
 
         if role in ctx.author.roles:
             return await ctx.send("You already are verified")
@@ -272,6 +370,48 @@ class TGverify(BaseCog):
             embed=discord.Embed(title=f"System error occurred", description=f"Contact the server admins for assistance", color=0xff0000)
             await ctx.send(content=f"", embed=embed)
 
+    @tgverify.command()
+    async def test(self, ctx, discord_user: discord.User):
+        """
+        Test welcome message sending
+        """
+        guild = ctx.guild
+        member = guild.get_member(discord_user.id)
+        await self.handle_member_join(member)
+    
+    @commands.Cog.listener()
+    async def on_member_join(self, member: discord.Member) -> None:
+        await self.handle_member_join(member)
+
+    async def handle_member_join(self, member: discord.Member) -> None:
+        guild = member.guild
+        if guild is None:
+            return
+        channel_id = await self.config.guild(guild).welcomechannel()
+        channel = cast(discord.TextChannel, guild.get_channel(channel_id))
+        if channel is None:
+            log.info(f"tgverify channel not found for guild, it was probably deleted User joined: {member}")
+            return
+        
+        if not guild.me.permissions_in(channel).send_messages:
+            log.info(f"Permissions Error. User that joined:{member}")
+            log.info(f"Bot doesn't have permissions to send messages to {guild.name}'s #{channel.name} channel")
+            return
+        
+        final = ""
+        if await self.config.guild(guild).disabled():
+            msg = await self.config.guild(guild).disabledgreeting()
+            final = msg.format(member, guild)
+        else:
+            msg = await self.config.guild(guild).welcomegreeting()
+            final = msg.format(member, guild)
+        bunkermsg = await self.config.guild(guild).bunkerwarning()
+        bunker = await self.config.guild(guild).bunker()
+        if bunkermsg != "" and bunker:
+            final = final + " " + bunkermsg
+        
+        await channel.send(final)
+    
     def get_tgdb(self):
         tgdb = self.bot.get_cog("TGDB")
         if not tgdb:
