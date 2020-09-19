@@ -14,11 +14,9 @@ from redbot.core import commands, checks, Config
 from redbot.core.utils.chat_formatting import pagify, box, humanize_list, warning
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 
-from tgcommon.models import *
-import sqlalchemy as sa
-from aoimysql import create_engine
+from tgcommon.models import tgschema
+from aiomysql.sa import create_engine
 
-metadata = sa.MetaData()
 
 __version__ = "1.0.0"
 __author__ = "oranges"
@@ -195,6 +193,16 @@ class TGDB(BaseCog):
                 embed.add_field(name=f"{k}:",value="`redacted`",inline=False)
         await ctx.send(embed=embed)
 
+    @checks.mod_or_permissions(administrator=True)
+    @commands.command()
+    async def test(self, ctx):
+        """
+        Gets the current settings for the notes database
+        """
+        cur = await self.pool.acquire()
+        res = await cur.execute(tgschema.discord_links.select())
+        for row in (await res.fetchall()):
+            print(row.id, row.one_time_token)
 
     async def update_discord_link(self, ctx, one_time_token: str, user_discord_snowflake: str):
         """
@@ -341,7 +349,7 @@ class TGDB(BaseCog):
             await self.pool.wait_closed()
 
         # Establish a connection with the database and pull the relevant data, recycle them every 300 seconds
-        self.pool = await aiomysql.create_pool(host=db_host,port=db_port,db=db,user=db_user,password=db_pass, connect_timeout=5, pool_recycle=300)
+        self.pool = await aiomysql.sa.create_engine(host=db_host,port=db_port,db=db,user=db_user,password=db_pass, connect_timeout=5, pool_recycle=300)
 
     async def query_database(self, ctx, query: str, parameters: list):
         '''
