@@ -14,7 +14,11 @@ from redbot.core import commands, checks, Config
 from redbot.core.utils.chat_formatting import pagify, box, humanize_list, warning
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 
-from tgcommon.models import DiscordLink
+from tgcommon.models import *
+import sqlalchemy as sa
+from aoimysql import create_engine
+
+metadata = sa.MetaData()
 
 __version__ = "1.0.0"
 __author__ = "oranges"
@@ -30,6 +34,9 @@ class TGDB(BaseCog):
     def __init__(self, bot):
         self.bot = bot
         self.config = Config.get_conf(self, identifier=672261474290237490, force_registration=True)
+        ## Stores all our configured database pools (if you use this bot for multiple servers)
+        ## They're indexed by a config key
+        self.database_pools = dict()
         self.visible_config = ["mysql_host", "mysql_port", "mysql_user", "mysql_db", "mysql_prefix",
         "min_living_minutes", "verified_role"]
 
