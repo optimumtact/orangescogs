@@ -93,3 +93,10 @@ class Pets(BaseCog):
         Ruffle their hair
         """
         await ctx.send("*{} ruffles {}'s hair gently, mussing it up a little*".format(ctx.author.mention, name))
+
+    @commands.command()
+    async def bap(self, ctx, *, name: str):
+        """
+        Bap!!!
+        """
+        await ctx.send("*{} baps {} on the head*".format(ctx.author.mention, name))
