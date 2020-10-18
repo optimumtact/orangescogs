@@ -100,3 +100,10 @@ class Pets(BaseCog):
         Bap!!!
         """
         await ctx.send("*{} baps {} on the head*".format(ctx.author.mention, name))
+    
+    @commands.command()
+    async def hug(self, ctx, *, name: str):
+        """
+        hug, awww!!!
+        """
+        await ctx.send("*{} gathers {} up in their arms and wraps them in a warm hug*".format(ctx.author.mention, name))
