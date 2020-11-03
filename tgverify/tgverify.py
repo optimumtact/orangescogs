@@ -294,6 +294,8 @@ class TGverify(BaseCog):
         role = ctx.guild.get_role(role)
         tgdb = self.get_tgdb()
         ckey = None
+        # People keep adding these from the sample code
+        one_time_token = one_time_token.strip('"')
 
         # First lets try to remove their message, since the one time token is technically a secret if something goes wrong
         try:
@@ -330,7 +332,7 @@ class TGverify(BaseCog):
             if player is None:
                 raise TGRecoverableError(f"Sorry {ctx.author} looks like we couldn't look up your user, ask the verification team for support!")
 
-            if player['living_time'] <= min_required_living_minutes:
+            if player['living_time'] < min_required_living_minutes:
                 return await message.edit(content=f"Sorry {ctx.author} you only have {player['living_time']} minutes as a living player on our servers, and you require at least {min_required_living_minutes}! You will need to play more on our servers to access all the discord channels, see {instructions_link} for more information")
 
             # clear any/all previous valid links for ckey or the discord id (in case they have decided to make a new ckey)
