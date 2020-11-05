@@ -294,8 +294,6 @@ class TGverify(BaseCog):
         role = ctx.guild.get_role(role)
         tgdb = self.get_tgdb()
         ckey = None
-        # People keep adding these from the sample code
-        one_time_token = one_time_token.strip('"')
 
         # First lets try to remove their message, since the one time token is technically a secret if something goes wrong
         try:
