@@ -107,3 +107,10 @@ class Pets(BaseCog):
         hug, awww!!!
         """
         await ctx.send("*{} gathers {} up in their arms and wraps them in a warm hug*".format(ctx.author.mention, name))
+    
+    @commands.command()
+    async def fine(self, ctx, *, name: str):
+        """
+        hug, awww!!!
+        """
+        await ctx.send("{} you are fined one credit for violation of the textual morality statutes".format(name))
