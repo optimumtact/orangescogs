@@ -85,7 +85,7 @@ class Fridge(BaseCog):
         Peek into the fridge
         """
         items = await self.config.guild(ctx.guild).items()
-        sample = min(30, len(items))
+        sample = min(10, len(items))
         spotted = random.sample(items, sample)
         await ctx.send(f"Bored, you open your fridge and stare into it for a few minutes and you see: {', '.join(items)}")
 
