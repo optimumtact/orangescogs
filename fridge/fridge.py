@@ -64,6 +64,11 @@ class Fridge(BaseCog):
         if("@" in item):
             await ctx.send(f"Nice try")    
             return
+        
+        if(len(item) > 100):
+            await ctx.send(f"This is too big to fit in the fridge")    
+            return
+
         items = await self.config.guild(ctx.guild).items()
         item = item.replace('@', '@​\u200b') 
         items.append(item)
