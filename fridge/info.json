@@ -1,0 +1,14 @@
+{
+    "author": ["oranges"],
+    "install_msg":"Utility commands for cat bots.",
+    "name": "Petting",
+    "short": "Makes cat admins happy",
+    "description": "Make cat admins happy",
+    "tags": [
+        "Space Station 13",
+        "Game",
+        "Administration",
+        "Utility",
+        "SS13"
+    ]
+}
