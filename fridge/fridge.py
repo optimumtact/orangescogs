@@ -77,7 +77,7 @@ class Fridge(BaseCog):
         """
         items = await self.config.guild(ctx.guild).items()
         item = random.choice(items)
-        await ctx.send(f"You got an {item}")
+        await ctx.send(f"You take out {item}, enjoy!")
 
     @fridge.command()
     async def peek(self, ctx):
