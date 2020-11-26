@@ -43,7 +43,7 @@ class Fridge(BaseCog):
         datapath = cog_data_path(self)
         for guild in self.bot.guilds:
             filename = Path(datapath, f"{guild.id}.json")
-            if filename.exists()
+            if filename.exists():
                 log.info(f"Loading backing store {filename}")
                 with open(filename, 'r') as backingstore:
                     storeditems = json.load(backingstore)
@@ -168,7 +168,7 @@ class Fridge(BaseCog):
         for item in spotted:
             if fridge[item] > 1:
                 output.append("{0} {1}".format(fridge[item], item))
-            else
+            else:
                 output.append(f"The last {item}")
         await ctx.send(f"Bored, you open your fridge and stare into it for a few minutes and you see: {', '.join(output)}")
 
