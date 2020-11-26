@@ -10,5 +10,6 @@
         "Administration",
         "Utility",
         "SS13"
-    ]
+    ],
+    "requirements": ["fuzzywuzzy"]
 }

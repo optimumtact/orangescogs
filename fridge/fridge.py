@@ -18,6 +18,9 @@ from collections import Counter, defaultdict
 
 from redbot.core.data_manager import cog_data_path
 
+
+from fuzzywuzzy import process
+
 __version__ = "1.1.0"
 __author__ = "oranges"
 
@@ -126,22 +129,32 @@ class Fridge(BaseCog):
         fridge[item]+=1
         await ctx.send(f"You put {item} in the fridge")
 
-        items = await self.config.guild(ctx.guild).items()
-        if item not in items:
-            items.append(item)
-            items = await self.config.guild(ctx.guild).items.set(items)
+        config = self.config.guild(ctx.guild)
+        async with config.items() as items:
+            if item not in items:
+                items.append(item)
 
     @fridge.command(aliases=['take', 'remove', 'find', 'eat'])
-    async def get(self, ctx):
+    async def get(self, ctx, *, search=None):
         """
         Get a random item out of the fridge
         """
         fridge = self.fridges[ctx.guild]
+        
         if(len(fridge) <= 0):
             await ctx.send(f"There's nothing in the fridge, you should use restock to refill it!")
             return
 
-        item = random.choice(list(fridge.keys()))
+        if search:
+            item = process.extractOne(search, list(fridge.keys()), score_cutoff=80)
+            if not item:
+                await ctx.send(f"Couldn't find anything like that!")
+                return
+            item = item[0]
+        
+        else:
+            item = random.choice(list(fridge.keys()))
+        
         fridge[item] -= 1
         if fridge[item] <= 0:
             del(fridge[item])
