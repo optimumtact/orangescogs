@@ -150,7 +150,7 @@ class Fridge(BaseCog):
             if not item:
                 await ctx.send(f"You don't seem to have anything you want, maybe get some and add?")
                 return
-            item = item[0]ok
+            item = item[0]
 
         
         else:
