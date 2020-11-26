@@ -40,7 +40,7 @@ class Fridge(BaseCog):
         pass
 
 
-    @fridge.command()
+    @fridge.command(aliases=['check'])
     async def current(self, ctx):
         """
         Who is currently on the fridge
