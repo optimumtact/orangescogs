@@ -165,9 +165,9 @@ class Fridge(BaseCog):
 
 
     @fridge.command()
-    async def peek(self, ctx):
+    async def peek(self, ctx, *, search=None):
         """
-        Peek into the fridge
+        Peek into the fridge, specify a search to find certain types of items
         """
         fridge = self.fridges[ctx.guild]
         items = fridge.keys()
@@ -175,9 +175,22 @@ class Fridge(BaseCog):
             await ctx.send(f"Bored, you open your fridge only to find there's nothing there!, use restock to refill your fridge")
             return
 
-        sample = min(10, len(items))
-        spotted = random.sample(items, sample)
+        spotted = list()
+        if search:
+            fuzzy_matches = process.extract(search, list(fridge.keys()), limit=30)
+            for match in fuzzy_matches:
+                if match[1] > 80:
+                    spotted.append(match[0])
+        else:
+            sample = min(10, len(items))
+            spotted = random.sample(items, sample)
+            
+        if len(spotted) <= 0:
+            await ctx.send(f"You couldn't really find anything like that")
+            return
+        
         output = list()
+
         for item in spotted:
             if fridge[item] > 1:
                 output.append("{0} {1}".format(fridge[item], item))
