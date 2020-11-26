@@ -43,17 +43,17 @@ class Fridge(BaseCog):
         datapath = cog_data_path(self)
         for guild in self.bot.guilds:
             filename = Path(datapath, f"{guild.id}.json")
-            log.info(f"Loading backing store {filename}")
-            with open(filename, 'r') as backingstore:
-                storeditems = json.load(backingstore)
-                fridge = self.fridges[guild]
-                for item in storeditems:
-                    fridge[item] +=1
+            if filename.exists()
+                log.info(f"Loading backing store {filename}")
+                with open(filename, 'r') as backingstore:
+                    storeditems = json.load(backingstore)
+                    fridge = self.fridges[guild]
+                    for item in storeditems:
+                        fridge[item] +=1
 
     
     def cog_unload(self):
         datapath = cog_data_path(self)
-        print(self.fridges)
         for guild in self.fridges.keys():
             fridge = self.fridges[guild]
             storeditems = list()
@@ -131,7 +131,7 @@ class Fridge(BaseCog):
             items.append(item)
             items = await self.config.guild(ctx.guild).items.set(items)
 
-    @fridge.command()
+    @fridge.command(aliases=['take', 'remove', 'find', 'eat'])
     async def get(self, ctx):
         """
         Get a random item out of the fridge
@@ -166,7 +166,10 @@ class Fridge(BaseCog):
         spotted = random.sample(items, sample)
         output = list()
         for item in spotted:
-            output.append("{0} {1}".format(fridge[item], item))
+            if fridge[item] > 1:
+                output.append("{0} {1}".format(fridge[item], item))
+            else
+                output.append(f"The last {item}")
         await ctx.send(f"Bored, you open your fridge and stare into it for a few minutes and you see: {', '.join(output)}")
 
     @fridge.command()
