@@ -150,7 +150,8 @@ class Fridge(BaseCog):
             if not item:
                 await ctx.send(f"You don't seem to have anything you want, maybe get some and add?")
                 return
-            item = item[0]
+            item = item[0]ok
+
         
         else:
             item = random.choice(list(fridge.keys()))
@@ -214,7 +215,7 @@ class Fridge(BaseCog):
     @fridge.command()
     async def tip(self, ctx):
         message = f"Holy shit {ctx.author.mention} just straight up tipped the fridge over"
-        amount = random.randint(1, 30)
+        amount = random.randint(1, 10)
         fridge = self.fridges[ctx.guild]
         items = list(fridge.keys())
         sample = min(amount, len(items))
@@ -237,6 +238,7 @@ class Fridge(BaseCog):
         user = await self.config.guild(ctx.guild).fridge()
         if user:
             message += f" {user} is sent flying from the top of the fridge"
+        await self.config.guild(ctx.guild).fridge.set(None)
         await ctx.send(message)
 
     @buyables.command()
