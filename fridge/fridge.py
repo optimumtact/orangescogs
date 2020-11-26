@@ -148,7 +148,7 @@ class Fridge(BaseCog):
         if search:
             item = process.extractOne(search, list(fridge.keys()), score_cutoff=80)
             if not item:
-                await ctx.send(f"Couldn't find anything like that!")
+                await ctx.send(f"You don't seem to have anything you want, maybe get some and add?")
                 return
             item = item[0]
         
@@ -200,12 +200,30 @@ class Fridge(BaseCog):
 
     @fridge.command()
     async def tip(self, ctx):
-        message = f"Holy shit {ctx.author.mention} just straight up tipped the fridge over, all the items spilled out!"
+        message = f"Holy shit {ctx.author.mention} just straight up tipped the fridge over"
+        amount = random.randint(1, 30)
+        fridge = self.fridges[ctx.guild]
+        items = list(fridge.keys())
+        sample = min(amount, len(items))
+        spilled_out = random.sample(items, sample)
+        if len(spilled_out) >= 1:
+            print(spilled_out)
+            message += " items go flying everywhere!"
+        else:
+            message += " but nothing came out, lucky!"
+        for spilled in spilled_out:
+            
+            lost = random.randint(1, fridge[spilled])
+            if lost == 1:
+                message += f" one {spilled} gets scattered across the floor,"
+            else:
+                message += f" {lost} {spilled} get scattered across the floor,"
+            fridge[spilled]-=lost
+            if fridge[spilled] <= 0:
+                del(fridge[spilled])
         user = await self.config.guild(ctx.guild).fridge()
         if user:
             message += f" {user} is sent flying from the top of the fridge"
-        self.fridges[ctx.guild] = Counter()
-        await self.config.guild(ctx.guild).fridge.set(None)
         await ctx.send(message)
 
     @buyables.command()
