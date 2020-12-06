@@ -313,6 +313,7 @@ class TGverify(BaseCog):
         role = await self.config.guild(ctx.guild).verified_role()
         verified_role = await self.config.guild(ctx.guild).verified_living_role()
         role = ctx.guild.get_role(role)
+        verified_role = ctx.guild.get_role(verified_role)
         tgdb = self.get_tgdb()
         ckey = None
 
