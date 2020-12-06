@@ -341,7 +341,7 @@ class TGverify(BaseCog):
             # they haven't specified a one time token or it didn't match, see if we already have a linked ckey for the user id that is still valid
             if ckey is None:
                 discord_link = await tgdb.discord_link_for_discord_id(ctx, ctx.author.id)
-                if(discord_link and discord_link.valid > 0):
+                if discord_link and discord_link.valid > 0 :
                     prexisting = True
                     ckey = discord_link.ckey
                     # Now look for the user based on the ckey
@@ -376,7 +376,7 @@ class TGverify(BaseCog):
                 await ctx.author.add_roles(verified_role, reason="User has verified against their in game living minutes")
 
             message = f"Congrats {ctx.author} your verification is complete, but you do not have {min_required_living_minutes} minutes in game as a living crew member (you have {player['living_time']}), so you may not have access to all channels"
-            if(successful)
+            if successful:
                 message = "f"Congrats {ctx.author} your verification is complete"
             return await message.edit(content=message, color=0xff0000)
 
