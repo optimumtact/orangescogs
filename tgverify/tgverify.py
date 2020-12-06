@@ -327,8 +327,8 @@ class TGverify(BaseCog):
         if not verified_role:
             raise TGUnrecoverableError("No verification role is configured for living minutes, configure it with config command")
 
-        if role and verified_role in ctx.author.roles:
-            return await ctx.send("You already are verified")
+        if role in ctx.author_role and verified_role in ctx.author.roles:
+            return await ctx.send("You are already verified")
 
         message = await ctx.send("Attempting to verify you....")
         async with ctx.typing():
