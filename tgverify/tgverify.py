@@ -375,10 +375,10 @@ class TGverify(BaseCog):
                 successful = True
                 await ctx.author.add_roles(verified_role, reason="User has verified against their in game living minutes")
 
-            message = f"Congrats {ctx.author} your verification is complete, but you do not have {min_required_living_minutes} minutes in game as a living crew member (you have {player['living_time']}), so you may not have access to all channels"
+            fuck = f"Congrats {ctx.author} your verification is complete, but you do not have {min_required_living_minutes} minutes in game as a living crew member (you have {player['living_time']}), so you may not have access to all channels"
             if successful:
-                message = f"Congrats {ctx.author} your verification is complete"
-            return await message.edit(content=message, color=0xff0000)
+                fuck = f"Congrats {ctx.author} your verification is complete"
+            return await message.edit(content=fuck, color=0xff0000)
 
     @verify.error
     async def verify_error(self, ctx, error):
