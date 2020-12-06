@@ -351,8 +351,8 @@ class TGverify(BaseCog):
                     # we have a fast path, just reapply the linked role and bail
                     #await ctx.author.add_roles(role, reason="User has verified in game")
                     #return await message.edit(content=f"Congrats {ctx.author} your verification is complete")
-
-                raise TGRecoverableError(f"Sorry {ctx.author} it looks like you don't have a ckey linked to this discord account, go back into game and try generating another! See {instructions_link} for more information. \n\nIf it's still failing after a few tries, ask for support from the verification team, ")
+                else:
+                    raise TGRecoverableError(f"Sorry {ctx.author} it looks like you don't have a ckey linked to this discord account, go back into game and try generating another! See {instructions_link} for more information. \n\nIf it's still failing after a few tries, ask for support from the verification team, ")
 
             log.info(f"Verification request by {ctx.author.id}, for ckey {ckey}")
             # Now look for the user based on the ckey

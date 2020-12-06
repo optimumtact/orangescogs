@@ -221,7 +221,6 @@ class Fridge(BaseCog):
         sample = min(amount, len(items))
         spilled_out = random.sample(items, sample)
         if len(spilled_out) >= 1:
-            print(spilled_out)
             message += " items go flying everywhere!"
         else:
             message += " but nothing came out, lucky!"
