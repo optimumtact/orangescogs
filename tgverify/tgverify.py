@@ -377,7 +377,7 @@ class TGverify(BaseCog):
 
             message = f"Congrats {ctx.author} your verification is complete, but you do not have {min_required_living_minutes} minutes in game as a living crew member (you have {player['living_time']}), so you may not have access to all channels"
             if successful:
-                message = "f"Congrats {ctx.author} your verification is complete"
+                message = f"Congrats {ctx.author} your verification is complete"
             return await message.edit(content=message, color=0xff0000)
 
     @verify.error
