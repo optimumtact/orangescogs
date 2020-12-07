@@ -15,6 +15,7 @@ from redbot.core.utils.chat_formatting import pagify, box, humanize_list, warnin
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 
 from tgcommon.models import DiscordLink
+from tgcommon.models import TGUnrecoverableError
 
 __version__ = "1.0.0"
 __author__ = "oranges"
