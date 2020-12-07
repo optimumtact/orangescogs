@@ -1,12 +1,12 @@
-#Standard Imports
+# Standard Imports
 import logging
 import random
 from typing import Union
 
-#Discord Imports
+# Discord Imports
 import discord
 
-#Redbot Imports
+# Redbot Imports
 from redbot.core import commands, checks, Config
 
 from typing import cast
@@ -28,33 +28,44 @@ log = logging.getLogger("red.oranges_fridge")
 
 BaseCog = getattr(commands, "Cog", object)
 
+
 class Fridge(BaseCog):
     """
     Add stuff to the fridge
     """
+
     def __init__(self, bot):
         self.bot = bot
-        self.config = Config.get_conf(self, identifier=672261474290237490, force_registration=True)
+        self.config = Config.get_conf(
+            self, identifier=672261474290237490, force_registration=True
+        )
         default_guild = {
             "fridge": None,
-            "items": ["Banana", "Milk", "Bread", "Butter", "Chocolate", "Chocolate Milk", "Brussel sprouts, yuck!!", "A half eaten ham sandwich"],
+            "items": [
+                "Banana",
+                "Milk",
+                "Bread",
+                "Butter",
+                "Chocolate",
+                "Chocolate Milk",
+                "Brussel sprouts, yuck!!",
+                "A half eaten ham sandwich",
+            ],
         }
         self.config.register_guild(**default_guild)
         self.fridges = defaultdict(Counter)
-
 
         datapath = cog_data_path(self)
         for guild in self.bot.guilds:
             filename = Path(datapath, f"{guild.id}.json")
             if filename.exists():
                 log.info(f"Loading backing store {filename}")
-                with open(filename, 'r') as backingstore:
+                with open(filename, "r") as backingstore:
                     storeditems = json.load(backingstore)
                     fridge = self.fridges[guild]
                     for item in storeditems:
-                        fridge[item] +=1
+                        fridge[item] += 1
 
-    
     def cog_unload(self):
         datapath = cog_data_path(self)
         for guild in self.fridges.keys():
@@ -65,31 +76,31 @@ class Fridge(BaseCog):
                 for _ in range(count):
                     storeditems.append(key)
             filename = Path(datapath, f"{guild.id}.json")
-            
+
             log.info(f"Writing backing store {filename}")
-            with open(filename, 'w') as backingstore:
+            with open(filename, "w") as backingstore:
                 json.dump(storeditems, backingstore)
 
         log.info("Unloading")
 
     @commands.guild_only()
     @commands.group()
-    async def fridge(self,ctx):
+    async def fridge(self, ctx):
         """
         Fridge commands
         """
         pass
-    
+
     @commands.guild_only()
     @checks.mod_or_permissions(administrator=True)
     @fridge.group()
-    async def buyables(self,ctx):
+    async def buyables(self, ctx):
         """
         Buyable item commands
         """
         pass
 
-    @fridge.command(aliases=['check'])
+    @fridge.command(aliases=["check"])
     async def current(self, ctx):
         """
         Who is currently on the fridge
@@ -98,7 +109,9 @@ class Fridge(BaseCog):
         if user:
             await ctx.send(f"{user} is currently on top of the fridge")
         else:
-            await ctx.send(f"You look up on the top of the fridge but there is only dust")
+            await ctx.send(
+                f"You look up on the top of the fridge but there is only dust"
+            )
 
     @fridge.command()
     async def put(self, ctx, member: discord.Member):
@@ -113,20 +126,20 @@ class Fridge(BaseCog):
         """
         Put something in the fridge
         """
-        if("@" in item):
-            await ctx.send(f"Nice try")    
+        if "@" in item:
+            await ctx.send(f"Nice try")
             return
-        
-        if(len(item) > 100):
-            await ctx.send(f"This is too big to fit in the fridge")    
+
+        if len(item) > 100:
+            await ctx.send(f"This is too big to fit in the fridge")
             return
-        
-        if(item.count('\n') > 5):
+
+        if item.count("\n") > 5:
             await ctx.send(f"This is too spammy to fit in the fridge")
             return
 
         fridge = self.fridges[ctx.guild]
-        fridge[item]+=1
+        fridge[item] += 1
         await ctx.send(f"You put {item} in the fridge")
 
         config = self.config.guild(ctx.guild)
@@ -134,36 +147,38 @@ class Fridge(BaseCog):
             if item not in items:
                 items.append(item)
 
-    @fridge.command(aliases=['take', 'remove', 'find', 'eat'])
+    @fridge.command(aliases=["take", "remove", "find", "eat"])
     async def get(self, ctx, *, search=None):
         """
         Get a random item out of the fridge
         """
         fridge = self.fridges[ctx.guild]
-        
-        if(len(fridge) <= 0):
-            await ctx.send(f"There's nothing in the fridge, you should use restock to refill it!")
+
+        if len(fridge) <= 0:
+            await ctx.send(
+                f"There's nothing in the fridge, you should use restock to refill it!"
+            )
             return
 
         if search:
             item = process.extractOne(search, list(fridge.keys()), score_cutoff=80)
             if not item:
-                await ctx.send(f"You don't seem to have anything you want, maybe get some and add?")
+                await ctx.send(
+                    f"You don't seem to have anything you want, maybe get some and add?"
+                )
                 return
             item = item[0]
 
-        
         else:
             item = random.choice(list(fridge.keys()))
-        
+
         fridge[item] -= 1
         if fridge[item] <= 0:
-            del(fridge[item])
+            del fridge[item]
             await ctx.send(f"You take the last {item}, enjoy!")
             return
 
         await ctx.send(f"You take out {item}, enjoy!")
-
 
     @fridge.command()
     async def peek(self, ctx, *, search=None):
@@ -172,8 +187,10 @@ class Fridge(BaseCog):
         """
         fridge = self.fridges[ctx.guild]
         items = fridge.keys()
-        if(len(items) <= 0):
-            await ctx.send(f"Bored, you open your fridge only to find there's nothing there!, use restock to refill your fridge")
+        if len(items) <= 0:
+            await ctx.send(
+                f"Bored, you open your fridge only to find there's nothing there!, use restock to refill your fridge"
+            )
             return
 
         spotted = list()
@@ -185,11 +202,11 @@ class Fridge(BaseCog):
         else:
             sample = min(10, len(items))
             spotted = random.sample(items, sample)
-            
+
         if len(spotted) <= 0:
             await ctx.send(f"You couldn't really find anything like that")
             return
-        
+
         output = list()
 
         for item in spotted:
@@ -197,7 +214,9 @@ class Fridge(BaseCog):
                 output.append("{0} {1}".format(fridge[item], item))
             else:
                 output.append(f"The last {item}")
-        await ctx.send(f"Bored, you open your fridge and stare into it for a few minutes and you see: {', '.join(output)}")
+        await ctx.send(
+            f"Bored, you open your fridge and stare into it for a few minutes and you see: {', '.join(output)}"
+        )
 
     @fridge.command()
     async def restock(self, ctx, amount=100):
@@ -207,14 +226,17 @@ class Fridge(BaseCog):
         items = list(set(await self.config.guild(ctx.guild).items()))
         fridge = self.fridges[ctx.guild]
         for _ in range(amount):
-            fridge[random.choice(items)]+=1
+            fridge[random.choice(items)] += 1
 
-        await ctx.send(f"You had a productive shopping session and the fridge is now teeming with items")
-
+        await ctx.send(
+            f"You had a productive shopping session and the fridge is now teeming with items"
+        )
 
     @fridge.command()
     async def tip(self, ctx):
-        message = f"Holy shit {ctx.author.mention} just straight up tipped the fridge over"
+        message = (
+            f"Holy shit {ctx.author.mention} just straight up tipped the fridge over"
+        )
         amount = random.randint(1, 10)
         fridge = self.fridges[ctx.guild]
         items = list(fridge.keys())
@@ -225,15 +247,15 @@ class Fridge(BaseCog):
         else:
             message += " but nothing came out, lucky!"
         for spilled in spilled_out:
-            
+
             lost = random.randint(1, fridge[spilled])
             if lost == 1:
                 message += f" one {spilled} gets scattered across the floor,"
             else:
                 message += f" {lost} {spilled} get scattered across the floor,"
-            fridge[spilled]-=lost
+            fridge[spilled] -= lost
             if fridge[spilled] <= 0:
-                del(fridge[spilled])
+                del fridge[spilled]
         user = await self.config.guild(ctx.guild).fridge()
         if user:
             message += f" {user} is sent flying from the top of the fridge"
@@ -241,7 +263,7 @@ class Fridge(BaseCog):
         await ctx.send(message)
 
     @buyables.command()
-    async def remove(self, ctx,  *, item):
+    async def remove(self, ctx, *, item):
         """
         Remove an item from the buyable store
         """
@@ -251,7 +273,6 @@ class Fridge(BaseCog):
             items = await self.config.guild(ctx.guild).items.set(items)
             await ctx.send(f"{item} has been removed from the Buyables")
 
-
     @buyables.command()
     @checks.mod_or_permissions(administrator=True)
     async def clear(self, ctx):
@@ -259,8 +280,20 @@ class Fridge(BaseCog):
         Clear all buyable items
         """
         self.fridges[ctx.guild] = Counter()
-    
-        await self.config.guild(ctx.guild).items.set(["Banana", "Milk", "Milk", "Bread", "Butter", "Chocolate", "Chocolate Milk", "Brussel sprouts, yuck!!", "A half eaten ham sandwich"])
+
+        await self.config.guild(ctx.guild).items.set(
+            [
+                "Banana",
+                "Milk",
+                "Milk",
+                "Bread",
+                "Butter",
+                "Chocolate",
+                "Chocolate Milk",
+                "Brussel sprouts, yuck!!",
+                "A half eaten ham sandwich",
+            ]
+        )
         await ctx.send(f"Buyables has been cleared")
 
     @buyables.command()
@@ -271,11 +304,10 @@ class Fridge(BaseCog):
         """
         items = await self.config.guild(ctx.guild).items()
         setitems = set(items)
-        final = list(setitems)    
+        final = list(setitems)
         items = await self.config.guild(ctx.guild).items.set(final)
         await ctx.send(f"Buyables deduplicated")
-    
-    
+
     @buyables.command()
     @checks.mod_or_permissions(administrator=True)
     async def dump(self, ctx):

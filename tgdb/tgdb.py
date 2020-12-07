@@ -1,4 +1,4 @@
-#Standard Imports
+# Standard Imports
 import asyncio
 import aiomysql
 import socket
@@ -6,10 +6,10 @@ import ipaddress
 import re
 import logging
 
-#Discord Imports
+# Discord Imports
 import discord
 
-#Redbot Imports
+# Redbot Imports
 from redbot.core import commands, checks, Config
 from redbot.core.utils.chat_formatting import pagify, box, humanize_list, warning
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
@@ -23,15 +23,26 @@ log = logging.getLogger("red.oranges_tgdb")
 
 BaseCog = getattr(commands, "Cog", object)
 
+
 class TGDB(BaseCog):
     """
     Connector that will integrate with any database using the latest tg schema, provides utility functionality
     """
+
     def __init__(self, bot):
         self.bot = bot
-        self.config = Config.get_conf(self, identifier=672261474290237490, force_registration=True)
-        self.visible_config = ["mysql_host", "mysql_port", "mysql_user", "mysql_db", "mysql_prefix",
-        "min_living_minutes", "verified_role"]
+        self.config = Config.get_conf(
+            self, identifier=672261474290237490, force_registration=True
+        )
+        self.visible_config = [
+            "mysql_host",
+            "mysql_port",
+            "mysql_user",
+            "mysql_db",
+            "mysql_prefix",
+            "min_living_minutes",
+            "verified_role",
+        ]
 
         default_guild = {
             "mysql_host": "127.0.0.1",
@@ -50,7 +61,7 @@ class TGDB(BaseCog):
     @commands.guild_only()
     @commands.group()
     @checks.admin_or_permissions(administrator=True)
-    async def tgdb_config(self,ctx):
+    async def tgdb_config(self, ctx):
         """
         SS13 Configure the MySQL database connection settings
         """
@@ -59,7 +70,7 @@ class TGDB(BaseCog):
     @commands.guild_only()
     @commands.group()
     @checks.is_owner()
-    async def tgdb(self,ctx):
+    async def tgdb(self, ctx):
         """
         SS13 Configure the MySQL database connection settings
         """
@@ -83,8 +94,9 @@ class TGDB(BaseCog):
             await self.config.guild(ctx.guild).mysql_host.set(db_host)
             await ctx.send(f"Database host set to: `{db_host}`")
         except (ValueError, KeyError, AttributeError):
-            await ctx.send("There was an error setting the database's ip/hostname. Please check your entry and try again!")
-
+            await ctx.send(
+                "There was an error setting the database's ip/hostname. Please check your entry and try again!"
+            )
 
     @tgdb_config.command()
     @checks.is_owner()
@@ -93,16 +105,19 @@ class TGDB(BaseCog):
         Sets the MySQL port, defaults to 3306
         """
         try:
-            if 1024 <= db_port <= 65535: # We don't want to allow reserved ports to be set
+            if (
+                1024 <= db_port <= 65535
+            ):  # We don't want to allow reserved ports to be set
                 await self.config.guild(ctx.guild).mysql_port.set(db_port)
                 await ctx.send(f"Database port set to: `{db_port}`")
             else:
                 await ctx.send(f"{db_port} is not a valid port!")
         except (ValueError, KeyError, AttributeError):
-            await ctx.send("There was a problem setting your port. Please check to ensure you're attempting to use a port from 1024 to 65535")
+            await ctx.send(
+                "There was a problem setting your port. Please check to ensure you're attempting to use a port from 1024 to 65535"
+            )
 
-
-    @tgdb_config.command(aliases=['name', 'user'])
+    @tgdb_config.command(aliases=["name", "user"])
     @checks.is_owner()
     async def username(self, ctx, user: str):
         """
@@ -114,8 +129,9 @@ class TGDB(BaseCog):
             await self.config.guild(ctx.guild).mysql_user.set(user)
             await ctx.send(f"User set to: `{user}`")
         except (ValueError, KeyError, AttributeError):
-            await ctx.send("There was a problem setting the username for your database.")
-
+            await ctx.send(
+                "There was a problem setting the username for your database."
+            )
 
     @tgdb_config.command()
     @checks.is_owner()
@@ -130,11 +146,14 @@ class TGDB(BaseCog):
             await ctx.send("Your password has been set.")
             try:
                 await ctx.message.delete()
-            except(discord.DiscordException):
-                await ctx.send("I do not have the required permissions to delete messages, please remove/edit the password manually.")
+            except (discord.DiscordException):
+                await ctx.send(
+                    "I do not have the required permissions to delete messages, please remove/edit the password manually."
+                )
         except (ValueError, KeyError, AttributeError):
-            await ctx.send("There was a problem setting the password for your database.")
-
+            await ctx.send(
+                "There was a problem setting the password for your database."
+            )
 
     @tgdb_config.command(aliases=["db"])
     @checks.is_owner()
@@ -146,8 +165,7 @@ class TGDB(BaseCog):
             await self.config.guild(ctx.guild).mysql_db.set(db)
             await ctx.send(f"Database set to: `{db}`")
         except (ValueError, KeyError, AttributeError):
-            await ctx.send ("There was a problem setting your notes database.")
-
+            await ctx.send("There was a problem setting your notes database.")
 
     @tgdb_config.command()
     @checks.is_owner()
@@ -168,7 +186,6 @@ class TGDB(BaseCog):
         except (ValueError, KeyError, AttributeError):
             await ctx.send("There was a problem setting your database prefix")
 
-
     @checks.mod_or_permissions(administrator=True)
     @tgdb_config.command()
     async def current(self, ctx):
@@ -176,20 +193,21 @@ class TGDB(BaseCog):
         Gets the current settings for the notes database
         """
         settings = await self.config.guild(ctx.guild).all()
-        embed=discord.Embed(title="__Current settings:__")
+        embed = discord.Embed(title="__Current settings:__")
         for k, v in settings.items():
             # Ensures that the database password is not sent
             # Whitelist for extra safety
             if k in self.visible_config:
                 if v == "":
                     v = None
-                embed.add_field(name=f"{k}:",value=v,inline=False)
+                embed.add_field(name=f"{k}:", value=v, inline=False)
             else:
-                embed.add_field(name=f"{k}:",value="`redacted`",inline=False)
+                embed.add_field(name=f"{k}:", value="`redacted`", inline=False)
         await ctx.send(embed=embed)
 
-
-    async def update_discord_link(self, ctx, one_time_token: str, user_discord_snowflake: str):
+    async def update_discord_link(
+        self, ctx, one_time_token: str, user_discord_snowflake: str
+    ):
         """
         Given a one time token, and a discord user snowflake, insert the snowflake for the matching record in the discord links table
         """
@@ -205,7 +223,7 @@ class TGDB(BaseCog):
         to that one time key already (it has been used), or it is has not been set to invalid
         """
         prefix = await self.config.guild(ctx.guild).mysql_prefix()
-        query = f"SELECT ckey FROM {prefix}discord_links WHERE one_time_token = %s AND timestamp >= Now() - INTERVAL 4 HOUR AND discord_id IS NULL ORDER BY timestamp DESC LIMIT 1";
+        query = f"SELECT ckey FROM {prefix}discord_links WHERE one_time_token = %s AND timestamp >= Now() - INTERVAL 4 HOUR AND discord_id IS NULL ORDER BY timestamp DESC LIMIT 1"
         parameters = [one_time_token]
         results = await self.query_database(ctx, query, parameters)
         if len(results):
@@ -216,7 +234,7 @@ class TGDB(BaseCog):
         Given a valid discord id, return the latest record linked to that user
         """
         prefix = await self.config.guild(ctx.guild).mysql_prefix()
-        query = f"SELECT * FROM {prefix}discord_links WHERE discord_id = %s AND ckey IS NOT NULL ORDER BY timestamp DESC LIMIT 1";
+        query = f"SELECT * FROM {prefix}discord_links WHERE discord_id = %s AND ckey IS NOT NULL ORDER BY timestamp DESC LIMIT 1"
         parameters = [discord_id]
         results = await self.query_database(ctx, query, parameters)
         if len(results):
@@ -229,7 +247,7 @@ class TGDB(BaseCog):
         Given a valid ckey, return the latest record linked to that user
         """
         prefix = await self.config.guild(ctx.guild).mysql_prefix()
-        query = f"SELECT * FROM {prefix}discord_links WHERE ckey = %s AND discord_id IS NOT NULL ORDER BY timestamp DESC LIMIT 1";
+        query = f"SELECT * FROM {prefix}discord_links WHERE ckey = %s AND discord_id IS NOT NULL ORDER BY timestamp DESC LIMIT 1"
         parameters = [ckey]
         results = await self.query_database(ctx, query, parameters)
         if len(results):
@@ -242,7 +260,7 @@ class TGDB(BaseCog):
         Set the valid field to false for all links for the given ckey
         """
         prefix = await self.config.guild(ctx.guild).mysql_prefix()
-        query = f"UPDATE {prefix}discord_links SET valid = FALSE WHERE ckey = %s AND valid = TRUE";
+        query = f"UPDATE {prefix}discord_links SET valid = FALSE WHERE ckey = %s AND valid = TRUE"
         parameters = [ckey]
         results = await self.query_database(ctx, query, parameters)
 
@@ -251,7 +269,7 @@ class TGDB(BaseCog):
         Set the valid field to false for all links for the given discord id
         """
         prefix = await self.config.guild(ctx.guild).mysql_prefix()
-        query = f"UPDATE {prefix}discord_links SET valid = FALSE WHERE discord_id = %s AND valid = TRUE";
+        query = f"UPDATE {prefix}discord_links SET valid = FALSE WHERE discord_id = %s AND valid = TRUE"
         parameters = [discord_id]
         results = await self.query_database(ctx, query, parameters)
 
@@ -261,7 +279,7 @@ class TGDB(BaseCog):
         ordered by timestamp descending
         """
         prefix = await self.config.guild(ctx.guild).mysql_prefix()
-        query = f"SELECT * FROM {prefix}discord_links WHERE ckey = %s AND discord_id IS NOT NULL ORDER BY TIMESTAMP desc";
+        query = f"SELECT * FROM {prefix}discord_links WHERE ckey = %s AND discord_id IS NOT NULL ORDER BY TIMESTAMP desc"
         parameters = [ckey]
         discord_links = list()
         results = await self.query_database(ctx, query, parameters)
@@ -279,18 +297,22 @@ class TGDB(BaseCog):
         query = await self.query_database(ctx, query, [ckey])
         results = {}
         try:
-            query = query[0] # Checks to see if a player was found, if the list is empty nothing was found so we return the empty dict.
+            query = query[
+                0
+            ]  # Checks to see if a player was found, if the list is empty nothing was found so we return the empty dict.
         except IndexError:
             return None
 
-        results['ip'] = ipaddress.IPv4Address(query['ip']) #IP's are stored as a 32 bit integer, converting it for readability
-        results['cid'] = query['computerid']
-        results['ckey'] = query['ckey']
-        results['first'] = query['firstseen']
-        results['last'] = query['lastseen']
-        results['join'] = query['accountjoindate']
+        results["ip"] = ipaddress.IPv4Address(
+            query["ip"]
+        )  # IP's are stored as a 32 bit integer, converting it for readability
+        results["cid"] = query["computerid"]
+        results["ckey"] = query["ckey"]
+        results["first"] = query["firstseen"]
+        results["last"] = query["lastseen"]
+        results["join"] = query["accountjoindate"]
 
-        #Obtain role time statistics
+        # Obtain role time statistics
         query = f"SELECT job, minutes FROM {prefix}role_time WHERE ckey=%s AND (job='Ghost' OR job='Living')"
         try:
             query = await self.query_database(ctx, query, [ckey])
@@ -298,21 +320,21 @@ class TGDB(BaseCog):
             query = None
         if query:
             for job in query:
-                if job['job'] == "Living":
-                    results['living_time'] = job['minutes']
+                if job["job"] == "Living":
+                    results["living_time"] = job["minutes"]
                 else:
-                    results['ghost_time'] = job['minutes']
+                    results["ghost_time"] = job["minutes"]
 
-            if 'living_time' not in results.keys():
-                results['living_time'] = 0
-            if 'ghost_time' not in results.keys():
-                results['ghost_time'] = 0
+            if "living_time" not in results.keys():
+                results["living_time"] = 0
+            if "ghost_time" not in results.keys():
+                results["ghost_time"] = 0
 
         else:
-            results['living_time'] = 0
-            results['ghost_time'] = 0
+            results["living_time"] = 0
+            results["ghost_time"] = 0
 
-            results['total_time'] = results['living_time'] + results['ghost_time']
+            results["total_time"] = results["living_time"] + results["ghost_time"]
 
         return results
 
@@ -325,24 +347,34 @@ class TGDB(BaseCog):
         await self.reconnect_to_db(db, db_host, db_port, db_user, db_pass)
 
     async def reconnect_to_db(self, db, db_host, db_port, db_user, db_pass):
-        '''
+        """
         Open a connection to the database and save the pool in use
-        '''
+        """
         # Database options loaded from the config
         if self.pool:
             self.pool.close()
             await self.pool.wait_closed()
 
         # Establish a connection with the database and pull the relevant data, recycle them every 300 seconds
-        self.pool = await aiomysql.create_pool(host=db_host,port=db_port,db=db,user=db_user,password=db_pass, connect_timeout=5, pool_recycle=300)
+        self.pool = await aiomysql.create_pool(
+            host=db_host,
+            port=db_port,
+            db=db,
+            user=db_user,
+            password=db_pass,
+            connect_timeout=5,
+            pool_recycle=300,
+        )
 
     async def query_database(self, ctx, query: str, parameters: list):
-        '''
+        """
         Use our active pool to pass in the given query
-        '''
+        """
         if not self.pool:
             await self.reconnect_to_db_with_guild_context_config(ctx)
-            raise TGUnrecoverableError("The database was not connected,  a reconnect was attempted")
+            raise TGUnrecoverableError(
+                "The database was not connected,  a reconnect was attempted"
+            )
 
         try:
             log.debug(f"Executing query {query}, with parameters {parameters}")
@@ -356,4 +388,3 @@ class TGDB(BaseCog):
 
         except:
             raise
-
