@@ -1,4 +1,4 @@
-from setuptools import setup
+import setuptools
 
 setuptools.setup(
     name="tgcommon-oranges",
