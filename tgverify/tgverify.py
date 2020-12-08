@@ -403,7 +403,9 @@ class TGverify(BaseCog):
                         f"Sorry {ctx.author} it looks like you don't have a ckey linked to this discord account, go back into game and try generating another! See {instructions_link} for more information. \n\nIf it's still failing after a few tries, ask for support from the verification team, "
                     )
 
-            log.info(f"Verification request by {ctx.author.id}, for ckey {ckey}")
+            log.info(
+                f"Verification request by {ctx.author.id}, for ckey {ckey}, token was: {one_time_token}"
+            )
             # Now look for the user based on the ckey
             player = await tgdb.get_player_by_ckey(ctx, ckey)
 
