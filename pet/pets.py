@@ -206,8 +206,13 @@ class Pets(BaseCog):
         )
 
     @commands.command()
-    async def denton(self, ctx):
+    async def denton(self, ctx, *, name: str = None):
         """
         JC, A BOMB
         """
-        await ctx.send(random.choice(self.quotes))
+        if name:
+            message = f"{name}: {random.choice(self.quotes)}"
+        else:
+            message = f"{random.choice(self.quotes)}"
+        
+        await ctx.send(message)
