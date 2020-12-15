@@ -59,6 +59,20 @@ class Pets(BaseCog):
         """
         await ctx.send("*pulls {}'s tail*".format(name))
 
+    @commands.command()
+    async def bite(self, ctx, *, name: str):
+        """
+        Nom
+        """
+        await ctx.send("*{} noms on {}*".format(ctx.author.mention, name))
+
+    @commands.command(aliases=["taildestroy"])
+    async def destroy(self, ctx, *, name: str):
+        """
+        Ouch
+        """
+        await ctx.send("*{} picks up {} and spins them like a whirlwind, their tail is ripped off and they fly away in an arc*".format(ctx.author.mention, name))
+
     @commands.command(aliases=["tailbrush"])
     async def brush(self, ctx, *, name: str):
         """
@@ -111,6 +125,6 @@ class Pets(BaseCog):
     @commands.command()
     async def fine(self, ctx, *, name: str):
         """
-        hug, awww!!!
+        You so, fucking FINE
         """
         await ctx.send("{} you are fined one credit for violation of the textual morality statutes".format(name))
