@@ -65,6 +65,9 @@ class Pets(BaseCog):
             "A BOMB?!",
             "What a shame.",
             "Do you have a single fact to back that up?",
+            "You might as well tell me the rest. If I'm gonna kill you, you're already dead.",
+            "Sticks and stones...",
+            "The crossbow. Sometimes you've got to make a silent takedown.",
         ]
 
     @commands.command()
@@ -214,5 +217,5 @@ class Pets(BaseCog):
             message = f"{name}: {random.choice(self.quotes)}"
         else:
             message = f"{random.choice(self.quotes)}"
-        
+
         await ctx.send(message)
