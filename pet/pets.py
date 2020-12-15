@@ -64,7 +64,7 @@ class Pets(BaseCog):
         """
         Nom
         """
-        await ctx.send("*{} noms on {}*".format(ctx.author.mention, name))
+        await ctx.send("*{} bites {}'s tail softly and chews away*".format(ctx.author.mention, name))
 
     @commands.command(aliases=["taildestroy"])
     async def destroy(self, ctx, *, name: str):
