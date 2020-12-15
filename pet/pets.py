@@ -219,3 +219,14 @@ class Pets(BaseCog):
             message = f"{random.choice(self.quotes)}"
 
         await ctx.send(message)
+
+    @commands.command(aliases=["entwine"])
+    async def tailentwine(self, ctx, *, name: str):
+        """
+        Cat!
+        """
+        await ctx.send(
+            "*{} wraps their tail around {}'s tail*".format(
+                ctx.author.mention, name
+            )
+        )
