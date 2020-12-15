@@ -1,10 +1,10 @@
-#Standard Imports
+# Standard Imports
 import random
 
-#Discord Imports
+# Discord Imports
 import discord
 
-#Redbot Imports
+# Redbot Imports
 from redbot.core import commands
 
 __version__ = "1.2.1"
@@ -12,38 +12,35 @@ __author__ = "oranges"
 
 BaseCog = getattr(commands, "Cog", object)
 
+
 class Pets(BaseCog):
     def __init__(self, bot):
         self.bot = bot
         self.coffee = [
-        "Affogato",
-        "Americano",
-        "Caffè Latte",
-        "Caffè Mocha",
-        "Cafè Au Lait",
-        "Cappuccino",
-        "Double Espresso (doppio)",
-        "Espresso",
-        "Espresso Con Panna",
-        "Espresso Macchiato",
-        "Flat White",
-        "Frappé",
-        "Freakshake",
-        "Irish Coffee",
-        "Latte Macchiato",
-        "Lungo",
-        "Ristretto",
+            "Affogato",
+            "Americano",
+            "Caffè Latte",
+            "Caffè Mocha",
+            "Cafè Au Lait",
+            "Cappuccino",
+            "Double Espresso (doppio)",
+            "Espresso",
+            "Espresso Con Panna",
+            "Espresso Macchiato",
+            "Flat White",
+            "Frappé",
+            "Freakshake",
+            "Irish Coffee",
+            "Latte Macchiato",
+            "Lungo",
+            "Ristretto",
         ]
         self.ethical_alternatives = [
             "Soy",
             "Oat",
             "Almond",
         ]
-        self.temps = [
-        "n iced",
-        " steaming hot",
-        " disappointingly lukewarm"
-        ]
+        self.temps = ["n iced", " steaming hot", " disappointingly lukewarm"]
 
         self.quotes = [
             "My vision is augmented.",
@@ -61,7 +58,13 @@ class Pets(BaseCog):
             "What a shame.",
             "A forgotten virtue like honesty is worth at least twenty credits.",
             "I'm not big into books.",
-            "I'm not going to stand here and listen to you badmouth the greatest democracy the world has ever known."
+            "I'm not going to stand here and listen to you badmouth the greatest democracy the world has ever known.",
+            "Maybe you should get a job",
+            "Number one: that's terror",
+            "I can't spare any arms right now. Please retreat to a safe location.",
+            "A BOMB?!",
+            "What a shame.",
+            "Do you have a single fact to back that up?",
         ]
 
     @commands.command()
@@ -69,7 +72,9 @@ class Pets(BaseCog):
         """
         Pet a user
         """
-        await ctx.send("*{} pets {} gently on the head*".format(ctx.author.mention, name))
+        await ctx.send(
+            "*{} pets {} gently on the head*".format(ctx.author.mention, name)
+        )
 
     @commands.command(aliases=["tailpull"])
     async def pull(self, ctx, *, name: str):
@@ -83,21 +88,31 @@ class Pets(BaseCog):
         """
         Nom
         """
-        await ctx.send("*{} bites {}'s tail softly, nom*".format(ctx.author.mention, name))
+        await ctx.send(
+            "*{} bites {}'s tail softly, nom*".format(ctx.author.mention, name)
+        )
 
     @commands.command()
     async def tailbite(self, ctx, *, name: str):
         """
         Nom
         """
-        await ctx.send("*{} bites {}'s tail ferociously and tears it off completely*".format(ctx.author.mention, name))
+        await ctx.send(
+            "*{} bites {}'s tail ferociously and tears it off completely*".format(
+                ctx.author.mention, name
+            )
+        )
 
     @commands.command(aliases=["taildestroy"])
     async def destroy(self, ctx, *, name: str):
         """
         Ouch
         """
-        await ctx.send("*{} picks up {} and spins them like a whirlwind, their tail is ripped off and they fly away in an arc*".format(ctx.author.mention, name))
+        await ctx.send(
+            "*{} picks up {} and spins them like a whirlwind, their tail is ripped off and they fly away in an arc*".format(
+                ctx.author.mention, name
+            )
+        )
 
     @commands.command(aliases=["tailbrush"])
     async def brush(self, ctx, *, name: str):
@@ -111,28 +126,55 @@ class Pets(BaseCog):
         """
         Give a user a nice coffee
         """
-        await ctx.send("*{} serves {} a{} {}*".format(ctx.author.mention, name, random.choice(self.temps), random.choice(self.coffee)))
+        await ctx.send(
+            "*{} serves {} a{} {}*".format(
+                ctx.author.mention,
+                name,
+                random.choice(self.temps),
+                random.choice(self.coffee),
+            )
+        )
 
     @commands.command()
     async def throw(self, ctx, *, name: str):
         """
         Throw a coffee at someone
         """
-        await ctx.send("*{} makes a{} {} and then picks it up and fucking hurls it at {}'s face*".format(ctx.author.mention, random.choice(self.temps), random.choice(self.coffee), name))
+        await ctx.send(
+            "*{} makes a{} {} and then picks it up and fucking hurls it at {}'s face*".format(
+                ctx.author.mention,
+                random.choice(self.temps),
+                random.choice(self.coffee),
+                name,
+            )
+        )
 
     @commands.command()
     async def sticky(self, ctx, *, name: str):
         """
         Give a user a smugly superior sense of self worth
         """
-        await ctx.send("*{} serves {} a{} {} with {} milk. How ethical! Is that a hint of smug superiority on the face of {}?*".format(ctx.author.mention, name, random.choice(self.temps), random.choice(self.coffee), random.choice(self.ethical_alternatives), name))
+        await ctx.send(
+            "*{} serves {} a{} {} with {} milk. How ethical! Is that a hint of smug superiority on the face of {}?*".format(
+                ctx.author.mention,
+                name,
+                random.choice(self.temps),
+                random.choice(self.coffee),
+                random.choice(self.ethical_alternatives),
+                name,
+            )
+        )
 
     @commands.command()
     async def ruffle(self, ctx, *, name: str):
         """
         Ruffle their hair
         """
-        await ctx.send("*{} ruffles {}'s hair gently, mussing it up a little*".format(ctx.author.mention, name))
+        await ctx.send(
+            "*{} ruffles {}'s hair gently, mussing it up a little*".format(
+                ctx.author.mention, name
+            )
+        )
 
     @commands.command()
     async def bap(self, ctx, *, name: str):
@@ -140,20 +182,28 @@ class Pets(BaseCog):
         Bap!!!
         """
         await ctx.send("*{} baps {} on the head*".format(ctx.author.mention, name))
-    
+
     @commands.command()
     async def hug(self, ctx, *, name: str):
         """
         hug, awww!!!
         """
-        await ctx.send("*{} gathers {} up in their arms and wraps them in a warm hug*".format(ctx.author.mention, name))
-    
+        await ctx.send(
+            "*{} gathers {} up in their arms and wraps them in a warm hug*".format(
+                ctx.author.mention, name
+            )
+        )
+
     @commands.command()
     async def fine(self, ctx, *, name: str):
         """
         You so, fucking FINE
         """
-        await ctx.send("{} you are fined one credit for violation of the textual morality statutes".format(name))
+        await ctx.send(
+            "{} you are fined one credit for violation of the textual morality statutes".format(
+                name
+            )
+        )
 
     @commands.command()
     async def denton(self, ctx):
