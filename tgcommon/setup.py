@@ -1,7 +1,7 @@
 import setuptools
 
 setuptools.setup(
-    name="tgcommon-oranges",
+    name="tgcommon",
     version="0.0.5",
     author="oranges",
     author_email="email@oranges.net.nz",
