@@ -70,6 +70,8 @@ class Pets(BaseCog):
             "The crossbow. Sometimes you've got to make a silent takedown.",
         ]
 
+        self.push_attempts = ["pushes", "violently shoves", "playfully pushes", "tries and fails to push", "falls over trying to push"]
+
     @commands.command()
     async def pet(self, ctx, *, name: str):
         """
@@ -228,5 +230,15 @@ class Pets(BaseCog):
         await ctx.send(
             "*{} wraps their tail around {}'s tail*".format(
                 ctx.author.mention, name
+            )
+        )
+    @commands.command(aliases=["push"])
+    async def push(self, ctx, *, name: str):
+        """
+        *pushes u*
+        """
+        await ctx.send(
+            "*{} {} {} over!*".format(
+                ctx.author.mention, random.choice(self.push_attempts), name
             )
         )
