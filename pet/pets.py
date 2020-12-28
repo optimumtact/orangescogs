@@ -232,7 +232,8 @@ class Pets(BaseCog):
                 ctx.author.mention, name
             )
         )
-    
+        
+    @commands.command()
     async def push(self, ctx, *, name: str):
         """
         *pushes u*
