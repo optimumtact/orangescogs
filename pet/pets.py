@@ -188,7 +188,7 @@ class Pets(BaseCog):
         """
         await ctx.send("*{} baps {} on the head*".format(ctx.author.mention, name))
     
-	@commands.command()
+    @commands.command()
     async def slap(self, ctx, *, name: str):
         await ctx.send("*{} slaps {} in the face*".format(ctx.author.mention, name))
     
