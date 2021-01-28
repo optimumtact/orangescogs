@@ -761,7 +761,7 @@ class Pets(BaseCog):
         *Checks your undies*
         """
         await ctx.send(
-            "*{} checks if {} is wearing undies, wow it looks like they {}".format(
+            "*{} checks if {} is wearing undies, wow it looks like they {}*".format(
                 ctx.author.mention, name, random.choices(list(self.undies.values()), list(self.undies.keys()))[0]
             )
         )
