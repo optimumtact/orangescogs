@@ -562,6 +562,12 @@ class Pets(BaseCog):
             "Sticks and stones...",
             "The crossbow. Sometimes you've got to make a silent takedown.",
         ]
+        self.undies = [
+            "aren't wearing any at all :flushed:",
+            "have some utilitarian work day ones on",
+            "have some lacey risque ones!!!!",
+            "...wait, wh-a-a...whats that liquid?"
+        ]
 
         self.push_attempts = ["pushes", "violently shoves", "playfully pushes", "tries and fails to push", "falls over trying to push"]
 
@@ -746,5 +752,16 @@ class Pets(BaseCog):
         await ctx.send(
             "*{} {} {} over!*".format(
                 ctx.author.mention, random.choice(self.push_attempts), name
+            )
+        )
+
+    @commands.command()
+    async def checkundies(self, ctx, *, name: str):
+        """
+        *Checks your undies*
+        """
+        await ctx.send(
+            "*{} checks if {} is wearing undies, wow it looks like they {}".format(
+                ctx.author.mention, name, random.choice(self.undies)
             )
         )
