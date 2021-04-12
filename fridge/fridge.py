@@ -134,7 +134,7 @@ class Fridge(BaseCog):
             await ctx.send(f"This is too big to fit in the fridge")
             return
 
-        if item.count("\n") > 5:
+        if item.count("\n") > 5 or "```" in item:
             await ctx.send(f"This is too spammy to fit in the fridge")
             return
 
