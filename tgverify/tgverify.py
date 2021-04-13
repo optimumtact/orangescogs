@@ -400,7 +400,7 @@ class TGverify(BaseCog):
                     # return await message.edit(content=f"Congrats {ctx.author} your verification is complete")
                 else:
                     raise TGRecoverableError(
-                        f"Sorry {ctx.author} it looks like you don't have a ckey linked to this discord account, go back into game and try generating another! See {instructions_link} for more information. \n\nIf it's still failing after a few tries, ask for support from the verification team, "
+                        f"Sorry {ctx.author} it looks like you don't have a ckey linked to this discord account, go back into game and try generating a token! See {instructions_link} for more information. \n\nIf it's still failing after a few tries, ask for support from the verification team, "
                     )
 
             log.info(
@@ -484,7 +484,7 @@ class TGverify(BaseCog):
             # now pretend everything is fine to the user :>
             embed = discord.Embed(
                 title=f"System error occurred",
-                description=f"Contact the server admins for assistance",
+                description=f"Ping the @verifier role for assistance",
                 color=0xFF0000,
             )
             await ctx.send(content=f"", embed=embed)
