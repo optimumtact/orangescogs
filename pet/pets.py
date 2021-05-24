@@ -765,3 +765,14 @@ class Pets(BaseCog):
                 ctx.author.mention, name, random.choices(list(self.undies.values()), list(self.undies.keys()))[0]
             )
         )
+
+    @commands.command()
+    async def setspouse(self, ctx, *, name: str):
+        """
+        *becomes your bf*
+        """
+        await ctx.send(
+            "{} sets {} as their spouse! How cute.".format(
+                ctx.author.mention, name
+            )
+        )
