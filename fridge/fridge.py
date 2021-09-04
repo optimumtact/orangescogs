@@ -1,6 +1,7 @@
 # Standard Imports
 import logging
 import random
+import datetime
 from typing import Union
 
 # Discord Imports
@@ -36,6 +37,26 @@ class Fridge(BaseCog):
 
     def __init__(self, bot):
         self.bot = bot
+        # format: "You look up on the top of the fridge but there is only some {fridge_trash}"
+        self.fridge_trash = [
+            "blood",
+            "cat hair",
+            "copies of spore: galactic adventures",
+            "cult runes",
+            "dirt",
+            "dust",
+            "entropy",
+            "false promises",
+            "garlic",
+            "muddle puddle tweetle poodle beetle noodle bottle paddle battle (when beetles fight these battles \
+            in a bottle with their paddles and the bottle's on a poodle and the poodle's eating noodles)",
+            "of the fine china",
+            "of the tiny aliens from men in black",
+            "old bread",
+            "rafter assistants",
+            "sadness",
+            "space ants",
+        ]
         self.config = Config.get_conf(
             self, identifier=672261474290237490, force_registration=True
         )
@@ -106,20 +127,32 @@ class Fridge(BaseCog):
         Who is currently on the fridge
         """
         user = await self.config.guild(ctx.guild).fridge()
-        if user:
-            await ctx.send(f"{user} is currently on top of the fridge")
-        else:
-            await ctx.send(
-                f"You look up on the top of the fridge but there is only dust"
-            )
+        if not user:
+            await ctx.send(f"You look up on the top of the fridge but there is only some {random.choice(self.fridge_trash)}.")
+            return
+        usurpation_date = await self.config.guild(ctx.guild).fridgetime()
+        #time delta between right now and when the fridge ruler usurped the throne
+        reign_time = datetime.datetime.now() - usurpation_date
+        reign_blurb = ""
+        # one week of rule
+        if reign_time.days > 7:
+            reign_blurb = " Their reign is still in it's infancy. Will there be benevolence from atop the fridge? Only time will tell."
+        # one month of rule (roughly)
+        if reign_time.days > 30:
+            reign_blurb = f" Their reign has been long. Fridge historians will write about how {user} put a temporary pause on the fridge tipping chaos."
+        await ctx.send(f"{user} is currently on top of the fridge. They've been up there for {str(reign_time)}.{reign_blurb}")
 
     @fridge.command()
     async def put(self, ctx, member: discord.Member):
         """
         Put this person on the fridge
         """
-        user = await self.config.guild(ctx.guild).fridge.set(member.name)
-        await ctx.send(f"{member.mention} has been put on top of the fridge")
+        if member == ctx.author:
+            await ctx.send(f"You can't reach the top of the fridge by YOURSELF.")
+            return
+        await self.config.guild(ctx.guild).fridgedate.set(datetime.datetime.now())
+        await self.config.guild(ctx.guild).fridge.set(member.name)
+        await ctx.send(f"{member.mention} has been put on top of the fridge.")
 
     @fridge.command()
     async def add(self, ctx, *, item):
@@ -258,8 +291,9 @@ class Fridge(BaseCog):
                 del fridge[spilled]
         user = await self.config.guild(ctx.guild).fridge()
         if user:
-            message += f" {user} is sent flying from the top of the fridge"
+            message += f" {user} is sent flying from the top of the fridge."
         await self.config.guild(ctx.guild).fridge.set(None)
+        await self.config.guild(ctx.guild).fridgetime.set(None)
         await ctx.send(message)
 
     @buyables.command()
