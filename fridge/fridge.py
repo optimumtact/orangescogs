@@ -37,7 +37,7 @@ class Fridge(BaseCog):
 
     def __init__(self, bot):
         self.bot = bot
-        # format: "You look up on the top of the fridge but there is only some {fridge_trash}"
+        # format: "You look up on the top of the fridge but there is only some {fridge_trash} up there."
         self.fridge_trash = [
             "blood",
             "cat hair",
@@ -62,6 +62,7 @@ class Fridge(BaseCog):
         )
         default_guild = {
             "fridge": None,
+            "fridgetime": None,
             "items": [
                 "Banana",
                 "Milk",
@@ -128,19 +129,21 @@ class Fridge(BaseCog):
         """
         user = await self.config.guild(ctx.guild).fridge()
         if not user:
-            await ctx.send(f"You look up on the top of the fridge but there is only some {random.choice(self.fridge_trash)}.")
+            await ctx.send(f"You look up on the top of the fridge but there is only some {random.choice(self.fridge_trash)} up there.")
             return
-        usurpation_date = await self.config.guild(ctx.guild).fridgetime()
-        #time delta between right now and when the fridge ruler usurped the throne
-        reign_time = datetime.datetime.now() - usurpation_date
+        usurpation_isoformat = await self.config.guild(ctx.guild).fridgetime()
+        #convert to date object and then subtract it from another date object to get a timedelta object
+        usurpation_timedelta = datetime.date.fromisoformat(usurpation_isoformat) - datetime.datetime.now().date()
         reign_blurb = ""
-        # one week of rule
-        if reign_time.days > 7:
-            reign_blurb = " Their reign is still in it's infancy. Will there be benevolence from atop the fridge? Only time will tell."
+        time_blurb = " They've been up there for "
+        if not usurpation_timedelta.days:
+            time_blurb += "less than a day."
+        else:
+            time_blurb += f"{usurpation_timedelta.days} days."
         # one month of rule (roughly)
-        if reign_time.days > 30:
-            reign_blurb = f" Their reign has been long. Fridge historians will write about how {user} put a temporary pause on the fridge tipping chaos."
-        await ctx.send(f"{user} is currently on top of the fridge. They've been up there for {str(reign_time)}.{reign_blurb}")
+        if usurpation_timedelta.days > 30:
+            reign_blurb = f" Their reign has been long. Fridge historians will write about how {user} put a temporary pause on all the fridge tipping chaos."
+        await ctx.send(f"{user} is currently on top of the fridge.{time_blurb}{reign_blurb}")
 
     @fridge.command()
     async def put(self, ctx, member: discord.Member):
@@ -150,9 +153,20 @@ class Fridge(BaseCog):
         if member == ctx.author:
             await ctx.send(f"You can't reach the top of the fridge by YOURSELF.")
             return
-        await self.config.guild(ctx.guild).fridgedate.set(datetime.datetime.now())
+        fridge_incumbent = await self.config.guild(ctx.guild).fridge()
+        if member.name == fridge_incumbent:
+            await ctx.send(f"{fridge_incumbent} is already on top of the fridge!")
+            return
+        message = "ERROR!"
+        # we want a string for saving it as data, and we only care about the day they began their rule
+        time = str(datetime.datetime.now().date())
+        if fridge_incumbent:
+            message = f"{fridge_incumbent} has been USURPED from the fridge by {member.name} on {time}!"
+        else:
+            message = f"{member.mention} has been put on top of the fridge on {time}."
+        await self.config.guild(ctx.guild).fridgetime.set(time)
         await self.config.guild(ctx.guild).fridge.set(member.name)
-        await ctx.send(f"{member.mention} has been put on top of the fridge.")
+        await ctx.send(message)
 
     @fridge.command()
     async def add(self, ctx, *, item):
