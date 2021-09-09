@@ -132,8 +132,8 @@ class Fridge(BaseCog):
             await ctx.send(f"You look up on the top of the fridge but there is only some {random.choice(self.fridge_trash)} up there.")
             return
         usurpation_isoformat = await self.config.guild(ctx.guild).fridgetime()
-        #convert to date object and then subtract it from another date object to get a timedelta object
-        usurpation_timedelta = datetime.date.fromisoformat(usurpation_isoformat) - datetime.datetime.now().date()
+        #convert to date object and then subtract it from another date object to get a timedelta object. must be now - date to get a positive delta value
+        usurpation_timedelta =  datetime.datetime.now().date() - datetime.date.fromisoformat(usurpation_isoformat)
         reign_blurb = ""
         time_blurb = " They've been up there for "
         if not usurpation_timedelta.days:
