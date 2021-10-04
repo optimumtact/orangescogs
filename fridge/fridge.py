@@ -64,6 +64,7 @@ class Fridge(BaseCog):
             "fridge": None,
             "fridgetime": None,
             "bracer": None,
+            "temperature": -10,
             "items": [
                 "Banana",
                 "Milk",
@@ -122,6 +123,40 @@ class Fridge(BaseCog):
         Buyable item commands
         """
         pass
+
+    @fridge.command(aliases=["checktemp"])
+    async def temperature(self, ctx):
+        """
+        Check the fridge temperature
+        """
+        member = ctx.author
+        current_temperature = await self.config.guild(ctx.guild).temperature()
+        await ctx.send(f"The fridge is currently {current_temperature}°C!")
+        return
+
+    @fridge.command(aliases=["chill", "down", "cold"])
+    async def turndown(self, ctx):
+        """
+        Turn the temperature down
+        """
+        member = ctx.author
+        current_temperature = await self.config.guild(ctx.guild).temperature()
+        change = random.randint(1, 10)
+        current_temperature = await self.config.guild(ctx.guild).temperature.set(current_temperature - change)
+        await ctx.send(f"{member} turned the fridge down by {change}°C!")
+        return
+
+    @fridge.command(aliases=["heat", "up", "warm"])
+    async def turnup(self, ctx):
+        """
+        Turn the temperature up
+        """
+        member = ctx.author
+        current_temperature = await self.config.guild(ctx.guild).temperature()
+        change = random.randint(1, 10)
+        current_temperature = await self.config.guild(ctx.guild).temperature.set(current_temperature + change)
+        await ctx.send(f"{member} turned the fridge up by {change}°C!")
+        return
 
     @fridge.command(aliases=["support"])
     async def brace(self, ctx):
@@ -247,11 +282,22 @@ class Fridge(BaseCog):
         """
         Peek into the fridge, specify a search to find certain types of items
         """
+        chill_message = ""
+        current_temperature = await self.config.guild(ctx.guild).temperature()
+        if current_temperature in range(-10, 1):
+            chill_message = ", it doesn't feel as chilly as you expected"
+        if current_temperature in range(0, 9):
+            chill_message = ", its rather warm in here"
+        if current_temperature >= 10:
+            chill_message = ", why is it so hot in the fridge!"
+        if current_temperature <= -10:
+            chill_message = ", the cool air feels nice against your face"
+
         fridge = self.fridges[ctx.guild]
         items = fridge.keys()
         if len(items) <= 0:
             await ctx.send(
-                f"Bored, you open your fridge only to find there's nothing there!, use restock to refill your fridge"
+                f"Bored, you open your fridge only to find there's nothing there!, use restock to refill your fridge{chill_message}"
             )
             return
 
@@ -277,7 +323,7 @@ class Fridge(BaseCog):
             else:
                 output.append(f"The last {item}")
         await ctx.send(
-            f"Bored, you open your fridge and stare into it for a few minutes and you see: {', '.join(output)}"
+            f"Bored, you open your fridge and stare into it for a few minutes and you see: {', '.join(output)}{chill_message}"
         )
 
     @fridge.command()
