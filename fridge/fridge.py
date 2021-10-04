@@ -63,6 +63,7 @@ class Fridge(BaseCog):
         default_guild = {
             "fridge": None,
             "fridgetime": None,
+            "bracer": None,
             "items": [
                 "Banana",
                 "Milk",
@@ -121,6 +122,20 @@ class Fridge(BaseCog):
         Buyable item commands
         """
         pass
+
+    @fridge.command(aliases=["support"])
+    async def brace(self, ctx):
+        """
+        Support the fridge against tippers
+        """
+        member = ctx.author
+        fridge_incumbent = await self.config.guild(ctx.guild).bracer()
+        if fridge_incumbent:
+            await ctx.send(f"{fridge_incumbent} is already stuck between the wall and the fridge!")
+            return
+        message = f"{member.mention} wedges themself between the wall and the fridge, bracing it upright."
+        await self.config.guild(ctx.guild).bracer.set(member.name)
+        await ctx.send(message)
 
     @fridge.command(aliases=["check"])
     async def current(self, ctx):
@@ -284,6 +299,13 @@ class Fridge(BaseCog):
         message = (
             f"Holy shit {ctx.author.mention} just straight up tipped the fridge over"
         )
+        fridge_incumbent = await self.config.guild(ctx.guild).bracer()
+        if fridge_incumbent is not None:
+            message = f"{ctx.author.mention} charges at the fridge to tip it, but {fridge_incumbent} is bracing it against the wall and {ctx.author.mention} bounces off and gets knocked over, what a goober"
+            await self.config.guild(ctx.guild).bracer.set(None)
+            await ctx.send(message)
+            return
+
         amount = random.randint(1, 10)
         fridge = self.fridges[ctx.guild]
         items = list(fridge.keys())
