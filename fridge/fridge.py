@@ -344,6 +344,17 @@ class Fridge(BaseCog):
             await ctx.send(f"{item} has been removed from the Buyables")
 
     @buyables.command()
+    async def stats(self, ctx):
+        """
+        Get some stats on the fridge
+        """
+        items = await self.config.guild(ctx.guild).items()
+        fridge = self.fridges[ctx.guild]
+        current = len(fridge.keys())
+        available = len(items)
+        await ctx.send(f"There are currently {current} items in the fridge, with {available} items for sale in stores")
+
+    @buyables.command()
     @checks.mod_or_permissions(administrator=True)
     async def clear(self, ctx):
         """
