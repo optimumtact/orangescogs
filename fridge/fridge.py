@@ -134,7 +134,7 @@ class Fridge(BaseCog):
         await ctx.send(f"The fridge is currently {current_temperature}°C!")
         return
 
-    @fridge.command(aliases=["chill", "down", "cold"])
+    @fridge.command(aliases=["chill", "down", "cold", "cool"])
     async def turndown(self, ctx):
         """
         Turn the temperature down
@@ -345,6 +345,10 @@ class Fridge(BaseCog):
         message = (
             f"Holy shit {ctx.author.mention} just straight up tipped the fridge over"
         )
+
+        # Resets the temperature gauge
+        change = random.randint(-10, 10)
+        await self.config.guild(ctx.guild).temperature.set(change)
         fridge_incumbent = await self.config.guild(ctx.guild).bracer()
         if fridge_incumbent is not None:
             message = f"{ctx.author.mention} charges at the fridge to tip it, but {fridge_incumbent} is bracing it against the wall and {ctx.author.mention} bounces off and gets knocked over, what a goober"
