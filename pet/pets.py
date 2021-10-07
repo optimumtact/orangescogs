@@ -658,13 +658,16 @@ class Pets(BaseCog):
         """
         Give a user a smugly superior sense of self worth
         """
+        milk =  random.choice(self.ethical_alternatives)
+        if random.randrange(100) < 1:
+            milk = 'breast'
         await ctx.send(
             "*{} serves {} a{} {} with {} milk. How ethical! Is that a hint of smug superiority on the face of {}?*".format(
                 ctx.author.mention,
                 name,
                 random.choice(self.temps),
                 random.choice(self.coffee),
-                random.choice(self.ethical_alternatives),
+                milk,
                 name,
             )
         )
