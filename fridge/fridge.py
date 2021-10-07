@@ -134,6 +134,10 @@ class Fridge(BaseCog):
         await ctx.send(f"The fridge is currently {current_temperature}°C!")
         return
 
+    # Fucking feral admins
+    @commands.cooldown(2, 60, type=commands.BucketType.user)
+    @commands.cooldown(6, 60, type=commands.BucketType.guild)
+    @commands.max_concurrency(3, per=commands.BucketType.guild, wait=False)
     @fridge.command(aliases=["chill", "down", "cold", "cool"])
     async def turndown(self, ctx):
         """
@@ -146,6 +150,11 @@ class Fridge(BaseCog):
         await ctx.send(f"{member} turned the fridge down by {change}°C!")
         return
 
+
+    # Fucking feral admins
+    @commands.cooldown(2, 60, type=commands.BucketType.user)
+    @commands.cooldown(6, 60, type=commands.BucketType.guild)
+    @commands.max_concurrency(3, per=commands.BucketType.guild, wait=False)
     @fridge.command(aliases=["heat", "up", "warm"])
     async def turnup(self, ctx):
         """
