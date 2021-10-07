@@ -135,7 +135,7 @@ class Fridge(BaseCog):
         return
 
     # Fucking feral admins
-    @commands.cooldown(1, 500, type=commands.BucketType.user)
+    @commands.cooldown(1, 300, type=commands.BucketType.user)
     @commands.cooldown(3, 200, type=commands.BucketType.guild)
     @commands.max_concurrency(3, per=commands.BucketType.guild, wait=False)
     @fridge.command(aliases=["chill", "down", "cold", "cool"])
@@ -349,6 +349,7 @@ class Fridge(BaseCog):
             f"You had a productive shopping session and the fridge is now teeming with items"
         )
 
+    @commands.cooldown(1, 300, type=commands.BucketType.user)
     @fridge.command()
     async def tip(self, ctx):
         message = (
@@ -367,7 +368,7 @@ class Fridge(BaseCog):
         items = list(fridge.keys())
         sample = min(amount, len(items))
         spilled_out = random.sample(items, sample)
-        if random.randrange(100) < 40:     
+        if random.randrange(100) < 101:     
             await ctx.send("The temperature control blanks and shows an error code")           
             # Resets the temperature gauge
             change = random.randint(-10, 10)
@@ -407,7 +408,7 @@ class Fridge(BaseCog):
     @buyables.command()
     async def stats(self, ctx):
         """
-        Get some stats on the fridge
+        Get some stats on the fridgeg
         """
         items = await self.config.guild(ctx.guild).items()
         fridge = self.fridges[ctx.guild]
