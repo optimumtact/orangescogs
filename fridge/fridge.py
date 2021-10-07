@@ -136,7 +136,7 @@ class Fridge(BaseCog):
 
     # Fucking feral admins
     @commands.cooldown(1, 60, type=commands.BucketType.user)
-    @commands.cooldown(3, 60, type=commands.BucketType.guild)
+    @commands.cooldown(3, 200, type=commands.BucketType.guild)
     @commands.max_concurrency(3, per=commands.BucketType.guild, wait=False)
     @fridge.command(aliases=["chill", "down", "cold", "cool"])
     async def turndown(self, ctx):
@@ -153,7 +153,7 @@ class Fridge(BaseCog):
 
     # Fucking feral admins
     @commands.cooldown(1, 60, type=commands.BucketType.user)
-    @commands.cooldown(3, 60, type=commands.BucketType.guild)
+    @commands.cooldown(3, 200, type=commands.BucketType.guild)
     @commands.max_concurrency(3, per=commands.BucketType.guild, wait=False)
     @fridge.command(aliases=["heat", "up", "warm"])
     async def turnup(self, ctx):
