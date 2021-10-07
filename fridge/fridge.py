@@ -167,6 +167,7 @@ class Fridge(BaseCog):
         await ctx.send(f"{member} turned the fridge up by {change}°C!")
         return
 
+    @commands.cooldown(1, 300, type=commands.BucketType.user)
     @fridge.command(aliases=["support"])
     async def brace(self, ctx):
         """
