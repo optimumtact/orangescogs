@@ -124,7 +124,7 @@ class Fridge(BaseCog):
         """
         pass
 
-    @fridge.command(aliases=["checktemp"])
+    @fridge.command(aliases=["checktemp", "temp"])
     async def temperature(self, ctx):
         """
         Check the fridge temperature
@@ -346,9 +346,6 @@ class Fridge(BaseCog):
             f"Holy shit {ctx.author.mention} just straight up tipped the fridge over"
         )
 
-        # Resets the temperature gauge
-        change = random.randint(-10, 10)
-        await self.config.guild(ctx.guild).temperature.set(change)
         fridge_incumbent = await self.config.guild(ctx.guild).bracer()
         if fridge_incumbent is not None:
             message = f"{ctx.author.mention} charges at the fridge to tip it, but {fridge_incumbent} is bracing it against the wall and {ctx.author.mention} bounces off and gets knocked over, what a goober"
@@ -361,6 +358,11 @@ class Fridge(BaseCog):
         items = list(fridge.keys())
         sample = min(amount, len(items))
         spilled_out = random.sample(items, sample)
+        if random.randrange(100) < 40:     
+            await ctx.send("The temperature control blanks and shows an error code")           
+            # Resets the temperature gauge
+            change = random.randint(-10, 10)
+            await self.config.guild(ctx.guild).temperature.set(change)
         if len(spilled_out) >= 1:
             message += " items go flying everywhere!"
         else:
