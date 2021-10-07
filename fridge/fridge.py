@@ -369,7 +369,7 @@ class Fridge(BaseCog):
         items = list(fridge.keys())
         sample = min(amount, len(items))
         spilled_out = random.sample(items, sample)
-        if random.randrange(100) < 101:     
+        if random.randrange(0, 100) < 60:     
             await ctx.send("The temperature control blanks and shows an error code")           
             # Resets the temperature gauge
             change = random.randint(-10, 10)
