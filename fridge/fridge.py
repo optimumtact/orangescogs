@@ -135,7 +135,7 @@ class Fridge(BaseCog):
         return
 
     # Fucking feral admins
-    @commands.cooldown(1, 60, type=commands.BucketType.user)
+    @commands.cooldown(1, 500, type=commands.BucketType.user)
     @commands.cooldown(3, 200, type=commands.BucketType.guild)
     @commands.max_concurrency(3, per=commands.BucketType.guild, wait=False)
     @fridge.command(aliases=["chill", "down", "cold", "cool"])
@@ -152,7 +152,7 @@ class Fridge(BaseCog):
 
 
     # Fucking feral admins
-    @commands.cooldown(1, 60, type=commands.BucketType.user)
+    @commands.cooldown(1, 500, type=commands.BucketType.user)
     @commands.cooldown(3, 200, type=commands.BucketType.guild)
     @commands.max_concurrency(3, per=commands.BucketType.guild, wait=False)
     @fridge.command(aliases=["heat", "up", "warm"])
