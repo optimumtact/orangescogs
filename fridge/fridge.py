@@ -124,49 +124,6 @@ class Fridge(BaseCog):
         """
         pass
 
-    @fridge.command(aliases=["checktemp", "temp"])
-    async def temperature(self, ctx):
-        """
-        Check the fridge temperature
-        """
-        member = ctx.author
-        current_temperature = await self.config.guild(ctx.guild).temperature()
-        await ctx.send(f"The fridge is currently {current_temperature}°C!")
-        return
-
-    # Fucking feral admins
-    @commands.cooldown(1, 300, type=commands.BucketType.user)
-    @commands.cooldown(3, 200, type=commands.BucketType.guild)
-    @commands.max_concurrency(3, per=commands.BucketType.guild, wait=False)
-    @fridge.command(aliases=["chill", "down", "cold", "cool"])
-    async def turndown(self, ctx):
-        """
-        Turn the temperature down
-        """
-        member = ctx.author
-        current_temperature = await self.config.guild(ctx.guild).temperature()
-        change = random.randint(1, 10)
-        current_temperature = await self.config.guild(ctx.guild).temperature.set(current_temperature - change)
-        await ctx.send(f"{member} turned the fridge down by {change}°C!")
-        return
-
-
-    # Fucking feral admins
-    @commands.cooldown(1, 500, type=commands.BucketType.user)
-    @commands.cooldown(3, 200, type=commands.BucketType.guild)
-    @commands.max_concurrency(3, per=commands.BucketType.guild, wait=False)
-    @fridge.command(aliases=["heat", "up", "warm"])
-    async def turnup(self, ctx):
-        """
-        Turn the temperature up
-        """
-        member = ctx.author
-        current_temperature = await self.config.guild(ctx.guild).temperature()
-        change = random.randint(1, 10)
-        current_temperature = await self.config.guild(ctx.guild).temperature.set(current_temperature + change)
-        await ctx.send(f"{member} turned the fridge up by {change}°C!")
-        return
-
     @commands.cooldown(1, 300, type=commands.BucketType.user)
     @fridge.command(aliases=["support"])
     async def brace(self, ctx):
