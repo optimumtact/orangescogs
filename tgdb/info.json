@@ -1,5 +1,5 @@
 {
-    "author": ["oranges"],
+    "author": ["oranges", "crossedfall"],
     "install_msg": "Thank you for installing tgdb.",
     "name": "SS13 tgdb module",
     "short": "Base module for helper cogs that interoperate with the tg database schema",
