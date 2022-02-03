@@ -19,7 +19,7 @@ from tgcommon.errors import TGRecoverableError, TGUnrecoverableError
 
 
 __version__ = "1.0.0"
-__author__ = "oranges"
+__author__ = ["crossedfall", "oranges"]
 
 log = logging.getLogger("red.oranges_tgdb")
 
