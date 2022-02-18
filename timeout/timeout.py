@@ -81,6 +81,7 @@ class Timeout(BaseCog):
 
     def __init__(self, bot):
         self.bot = bot
+        self.timeouts_by_role = {}
         self.config = Config.get_conf(
             self, identifier=672261474290237490, force_registration=True
         )
@@ -92,6 +93,7 @@ class Timeout(BaseCog):
         default_guild = {
             "enabled": True,
             "role_max": {},
+            "timeouts_applied": {},
         }
 
         self.config.register_guild(**default_guild)
@@ -186,10 +188,13 @@ class Timeout(BaseCog):
         if not enabled:
             await ctx.send("This module is not enabled")
             return
+
+        if user.id in self.timeouts_by_role and self.timeouts_by_role[user.id] > ctx.author.top_role:
+            await ctx.send(f"The timeout was placed by a higher ranked member")
+            return
               
         reason = f'Timeout removed by {ctx.author}'
         payload: Dict[str, Any] = {}
-        my_date: datetime = datetime.now()
         payload['communication_disabled_until'] = None
         try:
             data = await ctx.bot.http.edit_member(user.guild.id, user.id, reason=reason, **payload)
@@ -221,7 +226,10 @@ class Timeout(BaseCog):
             return
         
         if ctx.author.top_role <= user.top_role:
-            await ctx.send(f"You cannot apply a timeout to a higher ranked discord member")
+            await ctx.send(f"You cannot apply a timeout to an equal or higher ranked discord member")
+            return
+        if user.id in self.timeouts_by_role and self.timeouts_by_role[user.id] >= ctx.author.top_role:
+            await ctx.send(f"This user is already under a time out by an equal or higher ranked discord member")
             return
         
         role_max_dict = await self.config.guild(ctx.guild).role_max()
@@ -247,6 +255,7 @@ class Timeout(BaseCog):
         payload['communication_disabled_until'] = my_date.isoformat()
         try:
             data = await ctx.bot.http.edit_member(user.guild.id, user.id, reason=reason, **payload)
+            self.timeouts_by_role[user.id] = ctx.author.top_role
             await ctx.send(f"User has been timed out for {time_to_timeout}")
         except (Forbidden):
             #await self.config.guild(ctx.guild).enabled.set(False)
