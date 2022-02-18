@@ -1,0 +1,15 @@
+{
+    "author": ["oranges", "Will Roberts"],
+    "install_msg": "Thank you for installing timeout.",
+    "name": "Timeout",
+    "short": "The timeout module for ss13",
+    "description": "This cog allows you to let specific roles apply a timeout up to a maximum amount",
+    "permissions" : ["Moderate Member"],
+    "tags": [
+        "Space Station 13",
+        "Game",
+        "Administration",
+        "Utility",
+        "SS13"
+    ]
+}
