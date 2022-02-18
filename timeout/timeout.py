@@ -98,7 +98,6 @@ class Timeout(BaseCog):
 
     @commands.guild_only()
     @commands.group()
-    @checks.mod_or_permissions(administrator=True)
     async def timeout(self, ctx):
         """
         Timeout module
@@ -149,7 +148,7 @@ class Timeout(BaseCog):
             roleid = str(role.id)
             
             roles[roleid] = max_time_str.to_config()
-            log.error(f'New roles dict {roles}')
+            log.debug(f'New roles dict {roles}')
             if max_time_str.get_timedelta() == timedelta(0):
                 del roles[roleid]
                 await ctx.send(f"Role {role} permissions removed")
@@ -220,6 +219,11 @@ class Timeout(BaseCog):
         if not enabled:
             await ctx.send("This module is not enabled")
             return
+        
+        if ctx.author.top_role <= user.top_role:
+            await ctx.send(f"You cannot apply a timeout to a higher ranked discord member")
+            return
+        
         role_max_dict = await self.config.guild(ctx.guild).role_max()
         max_days = timedelta(0)
         for role in ctx.author.roles:
