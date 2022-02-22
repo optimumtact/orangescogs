@@ -2,7 +2,7 @@
 from collections import defaultdict
 import json
 import logging
-from typing import DefaultDict, Dict, Union, Any
+from typing import DefaultDict, Dict, Union, Any, cast
 
 
 # Redbot Imports
@@ -87,13 +87,15 @@ class Timeout(BaseCog):
         )
         self.visible_config = [
             "enabled",
-            "role_max"
+            "role_max",
+            "logging_channel",
         ]
 
         default_guild = {
             "enabled": True,
             "role_max": {},
             "timeouts_applied": {},
+            "logging_channel": False,
         }
 
         self.config.register_guild(**default_guild)
@@ -131,6 +133,42 @@ class Timeout(BaseCog):
             else:
                 embed.add_field(name=f"{k}:", value="`redacted`", inline=False)
         await ctx.send(embed=embed)
+
+    @config.command()
+    async def set_log_channel(self, ctx, channel: discord.TextChannel):
+        """
+        Set the channel that the timeouts are logged to
+        """
+        try:
+
+            await self.config.guild(ctx.guild).logging_channel.set(channel.id)
+            await ctx.send(f"Channel set to {channel}")
+        except (ValueError, KeyError, AttributeError) as e:    
+            await ctx.send(
+                "There was a problem setting the channel to log to"
+            )
+            raise e
+
+
+    async def send_log_message(self, guild: discord.Guild, message: str, source: discord.Member, target: discord.Member, jump_url: str):
+        """
+        Send a log message about a timeout action happening
+        """ 
+        channel: discord.TextChannel = await self.get_log_channel(guild)
+        if channel:
+            embed = discord.Embed(url=jump_url , title="__Timeout action:__")
+            embed.add_field(name="Source", value=source, inline=False)
+            embed.add_field(name="Target", value=target, inline=False)
+            embed.add_field(name="Action", value=message, inline=False)
+            log.info(type(channel))
+            await channel.send(embed=embed)
+
+    async def get_log_channel(self, guild:discord.Guild):
+        """
+        Get the configured channel for this guild, or None if none is set or the channel doesn't exist
+        """
+        channel_id = await self.config.guild(guild).logging_channel()
+        return cast(discord.TextChannel, guild.get_channel(channel_id))
 
     @config.command()
     async def role(self, ctx, role: discord.Role, max_time_str: TimeFormat):
@@ -198,10 +236,11 @@ class Timeout(BaseCog):
         payload['communication_disabled_until'] = None
         try:
             data = await ctx.bot.http.edit_member(user.guild.id, user.id, reason=reason, **payload)
+            await self.send_log_message(ctx.guild, f"Timeout was removed", ctx.author, user, ctx.message.jump_url)
             await ctx.send(f"Timeout has been removed")
         except (Forbidden):
             await self.config.guild(ctx.guild).enabled.set(False)
-            await ctx.send("I do not have permission to time members out")
+            await ctx.send("I do not have permission to time this member out")
 
     @timeout.command()
     async def apply(self, ctx, user: discord.Member, days:TimeFormat):
@@ -221,6 +260,7 @@ class Timeout(BaseCog):
         log.debug(f"Converted to timedelta {days.get_timedelta()}")
         days = days.get_timedelta()
         enabled = await self.config.guild(ctx.guild).enabled()
+        channel = await self.config.guild(ctx.guild).logging_channel()
         if not enabled:
             await ctx.send("This module is not enabled")
             return
@@ -256,6 +296,7 @@ class Timeout(BaseCog):
         try:
             data = await ctx.bot.http.edit_member(user.guild.id, user.id, reason=reason, **payload)
             self.timeouts_by_role[user.id] = ctx.author.top_role
+            await self.send_log_message(ctx.guild, f"User was timed out by for {time_to_timeout}", ctx.author, user, ctx.message.jump_url)
             await ctx.send(f"User has been timed out for {time_to_timeout}")
         except (Forbidden):
             #await self.config.guild(ctx.guild).enabled.set(False)
