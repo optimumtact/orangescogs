@@ -1,5 +1,13 @@
 ## Overview
-Random cogs to keep the tg admin team happy, don't look or you will lose sanity
+Utility cogs for the tgstation discord
+
+- based : test cog for investigating use of event handlers
+- fridge : a fridge for storing items and retrieving them later
+- pet : random misc commands
+- tgcommon : common models used by the tg* set of cogs, this should really be refactored into it's own repo at some point
+- tgdb : commands to talk to the tg database
+- tgverify : a verification module that applies two roles to user if they link their in game ckey to their discord account
+- timeout : cog that lets you give roles the ability to time users out, with maximum timeout periods able to be set
 
 ### Credits:
 - [Crossedfall](https://github.com/crossedfall/crossed-cogs) for his cogs that made me setup a redbot instance, and for the getnotes work I built upon for the tgdb code
