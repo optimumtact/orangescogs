@@ -9,16 +9,13 @@ __author__ = "SuperNovaa41"
 BaseCog = getattr(commands, "Cog", object)
 
 
-class gbp(commands.Cog):
+class gbp(BaseCog):
     """
     Find your GBP
     """
 
     def __init__(self, bot):
         self.bot = bot
-        self.config = Config.get_conf(
-            self, identifier=672261474290237490, force_registration=True
-        )
 
     def get_latest_gbp(self):
         response = requests.get(
