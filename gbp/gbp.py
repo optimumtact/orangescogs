@@ -1,7 +1,7 @@
 import requests
 import os.path
 
-from redbot.core import commands, utils, Config
+from redbot.core import commands, utils
 
 __version__ = "1.0.0"
 __author__ = "SuperNovaa41"
