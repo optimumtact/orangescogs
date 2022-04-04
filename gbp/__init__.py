@@ -1,4 +1,5 @@
-from .gbp import GBP
+from .gbp import gbp
+
 
 def setup(bot):
-    bot.add_cog(GBP(bot))
+    bot.add_cog(gbp(bot))
