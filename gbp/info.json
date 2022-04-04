@@ -1,0 +1,18 @@
+{
+    "author": ["SuperNovaa41"],
+    "install_msg": "Thank you for installing gbp plugin",
+    "name": "SS13 gbp plugin",
+    "short": "GBP!",
+    "requirements": [
+        "requests>=2.22.0"
+    ],
+    "description": "GBP plugin that allows display and searching of the tgstation gbp scores",
+    "permissions" : ["Manage Messages", "Embed Links"],
+    "tags": [
+        "Space Station 13",
+        "Game",
+        "Administration",
+        "Utility",
+        "SS13"
+    ]
+}
