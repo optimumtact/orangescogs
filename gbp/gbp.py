@@ -1,6 +1,6 @@
 import requests
+import os.path
 
-import discord
 from redbot.core import commands, utils, Config
 
 __version__ = "1.0.0"
@@ -20,9 +20,10 @@ class gbp(commands.Cog):
             self, identifier=672261474290237490, force_registration=True
         )
 
-    @commands.command()
-    async def fetchgbp(self, ctx):
-        response = requests.get(url="https://raw.githubusercontent.com/tgstation/tgstation/gbp-balances/.github/gbp-balances.toml")
+    def get_latest_gbp(self):
+        response = requests.get(
+            url="https://raw.githubusercontent.com/tgstation/tgstation/gbp-balances/.github/gbp-balances.toml"
+            )
         content = response.text
 
         raw_lines = []
@@ -48,13 +49,19 @@ class gbp(commands.Cog):
         with open("gbp.txt", 'w') as file:
             i = 1
             for pair in pairs:
-                file.write("#" + str(i) + ": " + pair[1] + " (" + str(pair[0]) + " GBP)\n")
+                file.write(
+                    "#" + str(i) + ": " + pair[1] + " (" + str(pair[0]) + " GBP)\n"
+                )
                 i += 1
 
+    @commands.command()
+    async def fetchgbp(self, ctx):
+        self.get_latest_gbp()
         await ctx.send("Fetched latest GBP!")
 
     @commands.command()
     async def findname(self, ctx, name=""):
+        self.does_file_exist()
         msg = ""
         with open("gbp.txt", 'r') as file:
             lines = file.readlines()
@@ -66,11 +73,12 @@ class gbp(commands.Cog):
             return
         if (len(msg) >= 2000):
             await ctx.send(file=utils.chat_formatting.text_to_file(msg, "gbp.txt"))
-            return
-        await ctx.send("```" + msg + "```")
-                    
+        else:
+            await ctx.send("```" + msg + "```")
+
     @commands.command()
     async def findpos(self, ctx, pos):
+        self.does_file_exist()
         with open("gbp.txt", 'r') as file:
             lines = file.readlines()
             for line in lines:
@@ -79,9 +87,10 @@ class gbp(commands.Cog):
                     await ctx.send("```" + line + "```")
                     return
         await ctx.send("No user at that position!")
-    
+
     @commands.command()
     async def findgbp(self, ctx, gbp_to_find):
+        self.does_file_exist()
         msg = ""
         with open("gbp.txt", 'r') as file:
             lines = file.readlines()
@@ -94,5 +103,9 @@ class gbp(commands.Cog):
             return
         if (len(msg) >= 2000):
             await ctx.send(file=utils.chat_formatting.text_to_file(msg, "gbp.txt"))
-            return
-        await ctx.send("```" + msg + "```")
+        else:
+            await ctx.send("```" + msg + "```")
+
+    def does_file_exist(self):
+        if not os.path.exists("gbp.txt"):
+            self.get_latest_gbp()
