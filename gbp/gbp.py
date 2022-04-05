@@ -1,7 +1,7 @@
 import requests
 import os.path
 
-from redbot.core import commands, utils
+from redbot.core import commands, utils, Config
 
 __version__ = "1.0.0"
 __author__ = "SuperNovaa41"
@@ -16,8 +16,14 @@ class gbp(BaseCog):
 
     def __init__(self, bot):
         self.bot = bot
+        self.config = Config.get_conf(self, identifier=672261474290237490, force_registration=True)
 
-    def get_latest_gbp(self):
+        default_global = {
+            "gbp": {}
+        }
+        self.config.register_global(**default_global)
+
+    async def get_latest_gbp(self):
         response = requests.get(
             url="https://raw.githubusercontent.com/tgstation/tgstation/gbp-balances/.github/gbp-balances.toml"
             )
@@ -43,66 +49,54 @@ class gbp(BaseCog):
                     pairs[i][1], pairs[i+1][1] = pairs[i+1][1], pairs[i][1]
                     pairs[i][0], pairs[i+1][0] = pairs[i+1][0], pairs[i][0]
 
-        with open("gbp.txt", 'w') as file:
-            i = 1
-            for pair in pairs:
-                file.write(
-                    "#" + str(i) + ": " + pair[1] + " (" + str(pair[0]) + " GBP)\n"
-                )
-                i += 1
+        final_dict = {}
+        i = 1
+        for pair in pairs:
+            final_dict[i] = (pair[1], pair[0])
+            i += 1
+        await self.config.gbp.set(final_dict)
 
     @commands.command()
     async def fetchgbp(self, ctx):
-        self.get_latest_gbp()
+        await self.get_latest_gbp()
         await ctx.send("Fetched latest GBP!")
 
     @commands.command()
     async def findname(self, ctx, name=""):
-        self.does_file_exist()
         msg = ""
-        with open("gbp.txt", 'r') as file:
-            lines = file.readlines()
-            for line in lines:
-                if name.lower() in line.lower():
-                    msg += line
+        gbp_dict = await self.config.gbp()
+        for i in range(1, len(gbp_dict) + 1):
+            line = gbp_dict[str(i)]
+            if name.lower() in line[0].lower():
+                msg += "#" + str(i) + ": " + gbp_dict[str(i)][0] + " (" + str(gbp_dict[str(i)][1]) + " GBP)\n"
         if (msg == ""):
             await ctx.send("No user found!")
             return
         if (len(msg) >= 2000):
             await ctx.send(file=utils.chat_formatting.text_to_file(msg, "gbp.txt"))
         else:
-            await ctx.send("```" + msg + "```")
+            await ctx.send(f"```{msg}```")
 
     @commands.command()
     async def findpos(self, ctx, pos):
-        self.does_file_exist()
-        with open("gbp.txt", 'r') as file:
-            lines = file.readlines()
-            for line in lines:
-                num = line.split(" ")[0]
-                if num[1:-1] == pos:
-                    await ctx.send("```" + line + "```")
-                    return
+        gbp_dict = await self.config.gbp()
+        if pos in gbp_dict:
+            await ctx.send(f"```#{pos}: {gbp_dict[pos][0]} ({gbp_dict[pos][1]} GBP)```")
+            return
         await ctx.send("No user at that position!")
 
     @commands.command()
     async def findgbp(self, ctx, gbp_to_find):
-        self.does_file_exist()
         msg = ""
-        with open("gbp.txt", 'r') as file:
-            lines = file.readlines()
-            for line in lines:
-                gbp = line.split(" ")[2]
-                if gbp[1:] == gbp_to_find:
-                    msg += line
+        gbp_dict = await self.config.gbp()
+        for i in range(1, len(gbp_dict) + 1):
+            line = gbp_dict[str(i)]
+            if gbp_to_find == str(line[1]):
+                msg += "#" + str(i) + ": " + gbp_dict[str(i)][0] + " (" + str(gbp_dict[str(i)][1]) + " GBP)\n"
         if (msg == ""):
             await ctx.send("No user found with this GBP!")
             return
         if (len(msg) >= 2000):
             await ctx.send(file=utils.chat_formatting.text_to_file(msg, "gbp.txt"))
         else:
-            await ctx.send("```" + msg + "```")
-
-    def does_file_exist(self):
-        if not os.path.exists("gbp.txt"):
-            self.get_latest_gbp()
+            await ctx.send(f"```{msg}```")
