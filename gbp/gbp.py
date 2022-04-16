@@ -100,3 +100,19 @@ class gbp(BaseCog):
             await ctx.send(file=utils.chat_formatting.text_to_file(msg, "gbp.txt"))
         else:
             await ctx.send(f"```{msg}```")
+
+    @commands.command()
+    async def finduntil(self, ctx, up_to_pos):
+        msg = ""
+        gbp_dict = await self.config.gbp()
+        for i in range(1, len(gbp_dict) + 1):
+            if int(up_to_pos) < i:
+                break
+            msg += "#" + str(i) + ": " + gbp_dict[str(i)][0] + " (" + str(gbp_dict[str(i)][1]) + " GBP)\n"
+        if (msg == ""):
+            await ctx.send("An error has occured!")
+            return
+        if (len(msg) >= 2000):
+            await ctx.send(file=utils.chat_formatting.text_to_file(msg, "gbp.txt"))
+        else:
+            await ctx.send(f"```{msg}```")
