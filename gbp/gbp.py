@@ -116,3 +116,17 @@ class gbp(BaseCog):
             await ctx.send(file=utils.chat_formatting.text_to_file(msg, "gbp.txt"))
         else:
             await ctx.send(f"```{msg}```")
+    
+    @commands..command()
+    async def totalgbp(self, ctx):
+        total_pos_gbp = 0
+        total_neg_gbp = 0
+        gbp_dict = await self.config.gbp()
+        for i in range(1, len(gbp_doict) + 1):
+            current_gbp = int(gbp_dict[str(i)][1])
+            if current_gbp > 0:
+                total_pos_gbp += current_gbp
+            else:
+                total_neg_gbp += abs(current_gbp)
+        await ctx.send(f"```There is {total_pos_gbp} positive GBP, and {total_neg_gbp} negative GBP in circulation.")
+
