@@ -128,5 +128,5 @@ class gbp(BaseCog):
                 total_pos_gbp += current_gbp
             else:
                 total_neg_gbp += abs(current_gbp)
-        await ctx.send(f"```There is {total_pos_gbp} positive GBP, and {total_neg_gbp} negative GBP in circulation.")
+        await ctx.send(f"```There is {total_pos_gbp} positive GBP, and {total_neg_gbp} negative GBP in circulation.```")
 
