@@ -117,7 +117,7 @@ class gbp(BaseCog):
         else:
             await ctx.send(f"```{msg}```")
     
-    @commands..command()
+    @commands.command()
     async def totalgbp(self, ctx):
         total_pos_gbp = 0
         total_neg_gbp = 0
