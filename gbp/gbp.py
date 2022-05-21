@@ -122,7 +122,7 @@ class gbp(BaseCog):
         total_pos_gbp = 0
         total_neg_gbp = 0
         gbp_dict = await self.config.gbp()
-        for i in range(1, len(gbp_doict) + 1):
+        for i in range(1, len(gbp_dict) + 1):
             current_gbp = int(gbp_dict[str(i)][1])
             if current_gbp > 0:
                 total_pos_gbp += current_gbp
