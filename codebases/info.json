@@ -1,0 +1,15 @@
+{
+    "author": ["oranges"],
+    "install_msg": "Thank you for installing codebases module.",
+    "name": "Codebaes",
+    "short": "The codebases role for coderbus",
+    "description": "This cog allows you to let specific roles apply a codebase role to others",
+    "permissions" : ["Moderate Member"],
+    "tags": [
+        "Space Station 13",
+        "Game",
+        "Administration",
+        "Utility",
+        "SS13"
+    ]
+}
