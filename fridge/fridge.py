@@ -140,7 +140,8 @@ class Fridge(BaseCog):
             await ctx.send("Theres already too many people stuck between the wall and the fridge!")
             return
         message = f"{member.mention} wedges themselves between the wall and the fridge, bracing it upright."
-        await self.config.guild(ctx.guild).bracers.add(member.name)
+        async with self.config.guild(ctx.guild).bracers() as bracers:
+            bracers.add(member.name)
         await ctx.send(message)
 
     @fridge.command(aliases=["check"])
@@ -322,7 +323,8 @@ class Fridge(BaseCog):
         if len(fridge_incumbents) > 0:
             brave_bracer = random.choice(fridge_incumbents)
             message = f"{ctx.author.mention} charges at the fridge to tip it, but {brave_bracer} is bracing it against the wall and {ctx.author.mention} bounces off and gets knocked over, what a goober"
-            await self.config.guild(ctx.guild).bracers.remove(brave_bracer)
+            async with self.config.guild(ctx.guild).bracers() as bracers:
+                bracers.remove(brave_bracer)
             await ctx.send(message)
             return
 
