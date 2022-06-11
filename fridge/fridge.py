@@ -141,7 +141,7 @@ class Fridge(BaseCog):
             return
         message = f"{member.mention} wedges themselves between the wall and the fridge, bracing it upright."
         async with self.config.guild(ctx.guild).bracers() as bracers:
-            bracers.add(member.name)
+            bracers.append(member.name)
         await ctx.send(message)
 
     @fridge.command(aliases=["check"])
