@@ -136,7 +136,7 @@ class Fridge(BaseCog):
         if member in fridge_incumbents:
             await ctx.send("You are already stuck between the wall and the fridge!")
             return
-        if len(fridge_incumbents) > await self.config.guild(ctx.guild).max_bracers():
+        if len(fridge_incumbents) >= await self.config.guild(ctx.guild).max_bracers():
             await ctx.send("Theres already too many people stuck between the wall and the fridge!")
             return
         message = f"{member.mention} wedges themselves between the wall and the fridge, bracing it upright."
