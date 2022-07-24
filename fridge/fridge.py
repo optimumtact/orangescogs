@@ -63,7 +63,8 @@ class Fridge(BaseCog):
         default_guild = {
             "fridge": None,
             "fridgetime": None,
-            "bracer": None,
+            "bracers": [],
+            "max_bracers": 3,
             "temperature": -10,
             "items": [
                 "Banana",
@@ -131,12 +132,16 @@ class Fridge(BaseCog):
         Support the fridge against tippers
         """
         member = ctx.author
-        fridge_incumbent = await self.config.guild(ctx.guild).bracer()
-        if fridge_incumbent:
-            await ctx.send(f"{fridge_incumbent} is already stuck between the wall and the fridge!")
+        fridge_incumbents = await self.config.guild(ctx.guild).bracers()
+        if member in fridge_incumbents:
+            await ctx.send("You are already stuck between the wall and the fridge!")
             return
-        message = f"{member.mention} wedges themself between the wall and the fridge, bracing it upright."
-        await self.config.guild(ctx.guild).bracer.set(member.name)
+        if len(fridge_incumbents) >= await self.config.guild(ctx.guild).max_bracers():
+            await ctx.send("Theres already too many people stuck between the wall and the fridge!")
+            return
+        message = f"{member.mention} wedges themselves between the wall and the fridge, bracing it upright."
+        async with self.config.guild(ctx.guild).bracers() as bracers:
+            bracers.append(member.name)
         await ctx.send(message)
 
     @fridge.command(aliases=["check"])
@@ -314,10 +319,12 @@ class Fridge(BaseCog):
             f"Holy shit {ctx.author.mention} just straight up tipped the fridge over"
         )
 
-        fridge_incumbent = await self.config.guild(ctx.guild).bracer()
-        if fridge_incumbent is not None:
-            message = f"{ctx.author.mention} charges at the fridge to tip it, but {fridge_incumbent} is bracing it against the wall and {ctx.author.mention} bounces off and gets knocked over, what a goober"
-            await self.config.guild(ctx.guild).bracer.set(None)
+        fridge_incumbents = await self.config.guild(ctx.guild).bracers()
+        if len(fridge_incumbents) > 0:
+            brave_bracer = random.choice(fridge_incumbents)
+            message = f"{ctx.author.mention} charges at the fridge to tip it, but {brave_bracer} is bracing it against the wall and {ctx.author.mention} bounces off and gets knocked over, what a goober"
+            async with self.config.guild(ctx.guild).bracers() as bracers:
+                bracers.remove(brave_bracer)
             await ctx.send(message)
             return
 
@@ -351,6 +358,24 @@ class Fridge(BaseCog):
         await self.config.guild(ctx.guild).fridge.set(None)
         await self.config.guild(ctx.guild).fridgetime.set(None)
         await ctx.send(message)
+
+    @fridge.command(aliases=["cb"])
+    @checks.mod_or_permissions(administrator=True)
+    async def clear_bracers(self, ctx):
+        """
+        Removes all bracers from the fridge
+        """
+        await self.config.guild(ctx.guild).bracers.set([])
+        await ctx.send("All bracers removed.")
+
+    @fridge.command(aliases=["smb"])
+    @checks.mod_or_permissions(administrator=True)
+    async def set_max_bracers(self, ctx, amount=3):
+        """
+        Removes all bracers from the fridge
+        """
+        await self.config.guild(ctx.guild).max_bracers.set(amount)
+        await ctx.send(f"The maximum amount of bracers is now {amount}")
 
     @buyables.command()
     async def remove(self, ctx, *, item):
