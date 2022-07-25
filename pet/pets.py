@@ -545,7 +545,7 @@ class Pets(BaseCog):
             "Some gang-banger, maybe you should think about going back to school.",
             "Bravery is not a function of firepower.",
             "Human beings may not be perfect, but a computer program with language synthesis is hardly the answer to the world's problems.",
-            "Every war is the result of a difference of opinion. Maybe the biggest questions can only be answered by the greatest of conflicts."
+            "Every war is the result of a difference of opinion. Maybe the biggest questions can only be answered by the greatest of conflicts.",
             "What good's an honest soldier if he can be ordered to behave like a terrorist?",
             "You've got ten seconds to beat it before I add you to the list of NSF casualties.",
             "What a shame.",
@@ -746,11 +746,14 @@ class Pets(BaseCog):
         """
         *pushes u*
         """
-        await ctx.send(
-            "*{} {} {} over!*".format(
-                ctx.author.mention, random.choice(self.push_attempts), name
+        if(random.random() > 0.90):
+            await ctx.send("https://file.house/KU6g.mov")
+        else:
+            await ctx.send(
+                "*{} {} {} over!*".format(
+                    ctx.author.mention, random.choice(self.push_attempts), name
+                )
             )
-        )
 
     @commands.command()
     async def checkundies(self, ctx, *, name: str):
