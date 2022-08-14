@@ -133,7 +133,6 @@ class Fridge(BaseCog):
         """
         member = ctx.author
         async with self.config.guild(ctx.guild).bracers_dict() as bracers:
-            await ctx.send("Guh: " + str(bracers))
             if str(member.id) in bracers:
                 await ctx.send("You are already stuck between the wall and the fridge!")
                 return None
@@ -142,7 +141,6 @@ class Fridge(BaseCog):
                 return None
             message = f"{member.mention} wedges themselves between the wall and the fridge, bracing it upright."
             bracers[str(member.id)] = member.name
-            await ctx.send("Guh: " + str(bracers))
         await ctx.send(message)
         return None
 
