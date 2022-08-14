@@ -367,7 +367,7 @@ class Fridge(BaseCog):
         """
         Removes all bracers from the fridge
         """
-        await self.config.guild(ctx.guild).bracers.set([])
+        await self.config.guild(ctx.guild).bracers.set({})
         await ctx.send("All bracers removed.")
 
     @fridge.command(aliases=["smb"])
