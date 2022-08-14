@@ -63,7 +63,7 @@ class Fridge(BaseCog):
         default_guild = {
             "fridge": None,
             "fridgetime": None,
-            "bracers": {},
+            "bracers_dict": {},
             "max_bracers": 3,
             "temperature": -10,
             "items": [
@@ -132,7 +132,7 @@ class Fridge(BaseCog):
         Support the fridge against tippers
         """
         member = ctx.author
-        async with self.config.guild(ctx.guild).bracers() as bracers:
+        async with self.config.guild(ctx.guild).bracers_dict() as bracers:
             if member in bracers:
                 await ctx.send("You are already stuck between the wall and the fridge!")
                 return None
@@ -319,7 +319,7 @@ class Fridge(BaseCog):
             f"Holy shit {ctx.author.mention} just straight up tipped the fridge over"
         )
 
-        async with self.config.guild(ctx.guild).bracers() as bracers:
+        async with self.config.guild(ctx.guild).bracers_dict() as bracers:
             if len(bracers) > 0:
                 brave_bracer = random.choice(tuple(bracers.keys()))
                 message = f"{ctx.author.mention} charges at the fridge to tip it, but {bracers[brave_bracer]} is bracing it against the wall and {ctx.author.mention} bounces off and gets knocked over, what a goober"
