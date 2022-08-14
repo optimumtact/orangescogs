@@ -135,13 +135,14 @@ class Fridge(BaseCog):
         async with self.config.guild(ctx.guild).bracers() as bracers:
             if member in bracers:
                 await ctx.send("You are already stuck between the wall and the fridge!")
-                return
+                return None
             if len(bracers) >= await self.config.guild(ctx.guild).max_bracers():
                 await ctx.send("Theres already too many people stuck between the wall and the fridge!")
-                return
+                return None
             message = f"{member.mention} wedges themselves between the wall and the fridge, bracing it upright."
             bracers[member] = member.name
         await ctx.send(message)
+        return None
 
     @fridge.command(aliases=["check"])
     async def current(self, ctx):
@@ -324,7 +325,7 @@ class Fridge(BaseCog):
                 message = f"{ctx.author.mention} charges at the fridge to tip it, but {bracers[brave_bracer]} is bracing it against the wall and {ctx.author.mention} bounces off and gets knocked over, what a goober"
                 bracers.pop(brave_bracer)
                 await ctx.send(message)
-                return
+                return None
 
         amount = random.randint(1, 10)
         fridge = self.fridges[ctx.guild]
@@ -356,6 +357,7 @@ class Fridge(BaseCog):
         await self.config.guild(ctx.guild).fridge.set(None)
         await self.config.guild(ctx.guild).fridgetime.set(None)
         await ctx.send(message)
+        return None
 
     @fridge.command(aliases=["cb"])
     @checks.mod_or_permissions(administrator=True)
