@@ -322,8 +322,7 @@ class Fridge(BaseCog):
         async with self.config.guild(ctx.guild).bracers_dict() as bracers:
             if len(bracers) > 0:
                 brave_bracer = random.choice(tuple(bracers.keys()))
-                message = f"{ctx.author.mention} charges at the fridge to tip it, but {bracers[brave_bracer]} is bracing it against the wall and {ctx.author.mention} bounces off and gets knocked over, what a goober"
-                bracers.pop(brave_bracer)
+                message = f"{ctx.author.mention} charges at the fridge to tip it, but {bracers.pop(brave_bracer)} is bracing it against the wall and {ctx.author.mention} bounces off and gets knocked over, what a goober"
                 await ctx.send(message)
                 return None
 
