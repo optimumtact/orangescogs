@@ -1,12 +1,11 @@
 # Standard Imports
 import logging
-from typing import DefaultDict, Dict, List, Union, Any, cast
+from typing import List, cast
 import yaml
 import io
 
 # Redbot Imports
 from redbot.core import commands, checks, Config
-from datetime import datetime, timedelta
 import discord
 from discord.errors import Forbidden
 
@@ -17,6 +16,7 @@ log = logging.getLogger("red.oranges_codebases")
 
 BaseCog = getattr(commands, "Cog", object)
 
+
 class CodeBases(BaseCog):
     """
     codebases module
@@ -25,7 +25,7 @@ class CodeBases(BaseCog):
     def __init__(self, bot):
         self.bot = bot
         self.codebases_by_role = {}
-        self.config = Config.get_conf(
+        self.config: Config = Config.get_conf(
             self, identifier=672261474290237490, force_registration=True
         )
         self.visible_config = [
@@ -88,13 +88,13 @@ class CodeBases(BaseCog):
 
             await self.config.guild(ctx.guild).logging_channel.set(channel.id)
             await ctx.send(f"Channel set to {channel}")
-        except (ValueError, KeyError, AttributeError) as e:    
+        except (ValueError, KeyError, AttributeError) as e:
             await ctx.send(
                 "There was a problem setting the channel to log to"
             )
             raise e
 
-    async def get_log_channel(self, guild:discord.Guild):
+    async def get_log_channel(self, guild: discord.Guild):
         """
         Get the configured channel for this guild, or None if none is set or the channel doesn't exist
         """
@@ -107,10 +107,9 @@ class CodeBases(BaseCog):
         Sets the role that can apply station roles
         """
         try:
-            
             await self.config.guild(ctx.guild).applier_role.set(role.id)
             await ctx.send("Role set")
-        except (ValueError, KeyError, AttributeError) as e:    
+        except (ValueError, KeyError, AttributeError) as e:
             await ctx.send(
                 "There was a problem setting the applier role"
             )
@@ -124,7 +123,7 @@ class CodeBases(BaseCog):
         try:
             await self.config.guild(ctx.guild).bless_role.set(role.id)
             await ctx.send("Role set")
-        except (ValueError, KeyError, AttributeError) as e:    
+        except (ValueError, KeyError, AttributeError) as e:
             await ctx.send(
                 "There was a problem setting the bless role"
             )
@@ -136,10 +135,9 @@ class CodeBases(BaseCog):
         Sets the role that can bless users
         """
         try:
-            
             await self.config.guild(ctx.guild).blesser_role.set(role.id)
             await ctx.send("Role set")
-        except (ValueError, KeyError, AttributeError) as e:    
+        except (ValueError, KeyError, AttributeError) as e:
             await ctx.send(
                 "There was a problem setting the blesser role"
             )
@@ -163,7 +161,7 @@ class CodeBases(BaseCog):
             await ctx.send("Roles set.")
 
     @config.command()
-    async def remove_codebase_role(self, ctx, role:discord.Role):
+    async def remove_codebase_role(self, ctx, role: discord.Role):
         """
         Remove a role from the list of codebase assignable roles
         """
@@ -176,7 +174,7 @@ class CodeBases(BaseCog):
         await ctx.send("invalid role or role not in list of roles")
 
     @config.command()
-    async def add_codebase_role(self, ctx, role:discord.Role):
+    async def add_codebase_role(self, ctx, role: discord.Role):
         """
         Add a role to the list of codebase assignable roles
         """
@@ -209,7 +207,12 @@ class CodeBases(BaseCog):
         """
         remove a codebase role as long as you are permissioned and a member of that codebase
         """
-        
+
+        if isinstance(codebase, str):
+            codebase = self.name_to_role(codebase)
+        if not codebase:
+            await ctx.send("I couldn't find that role by name")
+            return
         if not await self.validate_user_and_codebase(ctx, ctx.author, codebase):
             return
         reason = f'codebase {codebase} removed from {user} by {ctx.author}'
@@ -219,21 +222,20 @@ class CodeBases(BaseCog):
                 reason=reason,
             )
             await self.send_log_message(ctx.guild, reason, ctx.author, user, ctx.message.jump_url)
-            await ctx.send(f"codebase has been removed")
+            await ctx.send("codebase has been removed")
         except (Forbidden):
             await ctx.send("I do not have permission to change the roles")
-    
+
     @commands.guild_only()
     @commands.command()
-    async def bless(self, ctx, user:discord.Member):
+    async def bless(self, ctx, user: discord.Member):
         blesser_role = await self.config.guild(ctx.guild).blesser_role()
         blesser_role = ctx.guild.get_role(blesser_role)
         bless_role = await self.config.guild(ctx.guild).bless_role()
         bless_role = ctx.guild.get_role(bless_role)
 
-        
         if blesser_role not in ctx.author.roles:
-            await ctx.send(f"You are not authorised to do that")
+            await ctx.send("You are not authorised to do that")
             return False
 
         reason = f'{ctx.author} blessed {user}'
@@ -244,11 +246,17 @@ class CodeBases(BaseCog):
         await ctx.send(f"{user} blessed")
 
     @codebase.command(aliases=["apply"])
-    async def add(self, ctx, user: discord.Member, codebase:discord.Role):
+    async def add(self, ctx, user: discord.Member, codebase: discord.Role):
         """
         Set a role on the user, as long as you have the appropriate granting role
         and the same codebase role
         """
+
+        if isinstance(codebase, str):
+            codebase = self.name_to_role(codebase)
+        if not codebase:
+            await ctx.send("I couldn't find that role by name")
+            return
         if not await self.validate_user_and_codebase(ctx, ctx.author, codebase):
             return
 
@@ -259,43 +267,48 @@ class CodeBases(BaseCog):
                 reason=reason,
             )
             await self.send_log_message(ctx.guild, reason, ctx.author, user, ctx.message.jump_url)
-            await ctx.send(f"codebase has been added")
+            await ctx.send("codebase has been added")
         except (Forbidden):
             await ctx.send("I do not have permission to change the roles")
-
 
     async def send_log_message(self, guild: discord.Guild, message: str, source: discord.Member, target: discord.Member, jump_url: str):
         """
         Send a log message about a codebase action happening
-        """ 
+        """
         channel: discord.TextChannel = await self.get_log_channel(guild)
         if channel:
-            embed = discord.Embed(url=jump_url , title="__codebase action:__")
+            embed = discord.Embed(url=jump_url, title="__codebase action:__")
             embed.add_field(name="Source", value=f"{source} <@{source.id}>", inline=False)
             embed.add_field(name="Target", value=f"{target} <@{target.id}>", inline=False)
             embed.add_field(name="Action", value=message, inline=False)
             log.info(type(channel))
             await channel.send(embed=embed)
-    
+
     async def validate_user_and_codebase(self, ctx, applier: discord.Member, codebase: discord.Role):
         """
         Validate that a given applier can award the given discord role, sends messages to the given context for feedback
         """
+
+        if isinstance(codebase, str):
+            codebase = self.name_to_role(codebase)
+        if not codebase:
+            await ctx.send("I couldn't find that role by name")
+            return
         applier_role = await self.config.guild(ctx.guild).applier_role()
         applier_role = ctx.guild.get_role(applier_role)
         allowed_roles = await self.config.guild(ctx.guild).allowed_roles()
         if codebase.id not in allowed_roles:
-            await ctx.send(f"Not a valid codebase role")
+            await ctx.send("Not a valid codebase role")
             return False
 
         if applier_role not in ctx.author.roles:
-            await ctx.send(f"You are not authorised to do that")
+            await ctx.send("You are not authorised to do that")
             return False
 
         if codebase not in ctx.author.roles:
-            await ctx.send(f"You cannot apply a codebase role for a codebase you are not a member of")
+            await ctx.send("You cannot apply a codebase role for a codebase you are not a member of")
             return False
-        
+
         return True
 
     async def get_roles_from_yaml(self, source: discord.Attachment, guild: discord.Guild) -> List:
@@ -310,7 +323,7 @@ class CodeBases(BaseCog):
                 final.append(id)
         return final
 
-    async def get_codebase_roles_as_yaml(self,ctx) -> discord.File:
+    async def get_codebase_roles_as_yaml(self, ctx) -> discord.File:
         """Return the list of current valid codebase roles as id => name yaml"""
         final_roles = {}
         codebase_roles = await self.config.guild(ctx.guild).allowed_roles()
@@ -320,7 +333,7 @@ class CodeBases(BaseCog):
                 continue
             final_roles[role.id] = role.name
         fp = io.BytesIO(yaml.dump(final_roles, default_flow_style=False).encode("utf-8"))
-        return discord.File(fp, filename="codebaseroles.yaml")        
+        return discord.File(fp, filename="codebaseroles.yaml")
 
     async def get_server_roles_as_yaml(self, guild: discord.Guild) -> discord.File:
         """Get a YAML file for all roles in a guild"""
@@ -330,3 +343,9 @@ class CodeBases(BaseCog):
             guild_roles[role.id] = role.name
         fp = io.BytesIO(yaml.dump(guild_roles, default_flow_style=False).encode("utf-8"))
         return discord.File(fp, filename="roles.yaml")
+
+    async def name_to_role(self, guild: discord.Guild, name) -> discord.Role:
+        for role in await guild.fetch_roles():
+            if role.name == name:
+                return role
+        return None
