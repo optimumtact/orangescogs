@@ -351,7 +351,6 @@ class CodeBases(BaseCog):
         for role in await guild.fetch_roles():
             names.append(role.name)
             name2role[role.name] = role
-        log.error(f"{names}")
         match, score = process.extractOne(name, names)
         log.error(f"{match}, {score}")
         if score < 70:
