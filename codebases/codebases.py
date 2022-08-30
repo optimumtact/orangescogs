@@ -203,13 +203,13 @@ class CodeBases(BaseCog):
         await ctx.send("here are the current codebase roles", file=file)
 
     @codebase.command(aliases=["del", "unapply"])
-    async def remove(self, ctx, user: discord.Member, codebase: discord.Role):
+    async def remove(self, ctx, user: discord.Member, *, codebase: str):
         """
         remove a codebase role as long as you are permissioned and a member of that codebase
         """
 
         if isinstance(codebase, str):
-            codebase = self.name_to_role(codebase)
+            codebase = await self.name_to_role(ctx.guild, codebase)
         if not codebase:
             await ctx.send("I couldn't find that role by name")
             return
@@ -246,14 +246,14 @@ class CodeBases(BaseCog):
         await ctx.send(f"{user} blessed")
 
     @codebase.command(aliases=["apply"])
-    async def add(self, ctx, user: discord.Member, codebase: discord.Role):
+    async def add(self, ctx, user: discord.Member, *, codebase: str):
         """
         Set a role on the user, as long as you have the appropriate granting role
         and the same codebase role
         """
 
         if isinstance(codebase, str):
-            codebase = self.name_to_role(codebase)
+            codebase = await self.name_to_role(ctx.guild, codebase)
         if not codebase:
             await ctx.send("I couldn't find that role by name")
             return
@@ -290,7 +290,7 @@ class CodeBases(BaseCog):
         """
 
         if isinstance(codebase, str):
-            codebase = self.name_to_role(codebase)
+            codebase = await self.name_to_role(ctx.guild, codebase)
         if not codebase:
             await ctx.send("I couldn't find that role by name")
             return
@@ -346,6 +346,6 @@ class CodeBases(BaseCog):
 
     async def name_to_role(self, guild: discord.Guild, name) -> discord.Role:
         for role in await guild.fetch_roles():
-            if role.name == name:
+            if role.name.lower() == name.lower():
                 return role
         return None
