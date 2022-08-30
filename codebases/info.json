@@ -5,6 +5,7 @@
     "short": "The codebases role for coderbus",
     "description": "This cog allows you to let specific roles apply a codebase role to others",
     "permissions" : ["Moderate Member"],
+    "requirements": ["thefuzz"]
     "tags": [
         "Space Station 13",
         "Game",

@@ -3,6 +3,7 @@ import logging
 from typing import List, cast
 import yaml
 import io
+from thefuzz import process
 
 # Redbot Imports
 from redbot.core import commands, checks, Config
@@ -306,7 +307,7 @@ class CodeBases(BaseCog):
             return False
 
         if codebase not in ctx.author.roles:
-            await ctx.send("You cannot apply a codebase role for a codebase you are not a member of")
+            await ctx.send(f"You cannot apply a codebase role for a codebase you are not a member of: {codebase.name}")
             return False
 
         return True
@@ -345,7 +346,14 @@ class CodeBases(BaseCog):
         return discord.File(fp, filename="roles.yaml")
 
     async def name_to_role(self, guild: discord.Guild, name) -> discord.Role:
+        names = []
+        name2role = {}
         for role in await guild.fetch_roles():
-            if role.name.lower() == name.lower():
-                return role
-        return None
+            names.append(role.name)
+            name2role[role.name] = role
+        log.error(f"{names}")
+        match, score = process.extractOne(name, names)
+        log.error(f"{match}, {score}")
+        if score < 70:
+            return None
+        return name2role[match]
