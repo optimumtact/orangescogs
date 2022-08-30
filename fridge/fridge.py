@@ -215,6 +215,7 @@ class Fridge(BaseCog):
         async with config.items() as items:
             if item not in items:
                 items.append(item)
+        log.info(f"User {ctx.author.id} put {item} in the fridge")
 
     @fridge.command(aliases=["take", "remove", "find", "eat"])
     async def get(self, ctx, *, search=None):
