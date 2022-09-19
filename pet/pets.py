@@ -790,17 +790,15 @@ class Pets(BaseCog):
         Identifies a choom in the chat
         Don't tell anyone, but chooms are people whose id is even.
         """
-        if(!member):
-            await ctx.send("I can't tell if that is a choom.")
-        elif(member.id % 2 == 0):
+        if member.id % 2 == 0:
             await ctx.send(
                 "{} is indeed a choom.".format(
-                    member.nick
+                    member.name
                 )
             )
         else:
             await ctx.send(
                 "{} is not a choom.".format(
-                    member.nick
+                    member.name
                 )
             )
