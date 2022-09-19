@@ -783,3 +783,22 @@ class Pets(BaseCog):
                 ctx.author.mention, name
             )
         )
+
+    @commands.command()
+    async def choom(self, ctx, *, member: discord.Member):
+        """
+        Identifies a choom in the chat
+        Don't tell anyone, but chooms are people whose id ends with 2.
+        """
+        if member.id % 10 == 2:
+            await ctx.send(
+                "{} is indeed a choom.".format(
+                    member.name
+                )
+            )
+        else:
+            await ctx.send(
+                "{} is not a choom.".format(
+                    member.name
+                )
+            )
