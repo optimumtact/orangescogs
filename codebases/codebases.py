@@ -306,7 +306,10 @@ class CodeBases(BaseCog):
             await ctx.send("You are not authorised to do that")
             return False
 
-        if codebase not in ctx.author.roles:
+        blesser_role = await self.config.guild(ctx.guild).blesser_role()
+        blesser_role = ctx.guild.get_role(blesser_role)
+
+        if codebase not in ctx.author.roles and blesser_role not in ctx.author.roles:
             await ctx.send(f"You cannot apply a codebase role for a codebase you are not a member of: {codebase.name}")
             return False
 
