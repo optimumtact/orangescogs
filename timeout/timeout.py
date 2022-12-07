@@ -3,7 +3,7 @@ from collections import defaultdict
 import json
 import logging
 from typing import DefaultDict, Dict, Union, Any, cast
-from yaml import dump
+
 
 # Redbot Imports
 from redbot.core import commands, checks, Config
@@ -20,30 +20,11 @@ log = logging.getLogger("red.oranges_timeout")
 
 BaseCog = getattr(commands, "Cog", object)
 
-# class TimeoutLog():
-#     def __init__(self, applying_user: discord.Member, target_user: discord.Member, guild: discord.Guild, length_of_timeout: timedelta):
-#         self.applying_user_id = applying_user.id
-#         self.target_user_id = target_user.id
-#         self.guild_id = guild.id
-#         self.length_of_timeout = length_of_timeout
-#         self.expiry_date = datetime.now() + length_of_timeout
-#         self.highest_role_id = applying_user.top_role.id
-    
-#     def still_valid(self):
-#         '''
-#         Determine if this timeout log is still valid (i.e still applies)
-#         '''
-#         return datetime.now() <= self.expiry_date
-    
-#     def can_replace(self, applying_user: discord.Member):
-#         '''
-#         Can the applying user replace/remove the timeout in question
-#         '''
-#         return self.highest_role < applying_user.top_role
 
 #(c) Will Roberts  14 April, 2014
 #The regex and formatting code comes from the very useful https://github.com/wroberts/pytimeparse/blob/master/pytimeparse/timeparse.py
 #released under MIT and reproduced here
+
 class TimeFormat():
     DAYS = r'(?P<days>[\d.]+)\s*(?:d|dys?|days?)'
     MINS = r'(?P<mins>[\d.]+)\s*(?:m|(mins?)|(minutes?))'
@@ -60,6 +41,8 @@ class TimeFormat():
 
     COMPILED_TIMEFORMATS = [re.compile(r'\s*' + timefmt + r'\s*$', re.I)
                         for timefmt in TIMEFORMATS]
+    def __init__(self, timedict:dict):
+        self.time = timedict
     
     def __init__(self, formatstr:str):
         #So we always have the relevant keys (defaulting to zero)
@@ -106,13 +89,12 @@ class Timeout(BaseCog):
             "enabled",
             "role_max",
             "logging_channel",
-            "timeouts",
         ]
 
         default_guild = {
             "enabled": True,
             "role_max": {},
-            "timeouts": {},
+            "timeouts_applied": {},
             "logging_channel": False,
         }
 
@@ -245,6 +227,10 @@ class Timeout(BaseCog):
             await ctx.send("This module is not enabled")
             return
 
+        if user.id in self.timeouts_by_role and self.timeouts_by_role[user.id] > ctx.author.top_role:
+            await ctx.send(f"The timeout was placed by a higher ranked member")
+            return
+              
         reason = f'Timeout removed by {ctx.author}'
         payload: Dict[str, Any] = {}
         payload['communication_disabled_until'] = None
@@ -282,7 +268,10 @@ class Timeout(BaseCog):
         if ctx.author.top_role <= user.top_role:
             await ctx.send(f"You cannot apply a timeout to an equal or higher ranked discord member")
             return
-
+        if user.id in self.timeouts_by_role and self.timeouts_by_role[user.id] >= ctx.author.top_role:
+            await ctx.send(f"This user is already under a time out by an equal or higher ranked discord member")
+            return
+        
         role_max_dict = await self.config.guild(ctx.guild).role_max()
         max_days = timedelta(0)
         for role in ctx.author.roles:
@@ -306,10 +295,7 @@ class Timeout(BaseCog):
         payload['communication_disabled_until'] = my_date.isoformat()
         try:
             data = await ctx.bot.http.edit_member(user.guild.id, user.id, reason=reason, **payload)
-            # result = TimeoutLog(ctx.author, user, ctx.guild, time_to_timeout)
-            # self.timeouts_by_role[user] = result
-            # log.info(dump(result))
-            # await self.config.guild(ctx.guild).timeouts.set(dump(self.timeouts_by_role))
+            self.timeouts_by_role[user.id] = ctx.author.top_role
             await self.send_log_message(ctx.guild, f"User was timed out by for {time_to_timeout}", ctx.author, user, ctx.message.jump_url)
             await ctx.send(f"User has been timed out for {time_to_timeout}")
         except (Forbidden):
