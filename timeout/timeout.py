@@ -245,6 +245,19 @@ class Timeout(BaseCog):
             await ctx.send("This module is not enabled")
             return
 
+        role_max_dict = await self.config.guild(ctx.guild).role_max()
+        max_days = timedelta(0)
+        for role in ctx.author.roles:
+            roleid = str(role.id)
+            if roleid in role_max_dict:
+                possible_new_max = TimeFormat.from_config(role_max_dict[roleid]).get_timedelta()
+                log.debug(f"found role with max days {possible_new_max}")
+                max_days = max(max_days, possible_new_max)
+        
+        if max_days == timedelta(0): 
+            await ctx.send("You are not authorised to time users out and therefore cannot untime them out")
+            return
+
         reason = f'Timeout removed by {ctx.author}'
         payload: Dict[str, Any] = {}
         payload['communication_disabled_until'] = None
