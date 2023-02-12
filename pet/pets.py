@@ -1,5 +1,6 @@
 # Standard Imports
 import random
+import asyncio
 
 # Discord Imports
 import discord
@@ -587,8 +588,9 @@ class Pets(BaseCog):
         Heat em up
         """
         await ctx.send("*{} puts {} in the microwave and turns it on*".format(ctx.author.mention, name))
-        await ctx.send("beep, beep, beep")
-        await ctx.send("vrmmmmmmmmmmmmm")
+        await ctx.send("beep, beep, beep, vrrrrrmmmmmmmmmmmmmm, mmmmmmmmmmmmm")
+        await(asyncio.sleep(30))
+        await ctx.send("ding, {} is done".format(name))
 
     @commands.command(aliases=["tailpull"])
     async def pull(self, ctx, *, name: str):
