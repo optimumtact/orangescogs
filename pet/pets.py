@@ -591,7 +591,9 @@ class Pets(BaseCog):
         """
         await ctx.send("*{} puts {} in the microwave and turns it on*".format(ctx.author.mention, name))
         await ctx.send(f"beep, beep, beep, {random.choice(self.microwave_sound)}")
-        await(asyncio.sleep(30))
+        microwave_time = random.randrange(0, 100)
+        await(asyncio.sleep(microwave_time))
+        
         await ctx.send("ding, {} is done".format(name))
 
     @commands.command(aliases=["tailpull"])
