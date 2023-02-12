@@ -589,6 +589,9 @@ class Pets(BaseCog):
         """
         Heat em up
         """
+        if "ian" == str.lower(name):
+            await ctx.send("You monster")
+            return
         await ctx.send("*{} puts {} in the microwave and turns it on*".format(ctx.author.mention, name))
         await ctx.send(f"beep, beep, beep, {random.choice(self.microwave_sound)}")
         microwave_time = random.randrange(0, 180)
