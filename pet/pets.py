@@ -574,6 +574,22 @@ class Pets(BaseCog):
             "*{} pets {} gently on the head*".format(ctx.author.mention, name)
         )
 
+    @commands.command(aliases=["noogy"])
+    async def noogie(self, ctx, *, name: str):
+        """
+        Got em good
+        """
+        await ctx.send("*{} puts {} in a headlock and gives them an aggressive noogieing*".format(ctx.author.mention, name))
+
+    @commands.command(aliases=["vrrrrrrrrr"])
+    async def microwave(self, ctx, *, name: str):
+        """
+        Heat em up
+        """
+        await ctx.send("*{} puts {} in the microwave and turns it on*".format(ctx.author.mention, name))
+        await ctx.send("beep, beep, beep")
+        await ctx.send("vrmmmmmmmmmmmmm")
+
     @commands.command(aliases=["tailpull"])
     async def pull(self, ctx, *, name: str):
         """
@@ -802,3 +818,4 @@ class Pets(BaseCog):
                     member.name
                 )
             )
+
