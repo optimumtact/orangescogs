@@ -594,7 +594,7 @@ class Pets(BaseCog):
         microwave_time = random.randrange(0, 100)
         await(asyncio.sleep(microwave_time))
         
-        await ctx.send("ding, {} is done".format(name))
+        await ctx.send("{} ding, {} is done".format(ctx.author.mention, name))
 
     @commands.command(aliases=["tailpull"])
     async def pull(self, ctx, *, name: str):
