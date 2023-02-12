@@ -566,6 +566,8 @@ class Pets(BaseCog):
 
         self.push_attempts = ["pushes", "violently shoves", "playfully pushes", "tries and fails to push", "falls over trying to push"]
 
+        self.microwave_sound = ['vrrrrrrrrrrrmmmmmmmmmmmmm', 'whzzhzhzhzhzhzhzhzhzhz']
+
     @commands.command()
     async def pet(self, ctx, *, name: str):
         """
@@ -582,13 +584,13 @@ class Pets(BaseCog):
         """
         await ctx.send("*{} puts {} in a headlock and gives them an aggressive noogieing*".format(ctx.author.mention, name))
 
-    @commands.command(aliases=["vrrrrrrrrr"])
+    @commands.command(aliases=["vrrrrrrrrr, wzhzhzhzhz"])
     async def microwave(self, ctx, *, name: str):
         """
         Heat em up
         """
         await ctx.send("*{} puts {} in the microwave and turns it on*".format(ctx.author.mention, name))
-        await ctx.send("beep, beep, beep, vrrrrrmmmmmmmmmmmmmm, mmmmmmmmmmmmm")
+        await ctx.send(f"beep, beep, beep, {random.choice(self.microwave_sound)}")
         await(asyncio.sleep(30))
         await ctx.send("ding, {} is done".format(name))
 
