@@ -619,7 +619,7 @@ class Pets(BaseCog):
             if(random.random() > 0.5):
                 message += " great, it caught fire too"
         else:
-            message = "{} ding, {} is done, it's now {} degrees".format(ctx.author.mention, name, temperature)
+            message = "{} ding, {} is done, it's now {} degrees celsius".format(ctx.author.mention, name, temperature)
         
         await ctx.send(message)
 
