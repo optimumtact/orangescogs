@@ -611,7 +611,8 @@ class Pets(BaseCog):
             temperature = 15599983
         await ctx.send("*{} puts {} in the microwave and turns it on*".format(ctx.author.mention, name))
         await ctx.send(f"beep, beep, beep, {random.choice(self.microwave_sound)}")
-        microwave_time = random.randrange(0, 180)
+        microwave_time = random.randrange(0, 90)
+        
         await(asyncio.sleep(microwave_time))
         if self.dangerous_microwave_objects_regex.search(name):
             message = f"The microwave explodes violently, scattering parts everywhere, nice job {ctx.author.mention}"
