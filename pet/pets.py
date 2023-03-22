@@ -8,6 +8,8 @@ import discord
 # Redbot Imports
 from redbot.core import commands
 
+import re
+
 __version__ = "1.2.1"
 __author__ = "oranges"
 
@@ -564,9 +566,13 @@ class Pets(BaseCog):
             "The crossbow. Sometimes you've got to make a silent takedown.",
         ]
 
+
         self.push_attempts = ["pushes", "violently shoves", "playfully pushes", "tries and fails to push", "falls over trying to push"]
 
         self.microwave_sound = ['vrrrrrrrrrrrmmmmmmmmmmmmm', 'whzzhzhzhzhzhzhzhzhzhz']
+        self.dangerous_microwave_objects = ['fork', 'tinfoil']
+
+        self.dangerous_microwave_objects_regex = re.compile("|".join(self.dangerous_microwave_objects))
 
     @commands.command()
     async def pet(self, ctx, *, name: str):
@@ -584,7 +590,14 @@ class Pets(BaseCog):
         """
         await ctx.send("*{} puts {} in a headlock and gives them an aggressive noogieing*".format(ctx.author.mention, name))
 
-    @commands.command(aliases=["vrrrrrrrrr, wzhzhzhzhz"])
+    @commands.command(aliases=["wyci", "featurecoder"])
+    async def when(self, ctx, *, name: str):
+        """
+        Own feature coders with skill
+        """
+        await ctx.send(f"When you code it {name}")
+
+    @commands.command(aliases=["vrrrrrrrrr", "wzhzhzhzhz"])
     async def microwave(self, ctx, *, name: str):
         """
         Heat em up
@@ -592,12 +605,22 @@ class Pets(BaseCog):
         if "ian" == str.lower(name):
             await ctx.send("You monster")
             return
+
+        temperature = random.randint(15, 90)
+        if(random.random() > 0.98):
+            temperature = 15599983
         await ctx.send("*{} puts {} in the microwave and turns it on*".format(ctx.author.mention, name))
         await ctx.send(f"beep, beep, beep, {random.choice(self.microwave_sound)}")
         microwave_time = random.randrange(0, 180)
         await(asyncio.sleep(microwave_time))
+        if self.dangerous_microwave_objects_regex.search(name):
+            message = f"The microwave explodes violently, scattering parts everywhere, nice job {ctx.author.mention}"
+            if(random.random() > 0.5):
+                message += " great, it caught fire too"
+        else:
+            message = "{} ding, {} is done, it's now {} degrees".format(ctx.author.mention, name, temperature)
         
-        await ctx.send("{} ding, {} is done".format(ctx.author.mention, name))
+        await ctx.send(message)
 
     @commands.command(aliases=["tailpull"])
     async def pull(self, ctx, *, name: str):
