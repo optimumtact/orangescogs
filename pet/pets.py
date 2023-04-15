@@ -852,3 +852,9 @@ class Pets(BaseCog):
                 )
             )
 
+    @commands.command()
+    async def maxwell(self, ctx, *, name: str = None):
+        """
+        summons our little guy
+        """
+        await ctx.send("https://youtu.be/esmT7E3f0AA")
