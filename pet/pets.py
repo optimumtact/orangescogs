@@ -574,6 +574,8 @@ class Pets(BaseCog):
 
         self.dangerous_microwave_objects_regex = re.compile("|".join(self.dangerous_microwave_objects))
 
+        self.divorce_results = ["takes the dog", "takes the kids", "takes the house", "wins alimony"]
+
     @commands.command()
     async def pet(self, ctx, *, name: str):
         """
@@ -832,6 +834,27 @@ class Pets(BaseCog):
                 ctx.author.mention, name
             )
         )
+
+    @commands.command()
+    async def divorce(self, ctx, *, name: str):
+        """
+        Wow, thanks a lot Henry VIII
+        """
+        if random.random() > 0.9:
+            await ctx.send(
+                "{} files for divorce from {}. However, they manage to resolve things peacefully!".format(
+                    ctx.author.mention, name
+                )
+            )
+        else:
+            await ctx.send(
+                "{} files for divorce from {}. {} {}!".format(
+                    ctx.author.mention, 
+                    name, 
+                    name, 
+                    random.choice(self.divorce_results)
+                )
+            )
 
     @commands.command()
     async def choom(self, ctx, *, member: discord.Member):
