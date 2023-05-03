@@ -26,7 +26,7 @@ class gbp(BaseCog):
     async def get_latest_gbp(self):
         response = requests.get(
             url="https://raw.githubusercontent.com/tgstation/tgstation/gbp-balances/.github/gbp-balances.toml"
-            )
+        )
         content = response.text
 
         raw_lines = []
@@ -43,11 +43,11 @@ class gbp(BaseCog):
             if segments[-1][-1:] == '\n':
                 segments[-1] = segments[-1][:-1]
             pairs.append([int(segments[2]), segments[-1]])
-        for n in range(len(pairs)-1, 0, -1):
+        for n in range(len(pairs) - 1, 0, -1):
             for i in range(n):
                 if pairs[i][0] < pairs[i + 1][0]:
-                    pairs[i][1], pairs[i+1][1] = pairs[i+1][1], pairs[i][1]
-                    pairs[i][0], pairs[i+1][0] = pairs[i+1][0], pairs[i][0]
+                    pairs[i][1], pairs[i + 1][1] = pairs[i + 1][1], pairs[i][1]
+                    pairs[i][0], pairs[i + 1][0] = pairs[i + 1][0], pairs[i][0]
 
         final_dict = {}
         i = 1
@@ -129,4 +129,24 @@ class gbp(BaseCog):
             else:
                 total_neg_gbp += abs(current_gbp)
         await ctx.send(f"```There is {total_pos_gbp} positive GBP, and {total_neg_gbp} negative GBP in circulation.```")
+
+    @commands.command()
+    async def costs(self, ctx):
+        response = requests.get(
+            url="https://raw.githubusercontent.com/tgstation/tgstation/master/.github/gbp.toml"
+        )
+        content = response.text
+
+        raw_lines = []
+        line = ""
+        for char in content:
+            line += char
+            if char == '\n':
+                raw_lines.append(line)
+            line = ""
+        lines = raw_lines[4:]
+        msg = ""
+        for line in lines:
+            msg += line + "\n"
+        await ctx.send(f"```{msg}```")
 
