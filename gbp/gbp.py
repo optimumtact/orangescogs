@@ -1,5 +1,7 @@
 import requests
 import os.path
+import logging
+import toml
 
 from redbot.core import commands, utils, Config
 
@@ -8,6 +10,7 @@ __author__ = "SuperNovaa41"
 
 BaseCog = getattr(commands, "Cog", object)
 
+log = logging.getLogger("red.oranges_gbp")
 
 class gbp(BaseCog):
     """
@@ -136,17 +139,11 @@ class gbp(BaseCog):
             url="https://raw.githubusercontent.com/tgstation/tgstation/master/.github/gbp.toml"
         )
         content = response.text
-
-        raw_lines = []
-        line = ""
-        for char in content:
-            line += char
-            if char == '\n':
-                raw_lines.append(line)
-            line = ""
-        lines = raw_lines[4:]
+        result = toml.loads(content)
         msg = ""
-        for line in lines:
-            msg += line + "\n"
-        await ctx.send(f"```{msg}```")
+        for label,cost in result["points"].items():
+            msg += f"{label} = {cost}\n"
+
+        await ctx.send(msg)
+
 
