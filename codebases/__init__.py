@@ -1,4 +1,4 @@
 from .codebases import CodeBases
 
-def setup(bot):
-    bot.add_cog(CodeBases(bot))
+async def setup(bot):
+    await bot.add_cog(CodeBases(bot))

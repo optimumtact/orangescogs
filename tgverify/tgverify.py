@@ -514,7 +514,8 @@ class TGverify(BaseCog):
             )
             return
 
-        if not guild.me.permissions_in(channel).send_messages:
+        
+        if not channel.permissions_for(guild.me).send_messages:
             log.info(f"Permissions Error. User that joined:{member}")
             log.info(
                 f"Bot doesn't have permissions to send messages to {guild.name}'s #{channel.name} channel"

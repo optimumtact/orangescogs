@@ -1,4 +1,4 @@
 from .based import Based
 
-def setup(bot):
-    bot.add_cog(Based(bot))
+async def setup(bot):
+    await bot.add_cog(Based(bot))
