@@ -1,9 +1,6 @@
 # Standard Imports
-import asyncio
-import aiomysql
 import socket
 import ipaddress
-import re
 import logging
 
 # Discord Imports
@@ -11,11 +8,10 @@ import discord
 
 # Redbot Imports
 from redbot.core import commands, checks, Config
-from redbot.core.utils.chat_formatting import pagify, box, humanize_list, warning
-from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 
 from tgcommon.models import DiscordLink
-from tgcommon.errors import TGRecoverableError, TGUnrecoverableError
+from tgcommon.errors import TGUnrecoverableError
+import aiomysql
 
 
 __version__ = "1.0.0"
@@ -171,7 +167,7 @@ class TGDB(BaseCog):
 
     @tgdb_config.command()
     @checks.is_owner()
-    async def prefix(self, ctx, prefix: str = None):
+    async def prefix(self, ctx, prefix: str = ""):
         """
         Sets the database prefix (if applicable)
 
@@ -180,7 +176,7 @@ class TGDB(BaseCog):
         try:
             if prefix is None:
                 await self.config.guild(ctx.guild).mysql_prefix.set("")
-                await ctx.send(f"Database prefix removed!")
+                await ctx.send("Database prefix removed!")
             else:
                 await self.config.guild(ctx.guild).mysql_prefix.set(prefix)
                 await ctx.send(f"Database prefix set to: `{prefix}`")
@@ -264,7 +260,7 @@ class TGDB(BaseCog):
         prefix = await self.config.guild(ctx.guild).mysql_prefix()
         query = f"UPDATE {prefix}discord_links SET valid = FALSE WHERE ckey = %s AND valid = TRUE"
         parameters = [ckey]
-        results = await self.query_database(ctx, query, parameters)
+        await self.query_database(ctx, query, parameters)
 
     async def clear_all_valid_discord_links_for_discord_id(self, ctx, discord_id):
         """
@@ -273,7 +269,7 @@ class TGDB(BaseCog):
         prefix = await self.config.guild(ctx.guild).mysql_prefix()
         query = f"UPDATE {prefix}discord_links SET valid = FALSE WHERE discord_id = %s AND valid = TRUE"
         parameters = [discord_id]
-        results = await self.query_database(ctx, query, parameters)
+        await self.query_database(ctx, query, parameters)
 
     async def all_discord_links_for_ckey(self, ctx, ckey):
         """
@@ -368,7 +364,7 @@ class TGDB(BaseCog):
             pool_recycle=300,
         )
 
-    async def query_database(self, ctx, query: str, parameters: list):
+    async def query_database(self, ctx, query: str, parameters: list) -> list:
         """
         Use our active pool to pass in the given query
         """
@@ -378,15 +374,11 @@ class TGDB(BaseCog):
                 "The database was not connected,  a reconnect was attempted"
             )
 
-        try:
-            log.debug(f"Executing query {query}, with parameters {parameters}")
-            async with self.pool.acquire() as conn:
-                async with conn.cursor(aiomysql.DictCursor) as cur:
-                    await cur.execute(query, parameters)
-                    rows = cur.fetchall()
-                    # WRITE TO STORAGE LOL
-                    await conn.commit()
-                    return rows.result()
-
-        except:
-            raise
+        log.debug(f"Executing query {query}, with parameters {parameters}")
+        async with self.pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cur:
+                await cur.execute(query, parameters)
+                rows = cur.fetchall()
+                # WRITE TO STORAGE LOL
+                await conn.commit()
+                return rows.result()
