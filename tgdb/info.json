@@ -4,7 +4,8 @@
     "name": "SS13 tgdb module",
     "short": "Base module for helper cogs that interoperate with the tg database schema",
     "requirements": [
-        "aiomysql>=0.0.20"
+        "aiomysql>=0.0.20",
+        "git+https://github.com/optimumtact/orangescogs.git#egg=tgcommon&subdirectory=tgcommon"
     ],
     "description": "Interoperability plugin for a discord bot, connects to any database using the latest tg schema",
     "permissions" : ["Manage Messages", "Embed Links"],

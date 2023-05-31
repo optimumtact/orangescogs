@@ -3,6 +3,9 @@
     "install_msg": "Thank you for installing tgverify.",
     "name": "SS13 verification module",
     "short": "The tgverify cog",
+    "requirements": [
+        "git+https://github.com/optimumtact/orangescogs.git#egg=tgcommon&subdirectory=tgcommon"
+    ],
     "description": "This cog uses tgdb cog to allow the automated linking/verification and role application to users",
     "permissions" : ["Manage Messages", "Manage Roles"],
     "tags": [
