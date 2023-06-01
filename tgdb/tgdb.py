@@ -9,9 +9,14 @@ import discord
 # Redbot Imports
 from redbot.core import commands, checks, Config
 
+<<<<<<< HEAD
 from tgcommon.models import DiscordLink
 from tgcommon.errors import TGUnrecoverableError
 import aiomysql
+=======
+from tgcommon.models import tgschema
+from aiomysql.sa import create_engine
+>>>>>>> origin/dbdev
 
 
 __version__ = "1.0.0"
@@ -29,18 +34,12 @@ class TGDB(BaseCog):
 
     def __init__(self, bot):
         self.bot = bot
-        self.config = Config.get_conf(
-            self, identifier=672261474290237490, force_registration=True
-        )
-        self.visible_config = [
-            "mysql_host",
-            "mysql_port",
-            "mysql_user",
-            "mysql_db",
-            "mysql_prefix",
-            "min_living_minutes",
-            "verified_role",
-        ]
+        self.config = Config.get_conf(self, identifier=672261474290237490, force_registration=True)
+        ## Stores all our configured database pools (if you use this bot for multiple servers)
+        ## They're indexed by a config key
+        self.database_pools = dict()
+        self.visible_config = ["mysql_host", "mysql_port", "mysql_user", "mysql_db", "mysql_prefix",
+        "min_living_minutes", "verified_role"]
 
         default_guild = {
             "mysql_host": "127.0.0.1",
@@ -203,9 +202,18 @@ class TGDB(BaseCog):
                 embed.add_field(name=f"{k}:", value="`redacted`", inline=False)
         await ctx.send(embed=embed)
 
-    async def update_discord_link(
-        self, ctx, one_time_token: str, user_discord_snowflake: str
-    ):
+    @checks.mod_or_permissions(administrator=True)
+    @commands.command()
+    async def test(self, ctx):
+        """
+        Gets the current settings for the notes database
+        """
+        cur = await self.pool.acquire()
+        res = await cur.execute(tgschema.discord_links.select())
+        for row in (await res.fetchall()):
+            print(row.id, row.one_time_token)
+
+    async def update_discord_link(self, ctx, one_time_token: str, user_discord_snowflake: str):
         """
         Given a one time token, and a discord user snowflake, insert the snowflake for the matching record in the discord links table
         """
@@ -354,6 +362,7 @@ class TGDB(BaseCog):
             await self.pool.wait_closed()
 
         # Establish a connection with the database and pull the relevant data, recycle them every 300 seconds
+<<<<<<< HEAD
         self.pool = await aiomysql.create_pool(
             host=db_host,
             port=db_port,
@@ -363,6 +372,9 @@ class TGDB(BaseCog):
             connect_timeout=5,
             pool_recycle=300,
         )
+=======
+        self.pool = await aiomysql.sa.create_engine(host=db_host,port=db_port,db=db,user=db_user,password=db_pass, connect_timeout=5, pool_recycle=300)
+>>>>>>> origin/dbdev
 
     async def query_database(self, ctx, query: str, parameters: list) -> list:
         """
