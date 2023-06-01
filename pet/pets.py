@@ -881,3 +881,10 @@ class Pets(BaseCog):
         summons our little guy
         """
         await ctx.send("https://youtu.be/esmT7E3f0AA")
+
+    @commands.command()
+    async def lys(self, ctx, *, name: str = None):
+        """
+        summons positive affirmations 
+        """
+        await ctx.send("https://youtu.be/5EqaekCD_uQ")
