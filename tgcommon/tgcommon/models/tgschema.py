@@ -18,7 +18,7 @@ modelname = Table("tablename", metadata
 )
 """
 
-admin = Table(
+Admin = Table(
     "admin",
     metadata,
     Column("ckey", VARCHAR(32), nullable=False),
@@ -27,7 +27,7 @@ admin = Table(
     PrimaryKeyConstraint("ckey"),
 )
 
-admin_log = Table(
+Admin_Log = Table(
     "admin_log",
     metadata,
     Column("id", INTEGER(11), nullable=False, autoincrement=True),
@@ -52,7 +52,7 @@ admin_log = Table(
     PrimaryKeyConstraint("id"),
 )
 
-admin_ranks = Table(
+Admin_Ranks = Table(
     "admin_ranks",
     metadata,
     Column("rank", VARCHAR(32), nullable=False),
@@ -62,7 +62,7 @@ admin_ranks = Table(
     PrimaryKeyConstraint("rank"),
 )
 
-ban = Table(
+Ban = Table(
     "ban",
     metadata,
     Column("id", INTEGER(11, unsigned=True), nullable=False, autoincrement=True),
@@ -109,7 +109,7 @@ ban = Table(
     ),
 )
 
-connection_log = Table(
+Connection_Log = Table(
     "connection_log",
     metadata,
     Column("id", INTEGER(11), nullable=False, autoincrement=True),
@@ -123,7 +123,7 @@ connection_log = Table(
     PrimaryKeyConstraint("id"),
 )
 
-death = Table(
+Death = Table(
     "death",
     metadata,
     Column("id", INTEGER(11), nullable=False, autoincrement=True),
@@ -154,7 +154,7 @@ death = Table(
     PrimaryKeyConstraint("id"),
 )
 
-feedback = Table(
+Feedback = Table(
     "feedback",
     metadata,
     Column("id", INTEGER(11, unsigned=True), nullable=False, autoincrement=True),
@@ -171,7 +171,7 @@ feedback = Table(
     PrimaryKeyConstraint("id"),
 )
 
-ipintel = Table(
+IPintel = Table(
     "ipintel",
     metadata,
     Column("ip", INTEGER(10, unsigned=True), nullable=False),
@@ -187,7 +187,7 @@ ipintel = Table(
     Index("idx_ipintel", "ip", "intel", "date"),
 )
 
-legacy_population = Table(
+Legacy_Population = Table(
     "legacy_population",
     metadata,
     Column("id", INTEGER(11), nullable=False, autoincrement=True),
@@ -200,7 +200,7 @@ legacy_population = Table(
     PrimaryKeyConstraint("id"),
 )
 
-library = Table(
+Library = Table(
     "library",
     metadata,
     Column("id", INTEGER(11), nullable=False, autoincrement=True),
@@ -223,7 +223,7 @@ library = Table(
     Index("idx_lib_search", "deleted", "author", "title", "category"),
 )
 
-messages = Table(
+Messages = Table(
     "messages",
     metadata,
     Column("id", INTEGER(11), nullable=False, autoincrement=True),
@@ -260,7 +260,7 @@ messages = Table(
     Index("idx_msg_type_ckey_time_odr", "type", "targetckey", "timestamp", "deleted"),
 )
 
-role_time = Table(
+Role_Time = Table(
     "role_time",
     metadata,
     Column("ckey", VARCHAR(32), nullable=False),
@@ -289,7 +289,7 @@ role_time_log = Table(
     Index("datetime", "datetime"),
 )
 
-player = Table(
+Player = Table(
     "player",
     metadata,
     Column("ckey", VARCHAR(32), nullable=False),
@@ -309,7 +309,7 @@ player = Table(
     Index("idx_player_ip_ckey", "ip", "ckey"),
 )
 
-poll_option = Table(
+Poll_Option = Table(
     "poll_option",
     metadata,
     Column("id", INTEGER(11), nullable=False, autoincrement=True),
@@ -328,7 +328,7 @@ poll_option = Table(
     Index("idx_pop_pollid", "pollid"),
 )
 
-poll_question = Table(
+Poll_Question = Table(
     "poll_question",
     metadata,
     Column("id", INTEGER(11), nullable=False, autoincrement=True),
@@ -369,7 +369,7 @@ poll_question = Table(
     ),
 )
 
-poll_textreply = Table(
+Poll_Textreply = Table(
     "poll_textreply",
     metadata,
     Column("id", INTEGER(11), nullable=False, autoincrement=True),
@@ -384,7 +384,7 @@ poll_textreply = Table(
     Index("idx_ptext_pollid_ckey", "pollid", "ckey"),
 )
 
-poll_vote = Table(
+Poll_Vote = Table(
     "poll_vote",
     metadata,
     Column("id", INTEGER(11), nullable=False, autoincrement=True),
@@ -401,7 +401,7 @@ poll_vote = Table(
     Index("idx_pvote_optionid_ckey", "optionid", "ckey"),
 )
 
-game_round = Table(
+Game_Round = Table(
     "round",
     metadata,
     Column("id", INTEGER(11), nullable=False, autoincrement=True),
@@ -421,7 +421,7 @@ game_round = Table(
     PrimaryKeyConstraint("id"),
 )
 
-schema_revision = Table(
+Schema_Revision = Table(
     "schema_revision",
     metadata,
     Column("major", TINYINT(3, unsigned=True), nullable=False),
@@ -436,7 +436,7 @@ schema_revision = Table(
     PrimaryKeyConstraint("major", "minor"),
 )
 
-stickyban = Table(
+Stickyban = Table(
     "stickyban",
     metadata,
     Column("ckey", VARCHAR(32), nullable=False),
@@ -446,7 +446,7 @@ stickyban = Table(
     PrimaryKeyConstraint("ckey"),
 )
 
-stickyban_matched_ckey = Table(
+Stickyban_Matched_Ckey = Table(
     "stickyban_matched_ckey",
     metadata,
     Column("stickyban", VARCHAR(32), nullable=False),
@@ -463,7 +463,7 @@ stickyban_matched_ckey = Table(
     PrimaryKeyConstraint("stickyban", "matched_ckey"),
 )
 
-stickyban_matched_ip = Table(
+Stickyban_Matched_Ip = Table(
     "stickyban_matched_ip",
     metadata,
     Column("stickyban", VARCHAR(32), nullable=False),
@@ -479,7 +479,7 @@ stickyban_matched_ip = Table(
     PrimaryKeyConstraint("stickyban", "matched_ip"),
 )
 
-stickyban_matched_cid = Table(
+Stickyban_Matched_Cid = Table(
     "stickyban_matched_cid",
     metadata,
     Column("stickyban", VARCHAR(32), nullable=False),
@@ -495,7 +495,7 @@ stickyban_matched_cid = Table(
     PrimaryKeyConstraint("stickyban", "matched_cid"),
 )
 
-achievements = Table(
+Achievements = Table(
     "achievements",
     metadata,
     Column("ckey", VARCHAR(32), nullable=False),
@@ -511,7 +511,7 @@ achievements = Table(
     PrimaryKeyConstraint("ckey", "achievement_key"),
 )
 
-achievement_metadata = Table(
+Achievement_Metadata = Table(
     "achievement_metadata",
     metadata,
     Column("achievement_key", VARCHAR(32), nullable=False),
@@ -522,7 +522,7 @@ achievement_metadata = Table(
     PrimaryKeyConstraint("achievement_key"),
 )
 
-ticket = Table(
+Ticket = Table(
     "ticket",
     metadata,
     Column("id", INTEGER(11, unsigned=True), nullable=False, autoincrement=True),
@@ -538,7 +538,7 @@ ticket = Table(
     PrimaryKeyConstraint("id"),
 )
 
-discord_links = Table(
+Discord_Links = Table(
     "discord_links",
     metadata,
     Column("id", INTEGER(11, unsigned=True), nullable=False, autoincrement=True),

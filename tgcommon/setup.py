@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="tgcommon",
-    version="1.0.0",
+    version="1.1.0",
     author="oranges",
     author_email="email@oranges.net.nz",
     description="Common code for the tg cogs",
