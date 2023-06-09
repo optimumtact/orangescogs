@@ -565,7 +565,13 @@ class Pets(BaseCog):
             "Sticks and stones...",
             "The crossbow. Sometimes you've got to make a silent takedown.",
         ]
-
+        self.back[
+            "We are back baby",
+            "We are fucking back",
+            "We arrrre baaaaaack",
+            "We're back",
+            "We are back, classic!",
+        ]
 
         self.push_attempts = ["pushes", "violently shoves", "playfully pushes", "tries and fails to push", "falls over trying to push"]
 
@@ -888,3 +894,12 @@ class Pets(BaseCog):
         summons positive affirmations 
         """
         await ctx.send("https://youtu.be/5EqaekCD_uQ")
+
+    @commands.command(aliases=["back", "soback", "baaaaack"])
+    async def weback(self, ctx, *, name: str = None):
+        """
+        We are so back
+        """
+        selectedphrase = random.choice(self.back)
+        message = f"{selectedphrase} https://file.house/UaFt.mp4"
+        await ctx.send(message)
