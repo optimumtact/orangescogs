@@ -828,8 +828,11 @@ class Pets(BaseCog):
         """
         *pushes u*
         """
-        if random.random() > 0.90:
+        choice = random.random()
+        if choice > 0.90:
             await ctx.send("https://file.house/KU6g.mov")
+        if choice > 0.80 and choice < 0.90:
+            await ctx.send("https://file.house/13kD.gif")
         else:
             await ctx.send(
                 "*{} {} {} over!*".format(
