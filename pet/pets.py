@@ -565,7 +565,7 @@ class Pets(BaseCog):
             "Sticks and stones...",
             "The crossbow. Sometimes you've got to make a silent takedown.",
         ]
-        self.back[
+        self.back = [
             "We are back baby",
             "We are fucking back",
             "We arrrre baaaaaack",
@@ -573,14 +573,27 @@ class Pets(BaseCog):
             "We are back, classic!",
         ]
 
-        self.push_attempts = ["pushes", "violently shoves", "playfully pushes", "tries and fails to push", "falls over trying to push"]
+        self.push_attempts = [
+            "pushes",
+            "violently shoves",
+            "playfully pushes",
+            "tries and fails to push",
+            "falls over trying to push",
+        ]
 
-        self.microwave_sound = ['vrrrrrrrrrrrmmmmmmmmmmmmm', 'whzzhzhzhzhzhzhzhzhzhz']
-        self.dangerous_microwave_objects = ['fork', 'tinfoil']
+        self.microwave_sound = ["vrrrrrrrrrrrmmmmmmmmmmmmm", "whzzhzhzhzhzhzhzhzhzhz"]
+        self.dangerous_microwave_objects = ["fork", "tinfoil"]
 
-        self.dangerous_microwave_objects_regex = re.compile("|".join(self.dangerous_microwave_objects))
+        self.dangerous_microwave_objects_regex = re.compile(
+            "|".join(self.dangerous_microwave_objects)
+        )
 
-        self.divorce_results = ["takes the dog", "takes the kids", "takes the house", "wins alimony"]
+        self.divorce_results = [
+            "takes the dog",
+            "takes the kids",
+            "takes the house",
+            "wins alimony",
+        ]
 
     @commands.command()
     async def pet(self, ctx, *, name: str):
@@ -596,7 +609,11 @@ class Pets(BaseCog):
         """
         Got em good
         """
-        await ctx.send("*{} puts {} in a headlock and gives them an aggressive noogieing*".format(ctx.author.mention, name))
+        await ctx.send(
+            "*{} puts {} in a headlock and gives them an aggressive noogieing*".format(
+                ctx.author.mention, name
+            )
+        )
 
     @commands.command(aliases=["wyci", "featurecoder"])
     async def when(self, ctx, *, name: str):
@@ -615,20 +632,26 @@ class Pets(BaseCog):
             return
 
         temperature = random.randint(15, 90)
-        if(random.random() > 0.98):
+        if random.random() > 0.98:
             temperature = 15599983
-        await ctx.send("*{} puts {} in the microwave and turns it on*".format(ctx.author.mention, name))
+        await ctx.send(
+            "*{} puts {} in the microwave and turns it on*".format(
+                ctx.author.mention, name
+            )
+        )
         await ctx.send(f"beep, beep, beep, {random.choice(self.microwave_sound)}")
         microwave_time = random.randrange(0, 90)
-        
-        await(asyncio.sleep(microwave_time))
+
+        await asyncio.sleep(microwave_time)
         if self.dangerous_microwave_objects_regex.search(name):
             message = f"The microwave explodes violently, scattering parts everywhere, nice job {ctx.author.mention}"
-            if(random.random() > 0.5):
+            if random.random() > 0.5:
                 message += " great, it caught fire too"
         else:
-            message = "{} ding, {} is done, it's now {} degrees celsius".format(ctx.author.mention, name, temperature)
-        
+            message = "{} ding, {} is done, it's now {} degrees celsius".format(
+                ctx.author.mention, name, temperature
+            )
+
         await ctx.send(message)
 
     @commands.command(aliases=["tailpull"])
@@ -709,9 +732,9 @@ class Pets(BaseCog):
         """
         Give a user a smugly superior sense of self worth
         """
-        milk =  random.choice(self.ethical_alternatives)
+        milk = random.choice(self.ethical_alternatives)
         if random.randrange(0, 100) < 1:
-            milk = 'breast'
+            milk = "breast"
         await ctx.send(
             "*{} serves {} a{} {} with {} milk. How ethical! Is that a hint of smug superiority on the face of {}?*".format(
                 ctx.author.mention,
@@ -740,11 +763,11 @@ class Pets(BaseCog):
         Bap!!!
         """
         await ctx.send("*{} baps {} on the head*".format(ctx.author.mention, name))
-    
+
     @commands.command()
     async def slap(self, ctx, *, name: str):
         await ctx.send("*{} slaps {} in the face*".format(ctx.author.mention, name))
-    
+
     @commands.command()
     async def hug(self, ctx, *, name: str):
         """
@@ -787,7 +810,7 @@ class Pets(BaseCog):
         await ctx.send(
             "*{} wraps their tail around {}'s tail*".format(ctx.author.mention, name)
         )
-    
+
     @commands.command(aliases=["food"])
     async def breakfast(self, ctx, *, name: str):
         """
@@ -795,15 +818,17 @@ class Pets(BaseCog):
         """
         items = random.sample(self.breakfast, 3)
         await ctx.send(
-            "{} serves {} a plate of {} and {}, Yummy!".format(ctx.author.mention, name, ', '.join(items[0:2]), items[2])
+            "{} serves {} a plate of {} and {}, Yummy!".format(
+                ctx.author.mention, name, ", ".join(items[0:2]), items[2]
+            )
         )
-        
+
     @commands.command()
     async def push(self, ctx, *, name: str):
         """
         *pushes u*
         """
-        if(random.random() > 0.90):
+        if random.random() > 0.90:
             await ctx.send("https://file.house/KU6g.mov")
         else:
             await ctx.send(
@@ -836,9 +861,7 @@ class Pets(BaseCog):
         *becomes your bf*
         """
         await ctx.send(
-            "{} sets {} as their spouse! How cute.".format(
-                ctx.author.mention, name
-            )
+            "{} sets {} as their spouse! How cute.".format(ctx.author.mention, name)
         )
 
     @commands.command()
@@ -855,10 +878,7 @@ class Pets(BaseCog):
         else:
             await ctx.send(
                 "{} files for divorce from {}. {} {}!".format(
-                    ctx.author.mention, 
-                    name, 
-                    name, 
-                    random.choice(self.divorce_results)
+                    ctx.author.mention, name, name, random.choice(self.divorce_results)
                 )
             )
 
@@ -869,17 +889,9 @@ class Pets(BaseCog):
         Don't tell anyone, but chooms are people whose id ends with 2.
         """
         if member.id % 10 == 2:
-            await ctx.send(
-                "{} is indeed a choom.".format(
-                    member.name
-                )
-            )
+            await ctx.send("{} is indeed a choom.".format(member.name))
         else:
-            await ctx.send(
-                "{} is not a choom.".format(
-                    member.name
-                )
-            )
+            await ctx.send("{} is not a choom.".format(member.name))
 
     @commands.command()
     async def maxwell(self, ctx, *, name: str = None):
@@ -891,7 +903,7 @@ class Pets(BaseCog):
     @commands.command()
     async def lys(self, ctx, *, name: str = None):
         """
-        summons positive affirmations 
+        summons positive affirmations
         """
         await ctx.send("https://youtu.be/5EqaekCD_uQ")
 
