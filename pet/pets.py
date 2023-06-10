@@ -918,3 +918,26 @@ class Pets(BaseCog):
         selectedphrase = random.choice(self.back)
         message = f"{selectedphrase} https://file.house/UaFt.mp4"
         await ctx.send(message)
+
+    @commands.command()
+    async def roulette(self, ctx, *, name: str = None):
+        """
+        are you feeling lucky, punk?
+        """
+        await ctx.send(
+          "{} spins the cylinder of a revolver, places the barrel against their temple, and pulls the trigger!".format(
+              ctx.author.mention
+          )
+        )
+        if random.random() > 0.8333:
+          await ctx.send(
+            "\*Click!\* Nothing happens, {} lives to see another day.".format(
+                ctx.author.mention
+            )
+          )
+        else:
+          await ctx.send(
+            "\*Bang!\* The revolver fires. {} is dead before they hit the ground. Looks like they weren't so lucky.".format(
+                ctx.author.mention
+            )
+          )
