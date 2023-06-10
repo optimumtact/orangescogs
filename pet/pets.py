@@ -931,13 +931,13 @@ class Pets(BaseCog):
         )
         if random.random() > 0.8333:
           await ctx.send(
-            "\*Click!\* Nothing happens, {} lives to see another day.".format(
+            "\*Bang!\* The revolver fires. {} is dead before they hit the ground. Looks like they weren't so lucky.".format(
                 ctx.author.mention
             )
           )
         else:
           await ctx.send(
-            "\*Bang!\* The revolver fires. {} is dead before they hit the ground. Looks like they weren't so lucky.".format(
+            "\*Click!\* Nothing happens, {} lives to see another day.".format(
                 ctx.author.mention
             )
           )
