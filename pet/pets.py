@@ -925,19 +925,27 @@ class Pets(BaseCog):
         are you feeling lucky, punk?
         """
         await ctx.send(
-          "{} spins the cylinder of a revolver, places the barrel against their temple, and pulls the trigger!".format(
-              ctx.author.mention
-          )
+            "{} spins the cylinder of a revolver, places the barrel against their temple, and pulls the trigger!".format(
+                ctx.author.mention
+            )
         )
         if random.random() > 0.8333:
-          await ctx.send(
-            "\*Bang!\* The revolver fires. {} is dead before they hit the ground. Looks like they weren't so lucky.".format(
-                ctx.author.mention
+            await ctx.send(
+                "\*Bang!\* The revolver fires. {} is dead before they hit the ground. Looks like they weren't so lucky.".format(
+                    ctx.author.mention
+                )
             )
-          )
         else:
-          await ctx.send(
-            "\*Click!\* Nothing happens, {} lives to see another day.".format(
-                ctx.author.mention
+            await ctx.send(
+                "\*Click!\* Nothing happens, {} lives to see another day.".format(
+                    ctx.author.mention
+                )
             )
-          )
+
+    @commands.command()
+    async def wtf(self, ctx, *, name: str = None):
+        """
+        What did we learn? nothing
+        """
+        message = "https://www.youtube.com/watch?v=9J8zCJEtftE"
+        await ctx.send(message)
