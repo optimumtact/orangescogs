@@ -9,12 +9,15 @@ import discord
 from redbot.core import commands
 from datetime import timedelta
 
+import logging
+
 import re
 
 __version__ = "1.2.1"
 __author__ = "oranges"
 
 BaseCog = getattr(commands, "Cog", object)
+log = logging.getLogger("red.oranges_pet")
 
 
 class Pets(BaseCog):
@@ -934,6 +937,7 @@ class Pets(BaseCog):
             try:
                 await ctx.author.timeout(timedelta(seconds=60))
             except discord.errors.Forbidden:
+                log.warning("The bot does not have permission to timeout users (requires edit member)")
                 pass  # Ignore if we can't timeout users
             await ctx.send(
                 "*Bang!* The revolver fires. {} is dead before they hit the ground. Looks like they weren't so lucky.".format(
