@@ -7,6 +7,7 @@ import discord
 
 # Redbot Imports
 from redbot.core import commands
+from datetime import timedelta
 
 import re
 
@@ -930,14 +931,18 @@ class Pets(BaseCog):
             )
         )
         if random.random() > 0.8333:
+            try:
+                await ctx.author.timeout(timedelta(seconds=60))
+            except discord.errors.Forbidden:
+                pass  # Ignore if we can't timeout users
             await ctx.send(
-                "\*Bang!\* The revolver fires. {} is dead before they hit the ground. Looks like they weren't so lucky.".format(
+                "*Bang!* The revolver fires. {} is dead before they hit the ground. Looks like they weren't so lucky.".format(
                     ctx.author.mention
                 )
             )
         else:
             await ctx.send(
-                "\*Click!\* Nothing happens, {} lives to see another day.".format(
+                "*Click!* Nothing happens, {} lives to see another day.".format(
                     ctx.author.mention
                 )
             )
