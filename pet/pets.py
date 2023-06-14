@@ -935,7 +935,7 @@ class Pets(BaseCog):
         )
         if random.random() > 0.8333:
             try:
-                await ctx.author.timeout(timedelta(seconds=60))
+                await ctx.author.timeout(timedelta(minutes=10))
             except discord.errors.Forbidden:
                 log.warning("The bot does not have permission to timeout users (requires edit member)")
                 pass  # Ignore if we can't timeout users
