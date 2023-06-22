@@ -1,5 +1,5 @@
 from .gbp import gbp
 
 
-def setup(bot):
-    bot.add_cog(gbp(bot))
+async def setup(bot):
+    await bot.add_cog(gbp(bot))

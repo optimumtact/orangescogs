@@ -1,5 +1,4 @@
 import requests
-import os.path
 import logging
 import toml
 
@@ -12,6 +11,7 @@ BaseCog = getattr(commands, "Cog", object)
 
 log = logging.getLogger("red.oranges_gbp")
 
+
 class gbp(BaseCog):
     """
     Find your GBP
@@ -19,11 +19,11 @@ class gbp(BaseCog):
 
     def __init__(self, bot):
         self.bot = bot
-        self.config = Config.get_conf(self, identifier=672261474290237490, force_registration=True)
+        self.config = Config.get_conf(
+            self, identifier=672261474290237490, force_registration=True
+        )
 
-        default_global = {
-            "gbp": {}
-        }
+        default_global = {"gbp": {}}
         self.config.register_global(**default_global)
 
     async def get_latest_gbp(self):
@@ -36,14 +36,14 @@ class gbp(BaseCog):
         line = ""
         for char in content:  # first we cleanse the garbage lines
             line += char
-            if char == '\n':
-                if (ord(line[0]) >= ord('0') and ord(line[0]) <= ord('9')):
+            if char == "\n":
+                if ord(line[0]) >= ord("0") and ord(line[0]) <= ord("9"):
                     raw_lines.append(line)
                 line = ""
         pairs = []
         for line in raw_lines:
             segments = line.split(" ")
-            if segments[-1][-1:] == '\n':
+            if segments[-1][-1:] == "\n":
                 segments[-1] = segments[-1][:-1]
             pairs.append([int(segments[2]), segments[-1]])
         for n in range(len(pairs) - 1, 0, -1):
@@ -71,11 +71,11 @@ class gbp(BaseCog):
         for i in range(1, len(gbp_dict) + 1):
             line = gbp_dict[str(i)]
             if name.lower() in line[0].lower():
-                msg += "#" + str(i) + ": " + gbp_dict[str(i)][0] + " (" + str(gbp_dict[str(i)][1]) + " GBP)\n"
-        if (msg == ""):
+                msg += f"# {str(i)}: {gbp_dict[str(i)][0]} ({str(gbp_dict[str(i)][1])} GBP)\n"
+        if msg == "":
             await ctx.send("No user found!")
             return
-        if (len(msg) >= 2000):
+        if len(msg) >= 2000:
             await ctx.send(file=utils.chat_formatting.text_to_file(msg, "gbp.txt"))
         else:
             await ctx.send(f"```{msg}```")
@@ -95,11 +95,11 @@ class gbp(BaseCog):
         for i in range(1, len(gbp_dict) + 1):
             line = gbp_dict[str(i)]
             if gbp_to_find == str(line[1]):
-                msg += "#" + str(i) + ": " + gbp_dict[str(i)][0] + " (" + str(gbp_dict[str(i)][1]) + " GBP)\n"
-        if (msg == ""):
+                msg += f"# {str(i)}: {gbp_dict[str(i)][0]} ({str(gbp_dict[str(i)][1])} GBP)\n"
+        if msg == "":
             await ctx.send("No user found with this GBP!")
             return
-        if (len(msg) >= 2000):
+        if len(msg) >= 2000:
             await ctx.send(file=utils.chat_formatting.text_to_file(msg, "gbp.txt"))
         else:
             await ctx.send(f"```{msg}```")
@@ -111,15 +111,15 @@ class gbp(BaseCog):
         for i in range(1, len(gbp_dict) + 1):
             if int(up_to_pos) < i:
                 break
-            msg += "#" + str(i) + ": " + gbp_dict[str(i)][0] + " (" + str(gbp_dict[str(i)][1]) + " GBP)\n"
-        if (msg == ""):
+            msg += f"# {str(i)}: {gbp_dict[str(i)][0]} ({str(gbp_dict[str(i)][1])} GBP)\n"
+        if msg == "":
             await ctx.send("An error has occured!")
             return
-        if (len(msg) >= 2000):
+        if len(msg) >= 2000:
             await ctx.send(file=utils.chat_formatting.text_to_file(msg, "gbp.txt"))
         else:
             await ctx.send(f"```{msg}```")
-    
+
     @commands.command()
     async def totalgbp(self, ctx):
         total_pos_gbp = 0
@@ -131,7 +131,9 @@ class gbp(BaseCog):
                 total_pos_gbp += current_gbp
             else:
                 total_neg_gbp += abs(current_gbp)
-        await ctx.send(f"```There is {total_pos_gbp} positive GBP, and {total_neg_gbp} negative GBP in circulation.```")
+        await ctx.send(
+            f"```There is {total_pos_gbp} positive GBP, and {total_neg_gbp} negative GBP in circulation.```"
+        )
 
     @commands.command()
     async def costs(self, ctx):
@@ -141,9 +143,7 @@ class gbp(BaseCog):
         content = response.text
         result = toml.loads(content)
         msg = ""
-        for label,cost in result["points"].items():
+        for label, cost in result["points"].items():
             msg += f"{label} = {cost}\n"
 
         await ctx.send(msg)
-
-
