@@ -267,7 +267,7 @@ class Fridge(BaseCog):
             chill_message = ", the cool air feels nice against your face"
 
         fridge = self.fridges[ctx.guild]
-        items = fridge.keys()
+        items = list(fridge.keys())
         if len(items) <= 0:
             await ctx.send(
                 f"Bored, you open your fridge only to find there's nothing there!, use restock to refill your fridge{chill_message}"
@@ -276,7 +276,7 @@ class Fridge(BaseCog):
 
         spotted = list()
         if search:
-            fuzzy_matches = process.extract(search, list(fridge.keys()), limit=30)
+            fuzzy_matches = process.extract(search, items, limit=30)
             for match in fuzzy_matches:
                 if match[1] > 80:
                     spotted.append(match[0])
