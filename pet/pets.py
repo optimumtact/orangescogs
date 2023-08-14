@@ -959,7 +959,7 @@ class Pets(BaseCog):
         message = "https://www.youtube.com/watch?v=9J8zCJEtftE"
         await ctx.send(message)
 
-    @commands.command()
+    @commands.command(aliases=["horse"])
     async def shock(self, ctx, *, name: str = None):
         """
         Horse action
