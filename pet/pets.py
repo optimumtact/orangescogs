@@ -958,3 +958,11 @@ class Pets(BaseCog):
         """
         message = "https://www.youtube.com/watch?v=9J8zCJEtftE"
         await ctx.send(message)
+
+    @commands.command()
+    async def shock(self, ctx, *, name: str = None):
+        """
+        Horse action
+        """
+        message = "https://file.house/aX2X.jpg"
+        await ctx.send(message)
