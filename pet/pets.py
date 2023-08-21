@@ -599,6 +599,29 @@ class Pets(BaseCog):
             "wins alimony",
         ]
 
+        self.magic_ball_responses = [
+          "It is certain",
+          "It is decidedly so",
+          "Without a doubt",
+          "Yes definitely",
+          "You may rely on it",
+          "As I see it, yes",
+          "Most likely",
+          "Outlook good",
+          "Yes",
+          "Signs point to yes",
+          "Reply hazy, try again",
+          "Ask again later",
+          "Better not tell you now",
+          "Cannot predict now",
+          "Concentrate and ask again",
+          "Don't count on it",
+          "My reply is no",
+          "My sources say no",
+          "Outlook not so good",
+          "Very doubtful",
+        ]
+
     @commands.command()
     async def pet(self, ctx, *, name: str):
         """
@@ -966,3 +989,14 @@ class Pets(BaseCog):
         """
         message = "https://file.house/aX2X.jpg"
         await ctx.send(message)
+
+    @commands.command(aliases=["8ball"])
+    async def magicball(self, ctx, *, name: str = None):
+        """
+        Consult the orb
+        """
+        await ctx.send(
+            "{} {}".format(
+                ctx.author.mention, random.choice(self.magic_ball_responses)
+            )
+        )
