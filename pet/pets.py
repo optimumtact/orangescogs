@@ -1000,3 +1000,21 @@ class Pets(BaseCog):
                 ctx.author.mention, random.choice(self.magic_ball_responses)
             )
         )
+
+    @commands.command(aliases=["ahelp"])
+    async def adminhelp(self, ctx, *, name: str):
+        """
+        BWOINK
+        """
+        if random.random() > 0.5:
+          await ctx.send(
+              "Admin PM from {}: {} IC issue".format(
+                  ctx.author.mention, name
+              )
+          )
+        else:
+          await ctx.send(
+              "Admin PM from {}: {} Skill issue".format(
+                  ctx.author.mention, name
+              )
+          )
