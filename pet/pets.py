@@ -598,6 +598,8 @@ class Pets(BaseCog):
             "takes the house",
             "wins alimony",
         ]
+        self.cylinder = 0
+        self.bullet = -1
 
         self.magic_ball_responses = [
           "It is certain",
@@ -951,12 +953,18 @@ class Pets(BaseCog):
         """
         are you feeling lucky, punk?
         """
+        self.cylinder += 1
+        # wrap around to 0 again
+        self.cylinder = self.cylinder % 6
+        if self.bullet == -1:
+            await self.spin(ctx)
+        log.info(f"Bullet position is {self.bullet}, cylinder is at {self.cylinder}")
         await ctx.send(
-            "{} spins the cylinder of a revolver, places the barrel against their temple, and pulls the trigger!".format(
+            "{} places the barrel against their temple, and pulls the trigger!".format(
                 ctx.author.mention
             )
         )
-        if random.random() > 0.8333:
+        if self.cylinder == self.bullet:
             try:
                 await ctx.author.timeout(timedelta(minutes=10))
             except discord.errors.Forbidden:
@@ -967,12 +975,24 @@ class Pets(BaseCog):
                     ctx.author.mention
                 )
             )
+            # Make sure it spins again
+            self.bullet = -1
         else:
             await ctx.send(
                 "*Click!* Nothing happens, {} lives to see another day.".format(
                     ctx.author.mention
                 )
             )
+
+    async def _spin(self, ctx):
+        bullet = random.randrange(0, 5)
+        self.bullet = bullet
+        log.info(f"Bullet position is {bullet}, cylinder is at {self.cylinder}")
+        await ctx.send(f"{ctx.author.mention} spins the cylinder against their arm like a badass")
+
+    @commands.command()
+    async def spin(self, ctx):
+        await self._spin(ctx)
 
     @commands.command()
     async def wtf(self, ctx, *, name: str = None):
