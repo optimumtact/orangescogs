@@ -1038,3 +1038,11 @@ class Pets(BaseCog):
                   ctx.author.mention, name
               )
           )
+
+    @commands.command(aliases=["kiwi"])
+    async def nz(self, ctx, *, name: str = None):
+        """
+        la creatura 
+        """
+        message = "https://www.youtube.com/watch?v=XqHA5nGap5A"
+        await ctx.send(message)
