@@ -959,10 +959,8 @@ class Pets(BaseCog):
         if self.bullet == -1:
             await self.spin(ctx)
         log.info(f"Bullet position is {self.bullet}, cylinder is at {self.cylinder}")
-        await ctx.send(
-            "{} places the barrel against their temple, and pulls the trigger!".format(
-                ctx.author.mention
-            )
+        message = "{} places the barrel against their temple, and pulls the trigger!".format(
+            ctx.author.mention
         )
         if self.cylinder == self.bullet:
             try:
@@ -970,19 +968,16 @@ class Pets(BaseCog):
             except discord.errors.Forbidden:
                 log.warning("The bot does not have permission to timeout users (requires edit member)")
                 pass  # Ignore if we can't timeout users
-            await ctx.send(
-                "*Bang!* The revolver fires. {} is dead before they hit the ground. Looks like they weren't so lucky.".format(
-                    ctx.author.mention
-                )
+            message += "\n*Bang!* The revolver fires. {} is dead before they hit the ground. Looks like they weren't so lucky.".format(
+                ctx.author.mention
             )
             # Make sure it spins again
             self.bullet = -1
         else:
-            await ctx.send(
-                "*Click!* Nothing happens, {} lives to see another day.".format(
-                    ctx.author.mention
-                )
+            message += "\n*Click!* Nothing happens, {} lives to see another day.".format(
+                ctx.author.mention
             )
+        await ctx.send(message)
 
     async def _spin(self, ctx):
         bullet = random.randrange(0, 5)
