@@ -1,9 +1,7 @@
 # Standard Imports
-from collections import defaultdict
 import json
 import logging
-from typing import DefaultDict, Dict, Union, Any, cast
-from yaml import dump
+from typing import Dict, Any, cast
 
 # Redbot Imports
 from redbot.core import commands, checks, Config
@@ -28,57 +26,64 @@ BaseCog = getattr(commands, "Cog", object)
 #         self.length_of_timeout = length_of_timeout
 #         self.expiry_date = datetime.now() + length_of_timeout
 #         self.highest_role_id = applying_user.top_role.id
-    
+
 #     def still_valid(self):
 #         '''
 #         Determine if this timeout log is still valid (i.e still applies)
 #         '''
 #         return datetime.now() <= self.expiry_date
-    
+
 #     def can_replace(self, applying_user: discord.Member):
 #         '''
 #         Can the applying user replace/remove the timeout in question
 #         '''
 #         return self.highest_role < applying_user.top_role
 
-#(c) Will Roberts  14 April, 2014
-#The regex and formatting code comes from the very useful https://github.com/wroberts/pytimeparse/blob/master/pytimeparse/timeparse.py
-#released under MIT and reproduced here
-class TimeFormat():
-    DAYS = r'(?P<days>[\d.]+)\s*(?:d|dys?|days?)'
-    MINS = r'(?P<mins>[\d.]+)\s*(?:m|(mins?)|(minutes?))'
-    HOURS = r'(?P<hours>[\d.]+)\s*(?:h|hrs?|hours?)'
+# (c) Will Roberts  14 April, 2014
+# The regex and formatting code comes from the very useful https://github.com/wroberts/pytimeparse/blob/master/pytimeparse/timeparse.py
+# released under MIT and reproduced here
+
+
+class TimeFormat:
+    DAYS = r"(?P<days>[\d.]+)\s*(?:d|dys?|days?)"
+    MINS = r"(?P<mins>[\d.]+)\s*(?:m|(mins?)|(minutes?))"
+    HOURS = r"(?P<hours>[\d.]+)\s*(?:h|hrs?|hours?)"
     TIMEFORMATS = [
-    fr'{DAYS}\s*{HOURS}\s*{MINS}',
-    fr'{DAYS}\s*{MINS}',
-    fr'{DAYS}\s*{HOURS}',
-    fr'{HOURS}\s*{MINS}',
-    fr'{MINS}',
-    fr'{HOURS}',
-    fr'{DAYS}',
+        fr"{DAYS}\s*{HOURS}\s*{MINS}",
+        fr"{DAYS}\s*{MINS}",
+        fr"{DAYS}\s*{HOURS}",
+        fr"{HOURS}\s*{MINS}",
+        fr"{MINS}",
+        fr"{HOURS}",
+        fr"{DAYS}",
     ]
 
-    COMPILED_TIMEFORMATS = [re.compile(r'\s*' + timefmt + r'\s*$', re.I)
-                        for timefmt in TIMEFORMATS]
-    
-    def __init__(self, formatstr:str):
-        #So we always have the relevant keys (defaulting to zero)
+    COMPILED_TIMEFORMATS = [
+        re.compile(r"\s*" + timefmt + r"\s*$", re.I) for timefmt in TIMEFORMATS
+    ]
+
+    def __init__(self, formatstr: str):
+        # So we always have the relevant keys (defaulting to zero)
         for timefmt in self.COMPILED_TIMEFORMATS:
             match = timefmt.match(formatstr)
             if match and match.group(0).strip():
                 mdict = match.groupdict()
-                for key in ('mins', 'days', 'hours'):
+                for key in ("mins", "days", "hours"):
                     if key in mdict:
                         mdict[key] = int(mdict[key])
                     else:
                         mdict[key] = 0
                 self.time = mdict
                 return
-        
-        raise discord.ext.commands.BadArgument(f'{formatstr} is not a valid time format')
-    
+
+        raise discord.ext.commands.BadArgument(
+            f"{formatstr} is not a valid time format"
+        )
+
     def get_timedelta(self):
-        return timedelta(self.time['days'], 0, 0, 0, self.time['mins'], self.time['hours'])
+        return timedelta(
+            self.time["days"], 0, 0, 0, self.time["mins"], self.time["hours"]
+        )
 
     def to_config(self) -> str:
         return json.dumps(self.time)
@@ -87,10 +92,11 @@ class TimeFormat():
     def from_config(jsonstr: str):
         timedict = json.loads(jsonstr)
         return TimeFormat(f"{timedict['days']}d{timedict['hours']}h{timedict['mins']}m")
-        
+
     def __str__(self) -> str:
         return str(self.get_timedelta())
-    
+
+
 class Timeout(BaseCog):
     """
     Timeout module
@@ -161,27 +167,31 @@ class Timeout(BaseCog):
 
             await self.config.guild(ctx.guild).logging_channel.set(channel.id)
             await ctx.send(f"Channel set to {channel}")
-        except (ValueError, KeyError, AttributeError) as e:    
-            await ctx.send(
-                "There was a problem setting the channel to log to"
-            )
+        except (ValueError, KeyError, AttributeError) as e:
+            await ctx.send("There was a problem setting the channel to log to")
             raise e
 
-
-    async def send_log_message(self, guild: discord.Guild, message: str, source: discord.Member, target: discord.Member, jump_url: str):
+    async def send_log_message(
+        self,
+        guild: discord.Guild,
+        message: str,
+        source: discord.Member,
+        target: discord.Member,
+        jump_url: str,
+    ):
         """
         Send a log message about a timeout action happening
-        """ 
+        """
         channel: discord.TextChannel = await self.get_log_channel(guild)
         if channel:
-            embed = discord.Embed(url=jump_url , title="__Timeout action:__")
+            embed = discord.Embed(url=jump_url, title="__Timeout action:__")
             embed.add_field(name="Source", value=source, inline=False)
             embed.add_field(name="Target", value=target, inline=False)
             embed.add_field(name="Action", value=message, inline=False)
             log.info(type(channel))
             await channel.send(embed=embed)
 
-    async def get_log_channel(self, guild:discord.Guild):
+    async def get_log_channel(self, guild: discord.Guild):
         """
         Get the configured channel for this guild, or None if none is set or the channel doesn't exist
         """
@@ -204,36 +214,36 @@ class Timeout(BaseCog):
         try:
             roles = await self.config.guild(ctx.guild).role_max()
             roleid = str(role.id)
-            
+
             roles[roleid] = max_time_str.to_config()
-            log.debug(f'New roles dict {roles}')
+            log.debug(f"New roles dict {roles}")
             if max_time_str.get_timedelta() == timedelta(0):
                 del roles[roleid]
                 await ctx.send(f"Role {role} permissions removed")
             else:
-                await ctx.send(f"Role {role} can now only set a maximum of {max_time_str} timeout")
+                await ctx.send(
+                    f"Role {role} can now only set a maximum of {max_time_str} timeout"
+                )
 
             await self.config.guild(ctx.guild).role_max.set(roles)
-            
-        except (ValueError, KeyError, AttributeError) as e:    
+
+        except (ValueError, KeyError, AttributeError) as e:
             await ctx.send(
                 "There was a problem setting the maximum timeout for this role"
             )
             raise e
-    
+
     @config.command()
     async def enable(self, ctx):
         """
         Enable the plugin
         """
         try:
-            roles = await self.config.guild(ctx.guild).enabled.set(True)
-            await ctx.send(f"The module is now enabled")
-            
+            await self.config.guild(ctx.guild).enabled.set(True)
+            await ctx.send("The module is now enabled")
+
         except (ValueError, KeyError, AttributeError):
-            await ctx.send(
-                "There was a problem enabling the module"
-            )
+            await ctx.send("There was a problem enabling the module")
 
     @timeout.command()
     async def remove(self, ctx, user: discord.Member):
@@ -250,27 +260,39 @@ class Timeout(BaseCog):
         for role in ctx.author.roles:
             roleid = str(role.id)
             if roleid in role_max_dict:
-                possible_new_max = TimeFormat.from_config(role_max_dict[roleid]).get_timedelta()
+                possible_new_max = TimeFormat.from_config(
+                    role_max_dict[roleid]
+                ).get_timedelta()
                 log.debug(f"found role with max days {possible_new_max}")
                 max_days = max(max_days, possible_new_max)
-        
-        if max_days == timedelta(0): 
-            await ctx.send("You are not authorised to time users out and therefore cannot untime them out")
+
+        if max_days == timedelta(0):
+            await ctx.send(
+                "You are not authorised to time users out and therefore cannot untime them out, this incident will be reported"
+            )
             return
 
-        reason = f'Timeout removed by {ctx.author}'
+        reason = f"Timeout removed by {ctx.author}"
         payload: Dict[str, Any] = {}
-        payload['communication_disabled_until'] = None
+        payload["communication_disabled_until"] = None
         try:
-            data = await ctx.bot.http.edit_member(user.guild.id, user.id, reason=reason, **payload)
-            await self.send_log_message(ctx.guild, f"Timeout was removed", ctx.author, user, ctx.message.jump_url)
-            await ctx.send(f"Timeout has been removed")
+            await ctx.bot.http.edit_member(
+                user.guild.id, user.id, reason=reason, **payload
+            )
+            await self.send_log_message(
+                ctx.guild,
+                "Timeout was removed",
+                ctx.author,
+                user,
+                ctx.message.jump_url,
+            )
+            await ctx.send("Timeout has been removed")
         except (Forbidden):
             await self.config.guild(ctx.guild).enabled.set(False)
             await ctx.send("I do not have permission to time this member out")
 
     @timeout.command()
-    async def apply(self, ctx, user: discord.Member, days:TimeFormat):
+    async def apply(self, ctx, user: discord.Member, days: TimeFormat):
         """
         Time out the targeted user for a given number of days (limits to role max automatically)
 
@@ -287,13 +309,14 @@ class Timeout(BaseCog):
         log.debug(f"Converted to timedelta {days.get_timedelta()}")
         days = days.get_timedelta()
         enabled = await self.config.guild(ctx.guild).enabled()
-        channel = await self.config.guild(ctx.guild).logging_channel()
         if not enabled:
             await ctx.send("This module is not enabled")
             return
-        
+
         if ctx.author.top_role <= user.top_role:
-            await ctx.send(f"You cannot apply a timeout to an equal or higher ranked discord member")
+            await ctx.send(
+                "You cannot apply a timeout to an equal or higher ranked discord member"
+            )
             return
 
         role_max_dict = await self.config.guild(ctx.guild).role_max()
@@ -301,30 +324,37 @@ class Timeout(BaseCog):
         for role in ctx.author.roles:
             roleid = str(role.id)
             if roleid in role_max_dict:
-                possible_new_max = TimeFormat.from_config(role_max_dict[roleid]).get_timedelta()
+                possible_new_max = TimeFormat.from_config(
+                    role_max_dict[roleid]
+                ).get_timedelta()
                 log.debug(f"found role with max days {possible_new_max}")
                 max_days = max(max_days, possible_new_max)
-        
-        
+
         time_to_timeout = max(timedelta(0), min(days, max_days, timedelta(28)))
         log.debug(f"Post calculations {days}, {max_days}, {time_to_timeout}")
-        if time_to_timeout == timedelta(0): 
-            await ctx.send("You are not authorised to time users out")
+        if time_to_timeout == timedelta(0):
+            await ctx.send("You are not authorised to time users out, this incident will be reported")
             return
-        
-        
-        reason = f'Requested timeout by {ctx.author} for {time_to_timeout}'
+
+        reason = f"Requested timeout by {ctx.author} for {time_to_timeout}"
         payload: Dict[str, Any] = {}
         my_date: datetime = datetime.now() + time_to_timeout
-        payload['communication_disabled_until'] = my_date.isoformat()
+        payload["communication_disabled_until"] = my_date.isoformat()
         try:
-            data = await ctx.bot.http.edit_member(user.guild.id, user.id, reason=reason, **payload)
+            await ctx.bot.http.edit_member(
+                user.guild.id, user.id, reason=reason, **payload
+            )
             # result = TimeoutLog(ctx.author, user, ctx.guild, time_to_timeout)
             # self.timeouts_by_role[user] = result
             # log.info(dump(result))
             # await self.config.guild(ctx.guild).timeouts.set(dump(self.timeouts_by_role))
-            await self.send_log_message(ctx.guild, f"User was timed out by for {time_to_timeout}", ctx.author, user, ctx.message.jump_url)
+            await self.send_log_message(
+                ctx.guild,
+                f"User was timed out by for {time_to_timeout}",
+                ctx.author,
+                user,
+                ctx.message.jump_url,
+            )
             await ctx.send(f"User has been timed out for {time_to_timeout}")
         except (Forbidden):
-            #await self.config.guild(ctx.guild).enabled.set(False)
             await ctx.send("I do not have permission to time members out")
