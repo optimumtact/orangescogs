@@ -1041,3 +1041,11 @@ class Pets(BaseCog):
         """
         message = "https://www.youtube.com/watch?v=XqHA5nGap5A"
         await ctx.send(message)
+
+    @commands.command()
+    async def sex(self, ctx, *, name: str = None):
+        """
+        Stop, Takeshi! Your body can't handle much more of this!
+        """
+        message = "https://www.youtube.com/watch?v=UHmFbT8DPX8"
+        await ctx.send(message)
