@@ -965,7 +965,7 @@ class Pets(BaseCog):
         message = "{} places the barrel against their temple, and pulls the trigger!".format(
             ctx.author.mention
         )
-        if True or self.cylinder == self.bullet:
+        if self.cylinder == self.bullet:
             # Implements an exponentially increasing timeout until a period elapses
             log.info(f"{datetime.utcnow()- self.last_timeout}")
             if datetime.utcnow() - self.last_timeout > timedelta(minutes=self.timebetween_timeouts):
