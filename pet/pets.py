@@ -23,6 +23,7 @@ log = logging.getLogger("red.oranges_pet")
 class Pets(BaseCog):
     def __init__(self, bot):
         self.bot = bot
+        self.timeout_minutes = 10
         self.breakfast = [
             "Baked Shrimp Scampi",
             "Strawberries Romanov (La Madeleine copycat)",
@@ -964,7 +965,7 @@ class Pets(BaseCog):
         )
         if self.cylinder == self.bullet:
             try:
-                await ctx.author.timeout(timedelta(minutes=10))
+                await ctx.author.timeout(timedelta(minutes=self.timeout_minutes))
             except discord.errors.Forbidden:
                 log.warning("The bot does not have permission to timeout users (requires edit member)")
                 pass  # Ignore if we can't timeout users
@@ -1048,4 +1049,15 @@ class Pets(BaseCog):
         Stop, Takeshi! Your body can't handle much more of this!
         """
         message = "https://www.youtube.com/watch?v=UHmFbT8DPX8"
+
+    @commands.command(aliases=["punish"])
+    async def roulette_upgrade(self, ctx, *, name: str = None):
+        """
+        Make the roulette more dangerous
+        """
+        if self.timeout_minutes == 10:
+            self.timeout_minutes = 60
+        else:
+            self.timeout_minutes = 10
+        message = f"Roulette timeout has been set to {self.timeout_minutes}"
         await ctx.send(message)
