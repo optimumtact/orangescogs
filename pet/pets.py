@@ -1053,12 +1053,13 @@ class Pets(BaseCog):
         message = "https://www.youtube.com/watch?v=XqHA5nGap5A"
         await ctx.send(message)
 
-    @commands.command()
+    @commands.command(aliases=["takeshi"])
     async def sex(self, ctx, *, name: str = None):
         """
         Stop, Takeshi! Your body can't handle much more of this!
         """
         message = "https://www.youtube.com/watch?v=UHmFbT8DPX8"
+        await ctx.send(message)
 
     @commands.command(aliases=["punish"])
     async def roulette_upgrade(self, ctx, *, name: str = None):
