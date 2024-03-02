@@ -801,6 +801,10 @@ class Pets(BaseCog):
         await ctx.send("*{} slaps {} in the face*".format(ctx.author.mention, name))
 
     @commands.command()
+    async def trout(self, ctx, *, name: str):
+        await ctx.send("*{} slaps {} around a bit with a large trout*".format(ctx.author.mention, name))
+
+    @commands.command()
     async def hug(self, ctx, *, name: str):
         """
         hug, awww!!!
