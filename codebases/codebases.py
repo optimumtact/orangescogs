@@ -229,6 +229,25 @@ class CodeBases(BaseCog):
 
     @commands.guild_only()
     @commands.command()
+    async def curse(self, ctx, user: discord.Member):
+        blesser_role = await self.config.guild(ctx.guild).blesser_role()
+        blesser_role = ctx.guild.get_role(blesser_role)
+        bless_role = await self.config.guild(ctx.guild).bless_role()
+        bless_role = ctx.guild.get_role(bless_role)
+
+        if blesser_role not in ctx.author.roles:
+            await ctx.send("You are not authorised to do that")
+            return False
+
+        reason = f'{ctx.author} blessed {user}'
+        await user.add_roles(
+            bless_role,
+            reason=reason,
+        )
+        await ctx.send(f"{user} is cursed with a vague sense of foreboding")
+
+    @commands.guild_only()
+    @commands.command()
     async def bless(self, ctx, user: discord.Member):
         blesser_role = await self.config.guild(ctx.guild).blesser_role()
         blesser_role = ctx.guild.get_role(blesser_role)
