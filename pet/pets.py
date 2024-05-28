@@ -985,6 +985,7 @@ class Pets(BaseCog):
             message += "\n*Bang!* The revolver fires. {} is dead before they hit the ground. Looks like they weren't so lucky.".format(
                 ctx.author.mention
             )
+            message += f"\n The timeout is now {self.timeout_minutes}"
             log.info(f"The timeout was for {self.timeout_minutes}, last timeout was {self.last_timeout}, time between timeouts was {self.timebetween_timeouts}")
             # Make sure it spins again
             self.bullet = -1
