@@ -972,20 +972,29 @@ class Pets(BaseCog):
         if self.cylinder == self.bullet:
             # Implements an exponentially increasing timeout until a period elapses
             log.info(f"{datetime.utcnow()- self.last_timeout}")
+            # Reset if the time elapsed is greater than the timeout time
             if datetime.utcnow() - self.last_timeout > timedelta(minutes=self.timebetween_timeouts):
                 self.timeout_minutes = 10
             else:
+                # Otherwise double every time we kill someone
                 self.timeout_minutes = self.timeout_minutes * 2
+                self.future_timedelta = timedelta(minutes=self.timeout_minutes)
+
+            # Prevent going over the max allowed timeout
+            if self.future_timedelta >= timedelta(days=28):
+                self.timeout_minutes = 10
+
             self.last_timeout = datetime.utcnow()
+            timeout = timedelta(minutes=self.timeout_minutes)
             try:
-                await ctx.author.timeout(timedelta(minutes=self.timeout_minutes))
+                await ctx.author.timeout(timeout)
             except discord.errors.Forbidden:
                 log.warning("The bot does not have permission to timeout users (requires edit member)")
                 pass  # Ignore if we can't timeout users
             message += "\n*Bang!* The revolver fires. {} is dead before they hit the ground. Looks like they weren't so lucky.".format(
                 ctx.author.mention
             )
-            message += f"\n The timeout is now {self.timeout_minutes} minutes"
+            message += f"\n The timeout is now {timeout}"
             log.info(f"The timeout was for {self.timeout_minutes}, last timeout was {self.last_timeout}, time between timeouts was {self.timebetween_timeouts}")
             # Make sure it spins again
             self.bullet = -1
