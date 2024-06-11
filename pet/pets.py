@@ -978,10 +978,10 @@ class Pets(BaseCog):
             else:
                 # Otherwise double every time we kill someone
                 self.timeout_minutes = self.timeout_minutes * 2
-                self.future_timedelta = timedelta(minutes=self.timeout_minutes)
 
+            future_timedelta = timedelta(minutes=self.timeout_minutes)
             # Prevent going over the max allowed timeout
-            if self.future_timedelta >= timedelta(days=28):
+            if future_timedelta >= timedelta(days=28):
                 self.timeout_minutes = 10
 
             self.last_timeout = datetime.utcnow()
