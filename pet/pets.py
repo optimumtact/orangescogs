@@ -982,7 +982,7 @@ class Pets(BaseCog):
             future_timedelta = timedelta(minutes=self.timeout_minutes)
             # Prevent going over the max allowed timeout
             if future_timedelta >= timedelta(days=28):
-                self.timeout_minutes = 10
+                self.timeout_minutes = 38880  # Close enough
 
             self.last_timeout = datetime.utcnow()
             timeout = timedelta(minutes=self.timeout_minutes)
