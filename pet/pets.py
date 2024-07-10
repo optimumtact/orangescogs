@@ -6,7 +6,7 @@ import asyncio
 import discord
 
 # Redbot Imports
-from redbot.core import commands
+from redbot.core import commands, checks
 from datetime import timedelta, datetime
 
 import logging
@@ -22,6 +22,7 @@ log = logging.getLogger("red.oranges_pet")
 
 class Pets(BaseCog):
     def __init__(self, bot):
+        self.loaded = False
         self.bot = bot
         self.timeout_minutes = 5
         self.timebetween_timeouts = 10
@@ -960,6 +961,9 @@ class Pets(BaseCog):
         """
         are you feeling lucky, punk?
         """
+        # Quick disable
+        if not self.loaded:
+            return
         self.cylinder += 1
         # wrap around to 0 again
         self.cylinder = self.cylinder % 6
@@ -1076,6 +1080,7 @@ class Pets(BaseCog):
         await ctx.send(message)
 
     @commands.command(aliases=["punish"])
+    @checks.mod_or_permissions(administrator=True)
     async def roulette_upgrade(self, ctx, *, name: str = None):
         """
         Make the roulette more dangerous by waiting longer between timeout periods
@@ -1085,4 +1090,19 @@ class Pets(BaseCog):
         else:
             self.timebetween_timeouts = 10
         message = f"Roulette will now only reset timer after {self.timebetween_timeouts} minutes"
+        await ctx.send(message)
+
+    @commands.command(aliases=["unloadgun"])
+    @checks.mod_or_permissions(administrator=True)
+    async def roulette_off(self, ctx, *, name: str = None):
+        """
+        Disable the roulette command during spam periods
+        """
+        # Invert control
+        self.loaded = not self.loaded
+        english = "unloaded"
+        if self.loaded:
+            english = "loaded"
+
+        message = f"Gun is now {english}"
         await ctx.send(message)
