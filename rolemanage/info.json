@@ -5,6 +5,7 @@
     "short": "A role manageement module for ss13",
     "description": "This cog allows you to let specific roles apply a role to other users",
     "permissions" : ["Moderate Member"],
+    "requirements": ["thefuzz"],
     "tags": [
         "Space Station 13",
         "Game",

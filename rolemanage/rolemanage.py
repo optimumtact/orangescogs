@@ -11,6 +11,7 @@ from discord.errors import Forbidden
 
 # Redbot Imports
 from redbot.core import Config, checks, commands
+from thefuzz import process
 
 __version__ = "1.1.0"
 __author__ = "oranges"
@@ -165,13 +166,18 @@ class RoleManage(BaseCog):
             await ctx.send("There was a problem enabling the module")
 
     @rolemanage.command()
-    async def remove(self, ctx, user: discord.Member, role: discord.Role):
+    async def remove(self, ctx, user: discord.Member, role: str):
         """
         remove any rolemanage on the targeted user
         """
         enabled = await self.config.guild(ctx.guild).enabled()
         if not enabled:
             await ctx.send("This module is not enabled")
+            return
+
+        role = await self.name_to_role(ctx.guild, role)
+        if not role:
+            await ctx.send("I didn't recognise that role")
             return
 
         role_map_dict = await self.config.guild(ctx.guild).role_map()
@@ -204,13 +210,18 @@ class RoleManage(BaseCog):
         await ctx.send(f"{role.name} has been removed")
 
     @rolemanage.command()
-    async def apply(self, ctx, user: discord.Member, role: discord.Role):
+    async def apply(self, ctx, user: discord.Member, role: str):
         """
         remove any rolemanage on the targeted user
         """
         enabled = await self.config.guild(ctx.guild).enabled()
         if not enabled:
             await ctx.send("This module is not enabled")
+            return
+
+        role = await self.name_to_role(ctx.guild, role)
+        if not role:
+            await ctx.send("I didn't recognise that role")
             return
 
         role_map_dict = await self.config.guild(ctx.guild).role_map()
@@ -241,3 +252,15 @@ class RoleManage(BaseCog):
             ctx.message.jump_url,
         )
         await ctx.send(f"{role.name} has been added")
+
+    async def name_to_role(self, guild: discord.Guild, name) -> discord.Role:
+        names = []
+        name2role = {}
+        for role in await guild.fetch_roles():
+            names.append(role.name)
+            name2role[role.name] = role
+        match, score = process.extractOne(name, names)
+        log.debug(f"{match}, {score}")
+        if score < 70:
+            return None
+        return name2role[match]
