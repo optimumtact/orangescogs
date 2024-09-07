@@ -124,15 +124,19 @@ class RoleManage(BaseCog):
         """
         Sets that a given role can manage a given role by applying and removing it
         """
+        sourceroleid = str(sourcerole.id)
+        targetroleid = str(targetrole.id)
         roles = await self.config.guild(ctx.guild).role_map()
-        if sourcerole.id in roles:
-            if targetrole.id not in roles[sourcerole.id]:
-                roles[sourcerole.id].append(targetrole.id)
+        if sourceroleid in roles:
+            if targetroleid not in roles[sourceroleid]:
+                roles[sourceroleid].append(targetroleid)
+                await self.config.guild(ctx.guild).role_map.set(roles)
+                await ctx.send(f"Role {sourcerole} can now manage {targetrole}")
         else:
-            roles[sourcerole.id] = list()
-            roles[sourcerole.id].append(targetrole.id)
-        await self.config.guild(ctx.guild).role_map.set(roles)
-        await ctx.send(f"Role {sourcerole} can now manage {targetrole}")
+            roles[sourceroleid] = list()
+            roles[sourceroleid].append(targetroleid)
+            await self.config.guild(ctx.guild).role_map.set(roles)
+            await ctx.send(f"Role {sourcerole} can now manage {targetrole}")
 
     @config.command()
     async def roledel(self, ctx, sourcerole: discord.Role, targetrole: discord.Role):
@@ -140,10 +144,13 @@ class RoleManage(BaseCog):
         Removes that a given role can manage a given role by applying and removing it
         """
         roles = await self.config.guild(ctx.guild).role_map()
-        if sourcerole.id in roles:
-            roles[sourcerole.id].remove(targetrole.id)
-        await self.config.guild(ctx.guild).role_map.set(roles)
-        await ctx.send(f"Role {sourcerole} can no longer manage {targetrole}")
+        sourceroleid = str(sourcerole.id)
+        targetroleid = str(targetrole.id)
+        if sourceroleid in roles:
+            if targetroleid in roles[sourceroleid]:
+                roles[sourceroleid].remove(targetroleid)
+                await self.config.guild(ctx.guild).role_map.set(roles)
+                await ctx.send(f"Role {sourcerole} can no longer manage {targetrole}")
 
     @config.command()
     async def enable(self, ctx):
@@ -169,13 +176,14 @@ class RoleManage(BaseCog):
 
         role_map_dict = await self.config.guild(ctx.guild).role_map()
         allowed_roles = set()
+        roleid = str(role.id)
         for author_role in ctx.author.roles:
-            roleid = str(author_role.id)
-            if roleid in role_map_dict:
-                allowed_roles.update(role_map_dict[roleid])
-                log.debug(f"found role mappings {role_map_dict[roleid]}")
+            authorroleid = str(author_role.id)
+            if authorroleid in role_map_dict:
+                allowed_roles.update(role_map_dict[authorroleid])
+                log.debug(f"found role mappings {role_map_dict[authorroleid]}")
 
-        if role.id not in allowed_roles:
+        if roleid not in allowed_roles:
             log.debug(f"The {role} was not in the {allowed_roles}")
             await ctx.send("You are not authorised to remove this role")
             return
@@ -207,12 +215,13 @@ class RoleManage(BaseCog):
 
         role_map_dict = await self.config.guild(ctx.guild).role_map()
         allowed_roles = set()
+        roleid = str(role.id)
         for author_role in ctx.author.roles:
-            roleid = str(author_role.id)
-            if roleid in role_map_dict:
-                allowed_roles.update(role_map_dict[roleid])
+            authorroleid = str(author_role.id)
+            if authorroleid in role_map_dict:
+                allowed_roles.update(role_map_dict[authorroleid])
 
-        if role.id not in allowed_roles:
+        if roleid not in allowed_roles:
             log.debug(f"The {role} was not in the {allowed_roles}")
             await ctx.send("You are not authorised to add this role")
             return
