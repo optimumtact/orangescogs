@@ -1,17 +1,14 @@
 # Standard Imports
-import random
 import asyncio
+import logging
+import random
+import re
+from datetime import datetime, timedelta
 
 # Discord Imports
 import discord
-
 # Redbot Imports
-from redbot.core import commands, checks
-from datetime import timedelta, datetime
-
-import logging
-
-import re
+from redbot.core import checks, commands
 
 __version__ = "1.2.1"
 __author__ = "oranges"
@@ -1063,6 +1060,9 @@ class Pets(BaseCog):
               )
           )
 
+    @commands.command(aliases=["vibe", "designlead"])
+    async def hackmd(self, ctx):
+        await ctx.send("https://file.house/WAGpNr1zLahV42P-Tj_-FQ==.jpeg")
     @commands.command(aliases=["kiwi"])
     async def nz(self, ctx, *, name: str = None):
         """
