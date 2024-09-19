@@ -571,6 +571,7 @@ class Pets(BaseCog):
             "Sticks and stones...",
             "The crossbow. Sometimes you've got to make a silent takedown.",
             "No. I wanted orange. It gave me lemon-lime.",
+            "Wish I could help, but I'm not very well armed myself",
         ]
         self.back = [
             "We are back baby",
