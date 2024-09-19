@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 
 # Discord Imports
 import discord
+
 # Redbot Imports
 from redbot.core import checks, commands
 
@@ -569,6 +570,7 @@ class Pets(BaseCog):
             "You might as well tell me the rest. If I'm gonna kill you, you're already dead.",
             "Sticks and stones...",
             "The crossbow. Sometimes you've got to make a silent takedown.",
+            "No. I wanted orange. It gave me lemon-lime.",
         ]
         self.back = [
             "We are back baby",
@@ -603,26 +605,26 @@ class Pets(BaseCog):
         self.bullet = -1
 
         self.magic_ball_responses = [
-          "It is certain",
-          "It is decidedly so",
-          "Without a doubt",
-          "Yes definitely",
-          "You may rely on it",
-          "As I see it, yes",
-          "Most likely",
-          "Outlook good",
-          "Yes",
-          "Signs point to yes",
-          "Reply hazy, try again",
-          "Ask again later",
-          "Better not tell you now",
-          "Cannot predict now",
-          "Concentrate and ask again",
-          "Don't count on it",
-          "My reply is no",
-          "My sources say no",
-          "Outlook not so good",
-          "Very doubtful",
+            "It is certain",
+            "It is decidedly so",
+            "Without a doubt",
+            "Yes definitely",
+            "You may rely on it",
+            "As I see it, yes",
+            "Most likely",
+            "Outlook good",
+            "Yes",
+            "Signs point to yes",
+            "Reply hazy, try again",
+            "Ask again later",
+            "Better not tell you now",
+            "Cannot predict now",
+            "Concentrate and ask again",
+            "Don't count on it",
+            "My reply is no",
+            "My sources say no",
+            "Outlook not so good",
+            "Very doubtful",
         ]
 
     @commands.command()
@@ -800,7 +802,11 @@ class Pets(BaseCog):
 
     @commands.command()
     async def trout(self, ctx, *, name: str):
-        await ctx.send("*{} slaps {} around a bit with a large trout*".format(ctx.author.mention, name))
+        await ctx.send(
+            "*{} slaps {} around a bit with a large trout*".format(
+                ctx.author.mention, name
+            )
+        )
 
     @commands.command()
     async def hug(self, ctx, *, name: str):
@@ -967,14 +973,18 @@ class Pets(BaseCog):
         if self.bullet == -1:
             await self.spin(ctx)
         log.info(f"Bullet position is {self.bullet}, cylinder is at {self.cylinder}")
-        message = "{} places the barrel against their temple, and pulls the trigger!".format(
-            ctx.author.mention
+        message = (
+            "{} places the barrel against their temple, and pulls the trigger!".format(
+                ctx.author.mention
+            )
         )
         if self.cylinder == self.bullet:
             # Implements an exponentially increasing timeout until a period elapses
             log.info(f"{datetime.utcnow()- self.last_timeout}")
             # Reset if the time elapsed is greater than the timeout time
-            if datetime.utcnow() - self.last_timeout > timedelta(minutes=self.timebetween_timeouts):
+            if datetime.utcnow() - self.last_timeout > timedelta(
+                minutes=self.timebetween_timeouts
+            ):
                 self.timeout_minutes = 10
             else:
                 # Otherwise double every time we kill someone
@@ -990,18 +1000,24 @@ class Pets(BaseCog):
             try:
                 await ctx.author.timeout(timeout)
             except discord.errors.Forbidden:
-                log.warning("The bot does not have permission to timeout users (requires edit member)")
+                log.warning(
+                    "The bot does not have permission to timeout users (requires edit member)"
+                )
                 pass  # Ignore if we can't timeout users
             message += "\n*Bang!* The revolver fires. {} is dead before they hit the ground. Looks like they weren't so lucky.".format(
                 ctx.author.mention
             )
             message += f"\n The timeout is now {timeout}"
-            log.info(f"The timeout was for {self.timeout_minutes}, last timeout was {self.last_timeout}, time between timeouts was {self.timebetween_timeouts}")
+            log.info(
+                f"The timeout was for {self.timeout_minutes}, last timeout was {self.last_timeout}, time between timeouts was {self.timebetween_timeouts}"
+            )
             # Make sure it spins again
             self.bullet = -1
         else:
-            message += "\n*Click!* Nothing happens, {} lives to see another day.".format(
-                ctx.author.mention
+            message += (
+                "\n*Click!* Nothing happens, {} lives to see another day.".format(
+                    ctx.author.mention
+                )
             )
         await ctx.send(message)
 
@@ -1009,7 +1025,9 @@ class Pets(BaseCog):
         bullet = random.randrange(0, 5)
         self.bullet = bullet
         log.info(f"Bullet position is {bullet}, cylinder is at {self.cylinder}")
-        await ctx.send(f"{ctx.author.mention} spins the cylinder against their arm like a badass")
+        await ctx.send(
+            f"{ctx.author.mention} spins the cylinder against their arm like a badass"
+        )
 
     @commands.command()
     async def spin(self, ctx):
@@ -1037,9 +1055,7 @@ class Pets(BaseCog):
         Consult the orb
         """
         await ctx.send(
-            "{} {}".format(
-                ctx.author.mention, random.choice(self.magic_ball_responses)
-            )
+            "{} {}".format(ctx.author.mention, random.choice(self.magic_ball_responses))
         )
 
     @commands.command(aliases=["ahelp"])
@@ -1048,25 +1064,22 @@ class Pets(BaseCog):
         BWOINK
         """
         if random.random() > 0.5:
-          await ctx.send(
-              "Admin PM from {}: {} IC issue".format(
-                  ctx.author.mention, name
-              )
-          )
+            await ctx.send(
+                "Admin PM from {}: {} IC issue".format(ctx.author.mention, name)
+            )
         else:
-          await ctx.send(
-              "Admin PM from {}: {} Skill issue".format(
-                  ctx.author.mention, name
-              )
-          )
+            await ctx.send(
+                "Admin PM from {}: {} Skill issue".format(ctx.author.mention, name)
+            )
 
     @commands.command(aliases=["vibe", "designlead"])
     async def hackmd(self, ctx):
         await ctx.send("https://file.house/WAGpNr1zLahV42P-Tj_-FQ==.jpeg")
+
     @commands.command(aliases=["kiwi"])
     async def nz(self, ctx, *, name: str = None):
         """
-        la creatura 
+        la creatura
         """
         message = "https://www.youtube.com/watch?v=XqHA5nGap5A"
         await ctx.send(message)
