@@ -1082,7 +1082,7 @@ class Pets(BaseCog):
         """
         la creatura
         """
-        message = "https://www.youtube.com/watch?v=XqHA5nGap5A"
+        message = "https://file.house/Rxz-3yr_BtOVCk_Rvy9CAw==.mp4"
         await ctx.send(message)
 
     @commands.command(aliases=["takeshi"])
