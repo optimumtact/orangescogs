@@ -1093,6 +1093,14 @@ class Pets(BaseCog):
         message = "https://www.youtube.com/watch?v=UHmFbT8DPX8"
         await ctx.send(message)
 
+    @commands.command(aliases=["horny"])
+    async def cooldown(self, ctx, *, name: str = None):
+        """
+        You need to cool it
+        """
+        message = "https://file.house/6cCjp_2V0Ll-To3KnIPzdg==.mp4"
+        await ctx.send(message)
+
     @commands.command(aliases=["punish"])
     @checks.mod_or_permissions(administrator=True)
     async def roulette_upgrade(self, ctx, *, name: str = None):
