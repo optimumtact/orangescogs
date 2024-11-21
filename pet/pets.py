@@ -1235,7 +1235,7 @@ class Pets(BaseCog):
       else:
         weather = "{}!".format(random.choice(self.weather_types))
 
-      message = "It's {0:.1f}°C ({0:.1f}°F) " + location + weather
+      message = f"It's {0:.1f}°C ({0:.1f}°F) " + location + weather
       await ctx.send(message)
 
     @commands.command(aliases=["punish"])
