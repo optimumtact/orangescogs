@@ -628,6 +628,121 @@ class Pets(BaseCog):
             "Very doubtful",
         ]
 
+        self.rain_types = [
+          "rain",
+          "acid",
+          "lava",
+          "coffee",
+          "blood",
+          "urine",
+          "plasma",
+          "vodka",
+          "syrup",
+          "molasses",
+          "squid ink",
+          "moths",
+          "cats",
+          "dogs",
+          "cats and dogs",
+          "chocolate",
+          "lizards",
+          "fursuits",
+          "viruses",
+          "bacteria",
+          "atoms",
+          "molecules",
+          "neutrons",
+          "protons",
+          "electrons",
+          "photons",
+          "comets",
+          "asteroids",
+          "meteors",
+          "planets",
+          "stars",
+          "galaxies",
+          "nebulae",
+          "quasars",
+          "black holes",
+          "fungi",
+          "lichens",
+          "mosses",
+          "ferns",
+          "conifers",
+          "trees",
+          "herbs",
+          "shrubs",
+          "vines",
+          "minecraft creepers",
+          "minecraft bees",
+          "vbucks",
+          "money",
+          "coins",
+          "weed",
+          "1988 Honda Civics",
+          "water",
+          "tea",
+          "juice",
+          "wine",
+          "beer",
+          "milk",
+          "cream",
+          "yogurt",
+          "soup",
+          "broth",
+          "sauce",
+          "oil",
+          "vinegar",
+          "honey",
+          "salsa",
+          "ketchup",
+          "mustard",
+          "mayonnaise",
+          "jelly",
+          "jam",
+          "butter",
+          "margarine",
+          "oil",
+          "grease",
+          "wax",
+          "magma",
+          "slurry",
+          "gel",
+        ]
+
+        self.weather_types = [
+          "with tornadoes",
+          "and foggy",
+          "and smoggy",
+          "with hail",
+          "and storming",
+          "and thundering",
+          "with lightning",
+          "with snow",
+          "with ice",
+          "with volcanic ash",
+          "with smoke",
+          "with dust storms",
+          "with sand storms",
+          "with meteor showers",
+          "with aurora borealis",
+          "with funnel clouds"
+          "and cloudy",
+          "and sunny",
+          "with partial clouds",
+          "with extreme sun",
+          "with rats",
+          "with pigeons",
+          "with a solar eclipse",
+          "with a lunar eclipse",
+          "with tsunamis",
+          "with earthquakes",
+          "with forest fires",
+          "with solar flares",
+          "and pleasant",
+          "with a rapture",
+        ]
+
     @commands.command()
     async def pet(self, ctx, *, name: str):
         """
@@ -1100,6 +1215,28 @@ class Pets(BaseCog):
         """
         message = "https://file.house/6cCjp_2V0Ll-To3KnIPzdg==.mp4"
         await ctx.send(message)
+
+    @commands.command(aliases=["forecast"])
+    async def weather(self, ctx, *, name: str = None):
+      """
+      What the fuck is going on out there
+      """
+      location = ""
+      if name:
+        location = "in {} ".format(name)
+      
+      # 16C + standard distribution to get avg between ~4C and ~28C
+      tempC = 16 + (random.normalvariate() * 7.27)
+      tempF = (tempC * (9/5)) + 32
+
+      # 30% chance of rain
+      if random.random() > 0.7:
+        weather = "and raining {}!".format(random.choice(self.rain_types))
+      else:
+        weather = "{}!".format(random.choice(self.weather_types))
+
+      message = "It's {0:.1f}°C ({0:.1f}°F) " + location + weather
+      await ctx.send(message)
 
     @commands.command(aliases=["punish"])
     @checks.mod_or_permissions(administrator=True)
