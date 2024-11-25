@@ -5,8 +5,8 @@
     "short": "GBP!",
     "requirements": [
         "requests>=2.22.0",
-        "tomlkit^0.13.2",
-        "fuzzywuzzy^0.18.0"
+        "tomlkit",
+        "fuzzywuzzy"
     ],
     "description": "GBP plugin that allows display and searching of the tgstation gbp scores",
     "permissions" : ["Manage Messages", "Embed Links"],
