@@ -109,7 +109,7 @@ class gbp(BaseCog):
             f"```There is {total_pos_gbp} positive GBP, and {total_neg_gbp} negative GBP in circulation.```"
         )
 
-    @gbp.command()
+    @gbp.command(aliases=["points"])
     async def costs(self, ctx):
         response = requests.get(
             url="https://raw.githubusercontent.com/tgstation/tgstation/master/.github/gbp.toml"
