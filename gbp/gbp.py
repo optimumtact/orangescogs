@@ -57,7 +57,7 @@ class gbp(BaseCog):
             gbp, user = item
             self.postouser[index] = user
 
-    @gbp.group()
+    @gbp.command()
     async def find(self, ctx, name=""):
         await self.get_latest_gbp()
         msg = ""
@@ -72,7 +72,7 @@ class gbp(BaseCog):
         else:
             await ctx.send(f"```{msg}```")
 
-    @gbp.group()
+    @gbp.command()
     async def at(self, ctx, pos: int):
         await self.get_latest_gbp()
         if pos in self.postouser:
@@ -81,7 +81,7 @@ class gbp(BaseCog):
             return
         await ctx.send("No user at that position!")
 
-    @gbp.group()
+    @gbp.command()
     async def top(self, ctx, up_to_pos: int):
         await self.get_latest_gbp()
         msg = ""
@@ -95,7 +95,7 @@ class gbp(BaseCog):
         else:
             await ctx.send(f"```{msg}```")
 
-    @gbp.group()
+    @gbp.command()
     async def totals(self, ctx):
         await self.get_latest_gbp()
         total_pos_gbp = 0
@@ -109,7 +109,7 @@ class gbp(BaseCog):
             f"```There is {total_pos_gbp} positive GBP, and {total_neg_gbp} negative GBP in circulation.```"
         )
 
-    @gbp.group()
+    @gbp.command()
     async def costs(self, ctx):
         response = requests.get(
             url="https://raw.githubusercontent.com/tgstation/tgstation/master/.github/gbp.toml"
