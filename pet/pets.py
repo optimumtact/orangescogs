@@ -1200,6 +1200,14 @@ class Pets(BaseCog):
         message = "https://file.house/Rxz-3yr_BtOVCk_Rvy9CAw==.mp4"
         await ctx.send(message)
 
+    @commands.command(aliases=["concrete"])
+    async def pills(self, ctx, *, name: str = None):
+        """
+        Yummy pills
+        """
+        message = "https://file.house/UsJiHyRbmXT9yz2VEwFfTg==.jpg"
+        await ctx.send(message)
+
     @commands.command(aliases=["takeshi"])
     async def sex(self, ctx, *, name: str = None):
         """
