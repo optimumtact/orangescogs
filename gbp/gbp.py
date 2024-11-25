@@ -29,6 +29,14 @@ class gbp(BaseCog):
         default_global = {"gbp": {}}
         self.config.register_global(**default_global)
 
+    @commands.guild_only()
+    @commands.group()
+    async def gbp(self, ctx):
+        """
+        gbp commands group
+        """
+        pass
+
     async def get_latest_gbp(self):
         response = requests.get(
             url="https://raw.githubusercontent.com/tgstation/tgstation/gbp-balances/.github/gbp-balances.toml",
@@ -48,8 +56,8 @@ class gbp(BaseCog):
             gbp, user = item
             self.postouser[index] = user
 
-    @commands.command()
-    async def findname(self, ctx, name=""):
+    @gbp.group()
+    async def find(self, ctx, name=""):
         await self.get_latest_gbp()
         msg = ""
         choices = process.extract(name, self.usertogbp.keys(), limit=10)
@@ -63,8 +71,8 @@ class gbp(BaseCog):
         else:
             await ctx.send(f"```{msg}```")
 
-    @commands.command()
-    async def findpos(self, ctx, pos):
+    @gbp.group()
+    async def at(self, ctx, pos: int):
         await self.get_latest_gbp()
         if pos in self.postouser:
             user = self.postouser[pos]
@@ -72,19 +80,22 @@ class gbp(BaseCog):
             return
         await ctx.send("No user at that position!")
 
-    @commands.command()
-    async def finduntil(self, ctx, up_to_pos):
+    @gbp.group()
+    async def top(self, ctx, up_to_pos: int):
         await self.get_latest_gbp()
         msg = ""
-        for position, user in self.postouser.items():
+        for index, data in enumerate(self.postouser.items()):
+            if index == up_to_pos:
+                break
+            position, user = data
             msg += f"#{position} - {user}, {self.usertogbp[user]}"
         if len(msg) >= 2000:
             await ctx.send(file=utils.chat_formatting.text_to_file(msg, "gbp.txt"))
         else:
             await ctx.send(f"```{msg}```")
 
-    @commands.command()
-    async def totalgbp(self, ctx):
+    @gbp.group()
+    async def totals(self, ctx):
         await self.get_latest_gbp()
         total_pos_gbp = 0
         total_neg_gbp = 0
@@ -97,7 +108,7 @@ class gbp(BaseCog):
             f"```There is {total_pos_gbp} positive GBP, and {total_neg_gbp} negative GBP in circulation.```"
         )
 
-    @commands.command()
+    @gbp.group()
     async def costs(self, ctx):
         response = requests.get(
             url="https://raw.githubusercontent.com/tgstation/tgstation/master/.github/gbp.toml"
