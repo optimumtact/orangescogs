@@ -89,7 +89,7 @@ class gbp(BaseCog):
             if index == up_to_pos:
                 break
             position, user = data
-            msg += f"#{position} - {user}, {self.usertogbp[user]}"
+            msg += f"#{position} - {user}, {self.usertogbp[user]}\n"
         if len(msg) >= 2000:
             await ctx.send(file=utils.chat_formatting.text_to_file(msg, "gbp.txt"))
         else:
