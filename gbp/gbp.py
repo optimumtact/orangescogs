@@ -53,7 +53,7 @@ class gbp(BaseCog):
         gbptouser = dict(sorted(gbptouser.items(), reverse=True))
         # index user to position
         for index, item in enumerate(gbptouser.items()):
-            index = index += 1 # count like a human
+            index = index + 1  # count like a human
             gbp, user = item
             self.postouser[index] = user
 
