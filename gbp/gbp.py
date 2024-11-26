@@ -44,18 +44,19 @@ class gbp(BaseCog):
         )
         content = response.text
         document = parse(content)
-        gbptouser = {}
+        gbptouser = []
         for githubid, gbp in document.items():
             user = gbp.trivia.comment.strip("# ")
-            gbptouser[gbp] = user
+            gbptouser.append((user, gbp))
             self.usertogbp[user] = gbp
 
-        # Sort by GBP count
-        gbptouser = dict(sorted(gbptouser.items(), reverse=True))
+        # Sort by GBP value count
+        gbptouser.sort(key=lambda x: x[1], reverse=True)
+
         # index user to position
-        for index, item in enumerate(gbptouser.items()):
+        for index, item in enumerate(gbptouser):
             index = index + 1  # count like a human
-            gbp, user = item
+            user, gbp = item
             self.postouser[index] = user
             self.usertopos[user] = index
 
