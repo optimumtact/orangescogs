@@ -25,6 +25,7 @@ class gbp(BaseCog):
         )
         self.usertogbp = dict()
         self.postouser = dict()
+        self.usertopos = dict()
 
         default_global = {"gbp": {}}
         self.config.register_global(**default_global)
@@ -56,6 +57,7 @@ class gbp(BaseCog):
             index = index + 1  # count like a human
             gbp, user = item
             self.postouser[index] = user
+            self.usertopos[user] = index
 
     @gbp.command()
     async def find(self, ctx, name=""):
@@ -65,7 +67,8 @@ class gbp(BaseCog):
         for name, ratio in choices:
             if ratio >= 90:
                 gbp = self.usertogbp[name]
-                msg += f"{name} - {gbp}\n"
+                pos = self.usertopos[name]
+                msg += f"#{pos}: {name} - {gbp}\n"
         if msg == "":
             await ctx.send("No user found!")
             return
