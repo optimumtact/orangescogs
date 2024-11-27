@@ -50,6 +50,23 @@ class Fridge(BaseCog):
             "sadness",
             "space ants",
         ]
+        self.reactions = [
+          "how cruel!",
+          "zesty!",
+          "yummers!",
+          "enjoy!",
+          "tasty!",
+          "crunchy!",
+          "nutritious!",
+          "gross!",
+          "that was fucked up!",
+          "avert your eyes!",
+          "why would you do that?",
+          "bada bing!",
+          "how nostalgic!",
+          "just like mother used to make!",
+          "god help us all!",
+        ]
         self.config = Config.get_conf(
             self, identifier=672261474290237490, force_registration=True
         )
@@ -220,26 +237,39 @@ class Fridge(BaseCog):
         log.info(f"User {ctx.author.id} put {item} in the fridge")
 
     @fridge.command(aliases=[])
+    async def feed(self, ctx, *, member: discord.Member):
+        """
+        feed your friends the concrete pills 
+        """
+        item = await self._get(ctx, None)
+        if (item):
+            await ctx.send(f"You feed {member.mention} the {item}, {random.choice(self.reactions)}")
+
+    @fridge.command(aliases=[])
     async def yummers(self, ctx, *, search=None):
-        await self._get(ctx, search, True)
+        """
+        I see you got the extra whipped cream in there, huh?
+        """
+        item = await self._get(ctx, search)
+        if (item):
+            await ctx.send(f"You take out {item}, yummers!")
 
     @fridge.command(aliases=["take", "remove", "find", "eat"])
     async def get(self, ctx, *, search=None):
         """
         Get a random item out of the fridge
         """
-        await self._get(ctx, search)
+        item = await self._get(ctx, search)
+        if (item):
+            await ctx.send(f"You take out {item}, enjoy!")
 
-    async def _get(self, ctx, search, yummers=False):
+    async def _get(self, ctx, search):
         fridge = self.fridges[ctx.guild]
-        exclamation = "enjoy!"
-        if yummers:
-            exclamation = "yummers!"
         if len(fridge) <= 0:
             await ctx.send(
                 f"There's nothing in the fridge, you should use restock to refill it!"
             )
-            return
+            return None
 
         if search:
             item = process.extractOne(search, list(fridge.keys()), score_cutoff=80)
@@ -247,7 +277,7 @@ class Fridge(BaseCog):
                 await ctx.send(
                     f"You don't seem to have anything you want, maybe get some and add?"
                 )
-                return
+                return None
             item = item[0]
 
         else:
@@ -256,10 +286,9 @@ class Fridge(BaseCog):
         fridge[item] -= 1
         if fridge[item] <= 0:
             del fridge[item]
-            await ctx.send(f"You take the last {item}, {exclamation}")
-            return
+            return f"the last {item}"
 
-        await ctx.send(f"You take out {item}, {exclamation}")
+        return item
 
     @fridge.command()
     async def peek(self, ctx, *, search=None):
