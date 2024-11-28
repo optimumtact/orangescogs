@@ -243,7 +243,7 @@ class Fridge(BaseCog):
         """
         item = await self._get(ctx, None)
         if (item):
-            await ctx.send(f"You feed {member.mention} the {item}, {random.choice(self.reactions)}")
+            await ctx.send(f"You feed {member.mention} {item}, {random.choice(self.reactions)}")
 
     @fridge.command(aliases=[])
     async def yummers(self, ctx, *, search=None):
