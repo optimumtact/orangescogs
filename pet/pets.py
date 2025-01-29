@@ -1279,5 +1279,5 @@ class Pets(BaseCog):
         """
         Motherfuckin' server's down, get that shit back up
         """
-        message = "[INSERT FILE.HOUSE LINK HERE]"
+        message = "https://file.house/egbT_9qTYxAy1u_z0dDALg==.mov"
         await ctx.send(message)
