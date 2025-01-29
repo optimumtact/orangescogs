@@ -1273,3 +1273,11 @@ class Pets(BaseCog):
 
         message = f"Gun is now {english}"
         await ctx.send(message)
+
+    @commands.command(aliases=["fixthis", "snoop"])
+    async def servers(self, ctx, *, name: str = None):
+        """
+        Motherfuckin' server's down, get that shit back up
+        """
+        message = "https://file.house/egbT_9qTYxAy1u_z0dDALg==.mov"
+        await ctx.send(message)
