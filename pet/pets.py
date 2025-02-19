@@ -1192,6 +1192,10 @@ class Pets(BaseCog):
     async def hackmd(self, ctx):
         await ctx.send("https://file.house/WAGpNr1zLahV42P-Tj_-FQ==.jpeg")
 
+    @commands.command()
+    async def stoic(self, ctx):
+        await ctx.send("https://file.house/l-zISOmTCoxhFqUd5G6tuQ==.jpeg")
+
     @commands.command(aliases=["kiwi"])
     async def nz(self, ctx, *, name: str = None):
         """
