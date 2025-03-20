@@ -840,6 +840,17 @@ class Pets(BaseCog):
             )
         )
 
+    @commands.command()
+    async def kiss(self, ctx, *, name:str):
+        """
+        Tail brushing
+        """
+        await ctx.send("{} blows a kiss towards {}".format(
+            ctx.author.mention,
+            name
+            )
+        )
+
     @commands.command(aliases=["tailbrush"])
     async def brush(self, ctx, *, name: str):
         """
@@ -1236,7 +1247,7 @@ class Pets(BaseCog):
       location = ""
       if name:
         location = "in {} ".format(name)
-      
+
       # 16C + standard distribution to get avg between ~4C and ~28C
       tempC = 16 + (random.normalvariate() * 7.27)
       tempF = (tempC * (9/5)) + 32
