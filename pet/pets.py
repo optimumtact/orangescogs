@@ -843,11 +843,17 @@ class Pets(BaseCog):
     @commands.command()
     async def kiss(self, ctx, *, name:str):
         """
-        Tail brushing
+        Kiss
         """
+        if random.randrange(0, 100) < 1:
+            await ctx.send("{} passionately and deeply french kisses {}".format(
+                ctx.author.mention,
+                name
+            )
+            return
         await ctx.send("{} blows a kiss towards {}".format(
-            ctx.author.mention,
-            name
+                ctx.author.mention,
+                name
             )
         )
 
