@@ -1304,3 +1304,17 @@ class Pets(BaseCog):
         """
         message = "https://file.house/egbT_9qTYxAy1u_z0dDALg==.mov"
         await ctx.send(message)
+
+    @commands.command(aliases=["seal"])
+    async def sealed(self, ctx, *, name: str = None):
+        """
+        the best animal 
+        """
+                if random.random() > 0.7:
+            await ctx.send(
+                "https://i.postimg.cc/05nvKMJt/seal-tongue-seal.gif".format(ctx.author.mention, name)
+            )
+        else:
+            await ctx.send(
+                "https://i.postimg.cc/26g42XPG/IMG-20250314-194853-007.jpg".format(ctx.author.mention, name)
+            )
