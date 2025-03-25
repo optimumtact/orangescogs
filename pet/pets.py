@@ -1310,7 +1310,7 @@ class Pets(BaseCog):
         """
         the best animal 
         """
-                if random.random() > 0.7:
+        if random.random() > 0.7:
             await ctx.send(
                 "https://i.postimg.cc/05nvKMJt/seal-tongue-seal.gif".format(ctx.author.mention, name)
             )
