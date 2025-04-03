@@ -1328,8 +1328,8 @@ class Pets(BaseCog):
             await ctx.send("# RARE SEAL PULL https://file.house/g8LWLYw9iMqeFIceJCttIQ==.gif")
             return
         else:
-            ctx.send(
+            await ctx.send(
                 "{}".format(
                     random.choice(self.sealpulls),
+                )
             )
-        )
