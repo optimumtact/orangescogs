@@ -1327,8 +1327,9 @@ class Pets(BaseCog):
         if random.randrange(0, 100) < 1:
             await ctx.send("# RARE SEAL PULL https://file.house/g8LWLYw9iMqeFIceJCttIQ==.gif")
             return
-        else ctx.send(
-            "{}".format(
-                random.choice(self.sealpulls),
+        else:
+            ctx.send(
+                "{}".format(
+                    random.choice(self.sealpulls),
             )
         )
