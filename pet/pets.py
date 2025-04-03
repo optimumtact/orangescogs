@@ -1312,9 +1312,9 @@ class Pets(BaseCog):
         """
         if random.random() > 0.7:
             await ctx.send(
-                "https://i.postimg.cc/05nvKMJt/seal-tongue-seal.gif".format(ctx.author.mention, name)
+                "https://file.house/1PuM8EyT9FKWZSlO5L06cg==.gif".format(ctx.author.mention, name)
             )
         else:
             await ctx.send(
-                "https://i.postimg.cc/26g42XPG/IMG-20250314-194853-007.jpg".format(ctx.author.mention, name)
+                "https://file.house/REzV-fDkcTujTW1smgR8hQ==.jpg".format(ctx.author.mention, name)
             )
