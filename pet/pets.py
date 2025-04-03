@@ -743,6 +743,20 @@ class Pets(BaseCog):
           "with a rapture",
         ]
 
+        self.sealpulls = [
+            "https://file.house/OS90VzacHOCnsZ7XAD9CaA==.gif",
+            "https://file.house/H7pnRl6fvsT3oPB7xEkWCA==.gif",
+            "https://file.house/-pVo206bX8WbYcKPRoxXUg==.gif",
+            "https://file.house/Zg6ZK2ALEKViGVmqVXQlkQ==.gif",
+            "https://file.house/GvnqN7AGAw2YT5C4kK3C1w==.gif",
+            "https://file.house/T1BeR40guGFFGaWbkvLN-Q==.gif",
+            "https://file.house/ZX5CnqPSP1-stcJ40Xd7Mw==.gif",
+            "https://file.house/UMeOrP7uExosG2DcHNR_BA==.gif",
+            "https://file.house/r9IGIzSr-ojtD_K-og6Cow==.gif",
+            "https://file.house/1PuM8EyT9FKWZSlO5L06cg==.gif",
+            "https://file.house/REzV-fDkcTujTW1smgR8hQ==.jpg",
+        ]
+
     @commands.command()
     async def pet(self, ctx, *, name: str):
         """
@@ -1310,11 +1324,15 @@ class Pets(BaseCog):
         """
         the best animal 
         """
-        if random.random() > 0.7:
-            await ctx.send(
-                "https://file.house/1PuM8EyT9FKWZSlO5L06cg==.gif".format(ctx.author.mention, name)
+        if random.randrange(0, 100) < 1:
+            await ctx.send("# RARE SEAL PULL https://file.house/g8LWLYw9iMqeFIceJCttIQ==.gif"
+                .format(
+                    ctx.author.mention,
+                    name
+                )
             )
-        else:
-            await ctx.send(
-                "https://file.house/REzV-fDkcTujTW1smgR8hQ==.jpg".format(ctx.author.mention, name)
+        else ctx.send(
+            "{}".format(
+                random.choice(self.sealpulls),
             )
+        )
