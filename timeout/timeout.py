@@ -313,7 +313,7 @@ class Timeout(BaseCog):
             await ctx.send("This module is not enabled")
             return
 
-        if ctx.author.top_role <= user.top_role:
+        if ctx.author.top_role <= user.top_role and ctx.author.id != user.id:
             await ctx.send(
                 "You cannot apply a timeout to an equal or higher ranked discord member"
             )
