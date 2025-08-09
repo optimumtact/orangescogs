@@ -1353,7 +1353,11 @@ class Pets(BaseCog):
 
     @commands.command(aliases=["foxy"])
     async def fox(self, ctx):
-        await self.get_animal("fox", ctx)
+        if random.random() > 0.99:
+            await ctx.send("# RARE FOX PULL")
+            await ctx.send("https://file.house/bSMe1dV0J94DdRdFKawovg==.gif")
+        else:
+            await self.get_animal("fox", ctx)
 
     @commands.command(aliases=["seal"])
     async def sealed(self, ctx, *, name: str = None):
@@ -1361,10 +1365,8 @@ class Pets(BaseCog):
         the best animal
         """
         if random.randrange(0, 100) < 1:
-            await ctx.send(
-                "# RARE SEAL PULL https://file.house/g8LWLYw9iMqeFIceJCttIQ==.gif"
-            )
-            return
+            await ctx.send("# RARE SEAL PULL")
+            await ctx.send("https://file.house/g8LWLYw9iMqeFIceJCttIQ==.gif")
         elif random.random() > 0.8:
             await ctx.send(
                 "{}".format(
