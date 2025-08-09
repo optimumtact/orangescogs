@@ -4,6 +4,7 @@ import logging
 import random
 import re
 from datetime import datetime, timedelta
+import time 
 
 import aiohttp
 
@@ -11,7 +12,7 @@ import aiohttp
 import discord
 
 # Redbot Imports
-from redbot.core import checks, commands
+from redbot.core import Config, checks, commands
 
 __version__ = "1.2.1"
 __author__ = "oranges"
@@ -22,6 +23,13 @@ log = logging.getLogger("red.oranges_pet")
 
 class Pets(BaseCog):
     def __init__(self, bot):
+        self.config = Config.get_conf(
+            self, identifier=672261474290237490, force_registration=True
+        )
+        self.config.register_global(unsplash_key=None)
+        self.backoff_until = 0  # Unix timestamp when backoff ends for unsplash api
+        self.BACKOFF_SECONDS = 3600  # 1 hour for Unsplash free plan
+        self.CACHE_SIZE = 30
         self.loaded = False
         self.bot = bot
         self.timeout_minutes = 5
@@ -758,6 +766,9 @@ class Pets(BaseCog):
             "https://file.house/REzV-fDkcTujTW1smgR8hQ==.jpg",
         ]
 
+        # Cache: { animal_type: [list_of_urls] }
+        self.image_cache = {}
+
     @commands.command()
     async def pet(self, ctx, *, name: str):
         """
@@ -1317,22 +1328,20 @@ class Pets(BaseCog):
         message = "https://file.house/egbT_9qTYxAy1u_z0dDALg==.mov"
         await ctx.send(message)
 
+    async def get_animal(self, animal, ctx):
+        image_url = await self.get_animal_image(animal)
+        if image_url:
+            await ctx.send(image_url)
+        else:
+            await ctx.send(f"❌ Couldn't fetch images for '{animal}' right now.")
+
     @commands.command(aliases=["bunny"])
     async def rabbit(self, ctx):
-        """Fetch a random rabbit image, optionally by breed."""
-        base = "https://rabbit-api-two.vercel.app"
-        url = f"{base}/api/random"
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as resp:
-                if resp.status == 200:
-                    data = await resp.json()
-                    image_url = (
-                        data.get("url") or data.get("image") or data.get("image_url")
-                    )
-                    if image_url:
-                        await ctx.send(image_url)
-                        return
-                await ctx.send("🐰 Couldn't fetch a rabbit image right now!")
+        await self.get_animal("rabbit", ctx)
+
+    @commands.command(aliases=["foxy"])
+    async def fox(self, ctx):
+        await self.get_animal("fox", ctx)
 
     @commands.command(aliases=["seal"])
     async def sealed(self, ctx, *, name: str = None):
@@ -1344,9 +1353,98 @@ class Pets(BaseCog):
                 "# RARE SEAL PULL https://file.house/g8LWLYw9iMqeFIceJCttIQ==.gif"
             )
             return
-        else:
+        elif random.random() > 0.8:
             await ctx.send(
                 "{}".format(
                     random.choice(self.sealpulls),
                 )
             )
+        else:
+            await self.get_animal("seal", ctx)
+
+    async def fetch_images(self, animal: str):
+        """Fetch a fresh random batch of images for the given animal from Unsplash."""
+        api_key = await self.config.unsplash_key()
+        if not api_key:
+            log.info("No api key defined")
+            return []
+        # If we're in backoff, don't hit the API
+        if time.time() < self.backoff_until:
+            log.info("Backup limit hit")
+            return []
+        url = "https://api.unsplash.com/photos/random"
+        params = {"query": animal, "count": self.CACHE_SIZE}
+        headers = {"Authorization": f"Client-ID {api_key}"}
+        log.info("Unsplash API call being made")
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, params=params, headers=headers) as resp:
+                # Check for hard rate-limit errors
+                if resp.status == 403 or resp.status == 429:
+                    log.info("Api 403 or 429 error, entering backoff")
+                    self.backoff_until = time.time() + self.BACKOFF_SECONDS
+                    return []
+
+                # Parse rate-limit headers if present
+                remaining = resp.headers.get("X-Ratelimit-Remaining")
+                if remaining is not None:
+                    try:
+                        if int(remaining) <= 0:
+                            log.info("Rate limit exceeded, entering backoff")
+                            self.backoff_until = time.time() + self.BACKOFF_SECONDS
+                            return []
+                    except ValueError:
+                        pass  # Ignore bad header format
+                if resp.status != 200:
+                    return []
+                data = await resp.json()
+
+                # The random endpoint returns a list if count > 1
+                if isinstance(data, list):
+                    return [img["urls"]["regular"] for img in data if "urls" in img]
+                elif isinstance(data, dict):
+                    return [data["urls"]["regular"]] if "urls" in data else []
+                return []
+
+    async def get_animal_image(self, animal: str):
+        """Return a cached image for the given animal, refilling cache if needed."""
+        # Initialize cache list if not present
+        if animal not in self.image_cache:
+            self.image_cache[animal] = []
+
+        # If cache is empty, refill it
+        if not self.image_cache[animal]:
+            fresh_images = await self.fetch_images(animal)
+            if not fresh_images:
+                return None
+            # Shuffle to avoid predictable order
+            random.shuffle(fresh_images)
+            self.image_cache[animal].extend(fresh_images)
+
+        # Pop one image from the cache
+        return self.image_cache[animal].pop()
+
+    @commands.command()
+    @checks.mod_or_permissions(administrator=True)
+    async def animal(self, ctx, *, animal: str):
+        """
+        Fetch a random animal image. Example:
+        `.animal seal`
+        `.animal rabbit`
+        """
+        animal = animal.strip().lower()
+        log.info(animal)
+        image_url = await self.get_animal_image(animal)
+        log.info(image_url)
+        if image_url:
+            await ctx.send(image_url)
+        else:
+            await ctx.send(f"❌ Couldn't fetch images for '{animal}' right now.")
+
+    @commands.command()
+    @checks.is_owner()
+    async def setunsplash(self, ctx, key: str):
+        """
+        Set the Unsplash API key for this cog (owner only).
+        """
+        await self.config.unsplash_key.set(key.strip())
+        await ctx.send("✅ Unsplash API key has been updated.")
