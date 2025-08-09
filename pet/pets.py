@@ -1317,7 +1317,7 @@ class Pets(BaseCog):
         message = "https://file.house/egbT_9qTYxAy1u_z0dDALg==.mov"
         await ctx.send(message)
 
-    @commands.command()
+    @commands.command(aliases=["bunny"])
     async def rabbit(self, ctx):
         """Fetch a random rabbit image, optionally by breed."""
         base = "https://rabbit-api-two.vercel.app"
