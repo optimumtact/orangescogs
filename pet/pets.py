@@ -3,8 +3,8 @@ import asyncio
 import logging
 import random
 import re
+import time
 from datetime import datetime, timedelta
-import time 
 
 import aiohttp
 
@@ -1338,6 +1338,18 @@ class Pets(BaseCog):
     @commands.command(aliases=["bunny"])
     async def rabbit(self, ctx):
         await self.get_animal("rabbit", ctx)
+
+    @commands.command(aliases=["meow", "pussy"])
+    async def cat(self, ctx):
+        if random.random() > 0.95:
+            await ctx.send(f"Dogs are better, L + bozo")
+            self.get_animal("dog", ctx)
+        else:
+            await self.get_animal("cat", ctx)
+
+    @commands.command(aliases=["puppy", "thebestpet"])
+    async def dog(self, ctx):
+        await self.get_animal("dog", ctx)
 
     @commands.command(aliases=["foxy"])
     async def fox(self, ctx):
