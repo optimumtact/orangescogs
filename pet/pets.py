@@ -5,6 +5,8 @@ import random
 import re
 from datetime import datetime, timedelta
 
+import aiohttp
+
 # Discord Imports
 import discord
 
@@ -629,118 +631,117 @@ class Pets(BaseCog):
         ]
 
         self.rain_types = [
-          "rain",
-          "acid",
-          "lava",
-          "coffee",
-          "blood",
-          "urine",
-          "plasma",
-          "vodka",
-          "syrup",
-          "molasses",
-          "squid ink",
-          "moths",
-          "cats",
-          "dogs",
-          "cats and dogs",
-          "chocolate",
-          "lizards",
-          "fursuits",
-          "viruses",
-          "bacteria",
-          "atoms",
-          "molecules",
-          "neutrons",
-          "protons",
-          "electrons",
-          "photons",
-          "comets",
-          "asteroids",
-          "meteors",
-          "planets",
-          "stars",
-          "galaxies",
-          "nebulae",
-          "quasars",
-          "black holes",
-          "fungi",
-          "lichens",
-          "mosses",
-          "ferns",
-          "conifers",
-          "trees",
-          "herbs",
-          "shrubs",
-          "vines",
-          "minecraft creepers",
-          "minecraft bees",
-          "vbucks",
-          "money",
-          "coins",
-          "weed",
-          "1988 Honda Civics",
-          "water",
-          "tea",
-          "juice",
-          "wine",
-          "beer",
-          "milk",
-          "cream",
-          "yogurt",
-          "soup",
-          "broth",
-          "sauce",
-          "oil",
-          "vinegar",
-          "honey",
-          "salsa",
-          "ketchup",
-          "mustard",
-          "mayonnaise",
-          "jelly",
-          "jam",
-          "butter",
-          "margarine",
-          "oil",
-          "grease",
-          "wax",
-          "magma",
-          "slurry",
-          "gel",
+            "rain",
+            "acid",
+            "lava",
+            "coffee",
+            "blood",
+            "urine",
+            "plasma",
+            "vodka",
+            "syrup",
+            "molasses",
+            "squid ink",
+            "moths",
+            "cats",
+            "dogs",
+            "cats and dogs",
+            "chocolate",
+            "lizards",
+            "fursuits",
+            "viruses",
+            "bacteria",
+            "atoms",
+            "molecules",
+            "neutrons",
+            "protons",
+            "electrons",
+            "photons",
+            "comets",
+            "asteroids",
+            "meteors",
+            "planets",
+            "stars",
+            "galaxies",
+            "nebulae",
+            "quasars",
+            "black holes",
+            "fungi",
+            "lichens",
+            "mosses",
+            "ferns",
+            "conifers",
+            "trees",
+            "herbs",
+            "shrubs",
+            "vines",
+            "minecraft creepers",
+            "minecraft bees",
+            "vbucks",
+            "money",
+            "coins",
+            "weed",
+            "1988 Honda Civics",
+            "water",
+            "tea",
+            "juice",
+            "wine",
+            "beer",
+            "milk",
+            "cream",
+            "yogurt",
+            "soup",
+            "broth",
+            "sauce",
+            "oil",
+            "vinegar",
+            "honey",
+            "salsa",
+            "ketchup",
+            "mustard",
+            "mayonnaise",
+            "jelly",
+            "jam",
+            "butter",
+            "margarine",
+            "oil",
+            "grease",
+            "wax",
+            "magma",
+            "slurry",
+            "gel",
         ]
 
         self.weather_types = [
-          "with tornadoes",
-          "and foggy",
-          "and smoggy",
-          "with hail",
-          "and storming",
-          "and thundering",
-          "with lightning",
-          "with snow",
-          "with ice",
-          "with volcanic ash",
-          "with smoke",
-          "with dust storms",
-          "with sand storms",
-          "with meteor showers",
-          "with aurora borealis",
-          "with funnel clouds"
-          "and cloudy",
-          "and sunny",
-          "with partial clouds",
-          "with extreme sun",
-          "with rats",
-          "with pigeons",
-          "with a solar eclipse",
-          "with a lunar eclipse",
-          "with tsunamis",
-          "with earthquakes",
-          "with forest fires",
-          "with solar flares",
-          "and pleasant",
-          "with a rapture",
+            "with tornadoes",
+            "and foggy",
+            "and smoggy",
+            "with hail",
+            "and storming",
+            "and thundering",
+            "with lightning",
+            "with snow",
+            "with ice",
+            "with volcanic ash",
+            "with smoke",
+            "with dust storms",
+            "with sand storms",
+            "with meteor showers",
+            "with aurora borealis",
+            "with funnel clouds" "and cloudy",
+            "and sunny",
+            "with partial clouds",
+            "with extreme sun",
+            "with rats",
+            "with pigeons",
+            "with a solar eclipse",
+            "with a lunar eclipse",
+            "with tsunamis",
+            "with earthquakes",
+            "with forest fires",
+            "with solar flares",
+            "and pleasant",
+            "with a rapture",
         ]
 
         self.sealpulls = [
@@ -855,22 +856,19 @@ class Pets(BaseCog):
         )
 
     @commands.command()
-    async def kiss(self, ctx, *, name:str):
+    async def kiss(self, ctx, *, name: str):
         """
         Kiss
         """
         if random.randrange(0, 100) < 1:
-            await ctx.send("{} passionately and deeply french kisses {}"
-                .format(
-                    ctx.author.mention,
-                    name
+            await ctx.send(
+                "{} passionately and deeply french kisses {}".format(
+                    ctx.author.mention, name
                 )
             )
         else:
-            await ctx.send("{} blows a kiss towards {}".format(
-                    ctx.author.mention,
-                    name
-                )
+            await ctx.send(
+                "{} blows a kiss towards {}".format(ctx.author.mention, name)
             )
 
     @commands.command(aliases=["tailbrush"])
@@ -1263,25 +1261,25 @@ class Pets(BaseCog):
 
     @commands.command(aliases=["forecast"])
     async def weather(self, ctx, *, name: str = None):
-      """
-      What the fuck is going on out there
-      """
-      location = ""
-      if name:
-        location = "in {} ".format(name)
+        """
+        What the fuck is going on out there
+        """
+        location = ""
+        if name:
+            location = "in {} ".format(name)
 
-      # 16C + standard distribution to get avg between ~4C and ~28C
-      tempC = 16 + (random.normalvariate() * 7.27)
-      tempF = (tempC * (9/5)) + 32
+        # 16C + standard distribution to get avg between ~4C and ~28C
+        tempC = 16 + (random.normalvariate() * 7.27)
+        tempF = (tempC * (9 / 5)) + 32
 
-      # 30% chance of rain
-      if random.random() > 0.7:
-        weather = "and raining {}!".format(random.choice(self.rain_types))
-      else:
-        weather = "{}!".format(random.choice(self.weather_types))
+        # 30% chance of rain
+        if random.random() > 0.7:
+            weather = "and raining {}!".format(random.choice(self.rain_types))
+        else:
+            weather = "{}!".format(random.choice(self.weather_types))
 
-      message = f"It's {tempC:.1f}°C ({tempF:.1f}°F) " + location + weather
-      await ctx.send(message)
+        message = f"It's {tempC:.1f}°C ({tempF:.1f}°F) " + location + weather
+        await ctx.send(message)
 
     @commands.command(aliases=["punish"])
     @checks.mod_or_permissions(administrator=True)
@@ -1319,13 +1317,32 @@ class Pets(BaseCog):
         message = "https://file.house/egbT_9qTYxAy1u_z0dDALg==.mov"
         await ctx.send(message)
 
+    @commands.command()
+    async def rabbit(self, ctx):
+        """Fetch a random rabbit image, optionally by breed."""
+        base = "https://rabbit-api-two.vercel.app"
+        url = f"{base}/api/random"
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as resp:
+                if resp.status == 200:
+                    data = await resp.json()
+                    image_url = (
+                        data.get("url") or data.get("image") or data.get("image_url")
+                    )
+                    if image_url:
+                        await ctx.send(image_url)
+                        return
+                await ctx.send("🐰 Couldn't fetch a rabbit image right now!")
+
     @commands.command(aliases=["seal"])
     async def sealed(self, ctx, *, name: str = None):
         """
-        the best animal 
+        the best animal
         """
         if random.randrange(0, 100) < 1:
-            await ctx.send("# RARE SEAL PULL https://file.house/g8LWLYw9iMqeFIceJCttIQ==.gif")
+            await ctx.send(
+                "# RARE SEAL PULL https://file.house/g8LWLYw9iMqeFIceJCttIQ==.gif"
+            )
             return
         else:
             await ctx.send(
