@@ -1328,13 +1328,6 @@ class Pets(BaseCog):
         message = "https://file.house/egbT_9qTYxAy1u_z0dDALg==.mov"
         await ctx.send(message)
 
-    async def get_animal(self, animal, ctx):
-        image_url = await self.get_animal_image(animal)
-        if image_url:
-            await ctx.send(image_url)
-        else:
-            await ctx.send(f"❌ Couldn't fetch images for '{animal}' right now.")
-
     @commands.command(aliases=["bunny"])
     async def rabbit(self, ctx):
         await self.get_animal("rabbit", ctx)
@@ -1374,9 +1367,16 @@ class Pets(BaseCog):
                 )
             )
         else:
-            await self.get_animal("seal", ctx)
+            await self.get_animal("seal", ctx, ["sealion", "sealions", "lion", "lions"])
 
-    async def fetch_images(self, animal: str):
+    async def get_animal(self, animal, ctx, blacklist: list = []):
+        image_url = await self.get_animal_image(animal, blacklist)
+        if image_url:
+            await ctx.send(image_url)
+        else:
+            await ctx.send(f"❌ Couldn't fetch images for '{animal}' right now.")
+
+    async def fetch_images(self, animal: str, blacklist: list = []):
         """Fetch a fresh random batch of images for the given animal from Unsplash."""
         api_key = await self.config.unsplash_key()
         if not api_key:
@@ -1411,15 +1411,21 @@ class Pets(BaseCog):
                 if resp.status != 200:
                     return []
                 data = await resp.json()
+                if isinstance(data, dict):
+                    data = [data]
 
-                # The random endpoint returns a list if count > 1
-                if isinstance(data, list):
-                    return [img["urls"]["regular"] for img in data if "urls" in img]
-                elif isinstance(data, dict):
-                    return [data["urls"]["regular"]] if "urls" in data else []
-                return []
+                photos = []
+                for img in data:
+                    if "urls" in img:
+                        if self._is_blacklisted(img, blacklist):
+                            log.info(
+                                f"Image blacklisted: {img.get('description', 'No description')}"
+                            )
+                            continue
+                        photos.append(img["urls"]["regular"])
+                return photos
 
-    async def get_animal_image(self, animal: str):
+    async def get_animal_image(self, animal: str, blacklist: list = []):
         """Return a cached image for the given animal, refilling cache if needed."""
         # Initialize cache list if not present
         if animal not in self.image_cache:
@@ -1427,7 +1433,7 @@ class Pets(BaseCog):
 
         # If cache is empty, refill it
         if not self.image_cache[animal]:
-            fresh_images = await self.fetch_images(animal)
+            fresh_images = await self.fetch_images(animal, blacklist)
             if not fresh_images:
                 return None
             # Shuffle to avoid predictable order
@@ -1436,6 +1442,24 @@ class Pets(BaseCog):
 
         # Pop one image from the cache
         return self.image_cache[animal].pop()
+
+    def _is_blacklisted(self, photo, blacklist):
+        """Check if the photo matches any unwanted keywords."""
+        text_fields = [
+            photo.get("description") or "",
+            photo.get("alt_description") or "",
+        ]
+        # Some responses include a 'tags' array with title fields
+        tags = photo.get("tags", [])
+        if isinstance(tags, list):
+            for t in tags:
+                if isinstance(t, dict) and "title" in t:
+                    text_fields.append(t["title"])
+                elif isinstance(t, str):
+                    text_fields.append(t)
+
+        combined_text = " ".join(text_fields).lower()
+        return any(bad.lower() in combined_text for bad in blacklist)
 
     @commands.command()
     @checks.mod_or_permissions(administrator=True)
@@ -1446,9 +1470,7 @@ class Pets(BaseCog):
         `.animal rabbit`
         """
         animal = animal.strip().lower()
-        log.info(animal)
         image_url = await self.get_animal_image(animal)
-        log.info(image_url)
         if image_url:
             await ctx.send(image_url)
         else:
