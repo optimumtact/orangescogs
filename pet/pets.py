@@ -1422,7 +1422,7 @@ class Pets(BaseCog):
                                 f"Image blacklisted: {img.get('description', 'No description')}"
                             )
                             continue
-                        photos.append(img["urls"]["regular"])
+                        photos.append(img["urls"]["full"])
                 return photos
 
     async def get_animal_image(self, animal: str, blacklist: list = []):
