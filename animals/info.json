@@ -1,0 +1,16 @@
+{
+    "author": ["oranges"],
+    "install_msg":"Ensure you configure your unsplash api key",
+    "name": "Animal Search",
+    "short": "Find animals on unsplash",
+    "description": "Uses the unsplash API, plus some configurations to search for animals.",
+    "tags": [
+        "Unsplash",
+        "Animals",
+        "Utility",
+        "Cute Animals"
+    ],
+    "requirements": [
+        "aiohttp"
+    ]
+}
