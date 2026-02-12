@@ -80,16 +80,11 @@ class Animals(BaseCog):
         if random.randrange(0, 100) < 1:
             await ctx.send("# RARE SEAL PULL")
             await ctx.send("https://file.house/g8LWLYw9iMqeFIceJCttIQ==.gif")
-        elif random.random() > 0.8:
-            await ctx.send(
-                "{}".format(
-                    random.choice(self.sealpulls),
-                )
+        await ctx.send(
+            "{}".format(
+                random.choice(self.sealpulls),
             )
-        else:
-            await self.send_unsplash_image_to_chat(
-                "seal", ctx, ["sealion", "sealions", "lion", "lions"]
-            )
+        )
 
     @commands.command()
     @checks.mod_or_permissions(administrator=True)
