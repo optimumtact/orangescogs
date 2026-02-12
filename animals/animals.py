@@ -55,6 +55,10 @@ class Animals(BaseCog):
     @commands.command(aliases=["puppy", "thebestpet"])
     async def dog(self, ctx):
         await self.send_unsplash_image_to_chat("dog", ctx)
+    
+    @commands.command(aliases=["fuzzybumble", "bumblebee"])
+    async def bee(self, ctx):
+        await self.send_unsplash_image_to_chat("bee", ctx)
 
     @commands.command(aliases=["wetowl"])
     async def owl(self, ctx):
