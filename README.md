@@ -9,6 +9,28 @@ Utility cogs for the tgstation discord
 - tgverify : a verification module that applies two roles to user if they link their in game ckey to their discord account
 - timeout : cog that lets you give roles the ability to time users out, with maximum timeout periods able to be set
 
+## Development
+
+This project now uses `uv` for dependency management.
+
+Install/update the environment:
+
+```bash
+uv sync
+```
+
+Add a development dependency:
+
+```bash
+uv add --dev <package>
+```
+
+Update the lockfile:
+
+```bash
+uv lock
+```
+
 ### Credits:
 - [Crossedfall](https://github.com/crossedfall/crossed-cogs) for his cogs that made me setup a redbot instance, and for the getnotes work I built upon for the tgdb code
 - [Will Roberts](https://github.com/wroberts) - I used the definitions/regexes from his project [pytimeparse](https://github.com/wroberts/pytimeparse)

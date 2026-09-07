@@ -1,23 +1,24 @@
-[tool.poetry]
+[project]
 name = "orangescogs"
 version = "0.1.0"
 description = "Utility cogs for tgstation codebases"
-authors = ["oranges <email@oranges.net.nz>", "crossedfall <https://github.com/Crossedfall>", "Will Roberts <https://github.com/wroberts"]
-maintainers = ["oranges <email@oranges.net.nz>"]
+readme = "README.md"
+requires-python = ">=3.11,<3.12"
 license = "MIT"
+authors = [
+	{ name = "oranges", email = "email@oranges.net.nz" },
+	{ name = "crossedfall" },
+	{ name = "Will Roberts" },
+]
+maintainers = [{ name = "oranges", email = "email@oranges.net.nz" }]
 
-[tool.poetry.dependencies]
-python = ">=3.11,<3.12"
+[dependency-groups]
+dev = [
+	"Red-DiscordBot>=3,<4",
+	"requests>=2.31.0,<3",
+	"fuzzywuzzy>=0.18.0,<0.19",
+	"tomlkit>=0.13.2,<0.14",
+]
 
-[tool.poetry.dev-dependencies]
-Red-DiscordBot = "^3"
-
-[tool.poetry.group.dev.dependencies]
-requests = "^2.31.0"
-fuzzywuzzy = "^0.18.0"
-tomlkit = "^0.13.2"
-
-
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+[tool.uv]
+default-groups = ["dev"]

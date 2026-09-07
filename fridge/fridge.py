@@ -345,6 +345,7 @@ class Fridge(BaseCog):
         Refill your fridge with a shopping session
         """
         items = list(set(await self.config.guild(ctx.guild).items()))
+        amount = max(1, min(amount, 5000))
         fridge = self.fridges[ctx.guild]
         for _ in range(amount):
             fridge[random.choice(items)] += 1
