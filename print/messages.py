@@ -191,11 +191,11 @@ body { font-family: sans-serif; background: #fff; color: #1f1f1f; }
             image_urls.append(attachment.url)
 
         for embed in getattr(message, "embeds", []) or []:
-            for field_name in ("image", "thumbnail"):
+            for field_name in ("image", "thumbnail", "video"):
                 media = getattr(embed, field_name, None)
                 if media is None:
                     continue
-                url = getattr(media, "url", None)
+                url = getattr(media, "url", None) or getattr(media, "proxy_url", None)
                 if not url:
                     continue
                 if cls._is_supported_media_url(url):
