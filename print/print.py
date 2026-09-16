@@ -38,6 +38,7 @@ class PrintCog(BaseCog):
             escalation_window=900,
             reset_after=3600,
             max_threshold=100,
+            threshold_step=5,
             max_print_jobs=2,
             rate_limit_window_seconds=300,
             context_before=5,
@@ -209,6 +210,18 @@ class PrintCog(BaseCog):
             return base_threshold
         return min(max_threshold, max(base_threshold, current_threshold))
 
+    @staticmethod
+    def _calculate_next_threshold(
+        base_threshold,
+        current_threshold,
+        max_threshold,
+        threshold_step=5,
+    ) -> int:
+        base_threshold = max(1, int(base_threshold or 1))
+        current_threshold = max(base_threshold, int(current_threshold or base_threshold))
+        step = max(1, int(threshold_step or 1))
+        return min(max_threshold, max(base_threshold, current_threshold + step))
+
     async def _get_effective_threshold(self, guild_cfg):
         base_threshold = await guild_cfg.threshold()
         current_threshold = await guild_cfg.current_threshold()
@@ -350,9 +363,12 @@ class PrintCog(BaseCog):
                     current_threshold = (
                         await guild_cfg.current_threshold() or base_threshold
                     )
-                    next_threshold = min(
+                    threshold_step = await guild_cfg.threshold_step() or 5
+                    next_threshold = self._calculate_next_threshold(
+                        base_threshold,
+                        current_threshold,
                         await guild_cfg.max_threshold() or 100,
-                        max(base_threshold, current_threshold * 2),
+                        threshold_step=threshold_step,
                     )
                     now = discord.utils.utcnow()
                     recent_jobs = self._iter_recent_print_jobs(
@@ -506,6 +522,7 @@ class PrintCog(BaseCog):
         escalation_window: int = 900,
         reset_after: int = 3600,
         max_threshold: int = 100,
+        step: int = 5,
     ):
         if threshold < 1:
             await ctx.send("Threshold must be at least 1.")
@@ -515,6 +532,9 @@ class PrintCog(BaseCog):
             return
         if reset_after < 1:
             await ctx.send("Reset window must be at least 1 second.")
+            return
+        if step < 1:
+            await ctx.send("Threshold step must be at least 1.")
             return
         if max_threshold < threshold:
             await ctx.send(
@@ -527,6 +547,7 @@ class PrintCog(BaseCog):
         await guild_cfg.escalation_window.set(escalation_window)
         await guild_cfg.reset_after.set(reset_after)
         await guild_cfg.max_threshold.set(max_threshold)
+        await guild_cfg.threshold_step.set(step)
         await guild_cfg.last_print_at.set(None)
         await guild_cfg.last_threshold_update.set(None)
         await ctx.send(
@@ -534,7 +555,8 @@ class PrintCog(BaseCog):
             f"Base threshold: {threshold}\n"
             f"Escalation window: {escalation_window}s\n"
             f"Reset after inactivity: {reset_after}s\n"
-            f"Max threshold: {max_threshold}"
+            f"Max threshold: {max_threshold}\n"
+            f"Step increase: +{step}"
         )
 
     @commands.guild_only()
@@ -587,6 +609,7 @@ class PrintCog(BaseCog):
         before = await guild_cfg.context_before()
         after = await guild_cfg.context_after()
         reaction = await guild_cfg.reaction()
+        threshold_step = await guild_cfg.threshold_step() or 5
         max_print_jobs = await guild_cfg.max_print_jobs() or 2
         rate_limit_window = await guild_cfg.rate_limit_window_seconds() or 300
         service_status = "not configured"
@@ -602,6 +625,7 @@ class PrintCog(BaseCog):
             f"Token: {'configured' if token else 'not configured'}\n"
             f"Base threshold: {threshold}\n"
             f"Current threshold: {effective_threshold}\n"
+            f"Threshold step: +{threshold_step}\n"
             f"Max print jobs / {rate_limit_window}s window: {max_print_jobs}\n"
             f"Context: {before} before / {after} after\n"
             f"Reaction: {reaction}\n"
