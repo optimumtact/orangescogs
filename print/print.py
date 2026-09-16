@@ -41,6 +41,8 @@ class PrintCog(BaseCog):
             threshold_step=5,
             max_print_jobs=2,
             rate_limit_window_seconds=300,
+            rate_limit_notice_interval=120,
+            last_rate_limit_warning=None,
             context_before=5,
             context_after=5,
             reaction="🖨️",
@@ -218,9 +220,28 @@ class PrintCog(BaseCog):
         threshold_step=5,
     ) -> int:
         base_threshold = max(1, int(base_threshold or 1))
-        current_threshold = max(base_threshold, int(current_threshold or base_threshold))
+        current_threshold = max(
+            base_threshold, int(current_threshold or base_threshold)
+        )
         step = max(1, int(threshold_step or 1))
         return min(max_threshold, max(base_threshold, current_threshold + step))
+
+    @staticmethod
+    def _should_warn_rate_limit(
+        last_warning,
+        now,
+        interval_seconds=120,
+    ) -> bool:
+        if last_warning is None:
+            return True
+        last_warning_dt = PrintCog._coerce_datetime(last_warning)
+        if last_warning_dt is None:
+            return True
+        if last_warning_dt.tzinfo is None:
+            last_warning_dt = last_warning_dt.replace(tzinfo=timezone.utc)
+        if now.tzinfo is None:
+            now = now.replace(tzinfo=timezone.utc)
+        return now - last_warning_dt >= timedelta(seconds=interval_seconds)
 
     async def _get_effective_threshold(self, guild_cfg):
         base_threshold = await guild_cfg.threshold()
@@ -342,6 +363,21 @@ class PrintCog(BaseCog):
                     cooldown_until.isoformat(),
                     wait_seconds,
                 )
+                if len(unique_users) >= threshold:
+                    notice_interval = (
+                        await guild_cfg.rate_limit_notice_interval() or 120
+                    )
+                    if self._should_warn_rate_limit(
+                        await guild_cfg.last_rate_limit_warning(),
+                        now,
+                        interval_seconds=notice_interval,
+                    ):
+                        await self._notify(
+                            channel,
+                            "🖨️ Print votes are currently above the guild threshold, but the print rate limit is active. "
+                            f"This will resume automatically in about {wait_seconds} seconds.",
+                        )
+                        await guild_cfg.last_rate_limit_warning.set(now.isoformat())
                 return PrintResult(
                     success=False,
                     error=f"Print rate limit reached. Please wait {wait_seconds} seconds before printing again.",
@@ -612,6 +648,7 @@ class PrintCog(BaseCog):
         threshold_step = await guild_cfg.threshold_step() or 5
         max_print_jobs = await guild_cfg.max_print_jobs() or 2
         rate_limit_window = await guild_cfg.rate_limit_window_seconds() or 300
+        rate_limit_notice_interval = await guild_cfg.rate_limit_notice_interval() or 120
         service_status = "not configured"
         if endpoint_url:
             ok, message = await validate_print_service(endpoint_url)
@@ -627,6 +664,7 @@ class PrintCog(BaseCog):
             f"Current threshold: {effective_threshold}\n"
             f"Threshold step: +{threshold_step}\n"
             f"Max print jobs / {rate_limit_window}s window: {max_print_jobs}\n"
+            f"Rate-limit notice interval: {rate_limit_notice_interval}s\n"
             f"Context: {before} before / {after} after\n"
             f"Reaction: {reaction}\n"
             f"Print API: {service_status}"
