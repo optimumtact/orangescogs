@@ -14,6 +14,8 @@ class PrintableMessage:
     content: str
     image_urls: list[str] = field(default_factory=list)
     mention_map: dict[str, str] = field(default_factory=dict)
+    poll: dict[str, Any] | None = None
+    forward: dict[str, Any] | None = None
     is_target: bool = False
 
 

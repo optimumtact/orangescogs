@@ -21,6 +21,16 @@ body { font-family: sans-serif; background: #fff; color: #1f1f1f; }
 .author { font-weight: 700; }
 .timestamp { color: #666; font-size: 0.8rem; }
 .content { white-space: pre-wrap; line-height: 1.45; }
+.poll, .forward-message { margin-top: 12px; padding: 10px 12px; border: 1px solid #d9d9d9; border-radius: 8px; background: #fafafa; }
+.poll-header, .forward-label { font-size: 0.75rem; letter-spacing: 0.04em; text-transform: uppercase; color: #555; margin-bottom: 8px; font-weight: 700; }
+.poll-question { font-weight: 700; margin-bottom: 8px; }
+.poll-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.poll-option { display: flex; justify-content: space-between; gap: 12px; align-items: center; padding: 6px 0; border-top: 1px solid #e7e7e7; }
+.poll-option:first-child { border-top: none; }
+.poll-option-label { white-space: pre-wrap; }
+.poll-votes { color: #444; font-weight: 700; }
+.poll-total { margin-top: 8px; color: #666; font-size: 0.82rem; }
+.forward-body { white-space: pre-wrap; line-height: 1.45; }
 .inline-image, .inline-media { display: block; max-width: min(100%, 460px); max-height: 460px; margin-top: 12px; border: 1px solid #d0d0d0; }
 .print-footer { margin-top: 2rem; font-size: 0.8rem; color: #585858; }"""
 
@@ -218,7 +228,136 @@ body { font-family: sans-serif; background: #fff; color: #1f1f1f; }
             content=message.content or "",
             image_urls=unique_image_urls,
             mention_map=mention_map,
+            poll=cls._extract_poll_data(message),
+            forward=cls._extract_forward_data(message),
             is_target=is_target,
+        )
+
+    @staticmethod
+    def _extract_poll_data(message: Any) -> dict[str, Any] | None:
+        poll = getattr(message, "poll", None)
+        if poll is None:
+            return None
+
+        question = getattr(poll, "question", "") or ""
+        answers: list[dict[str, Any]] = []
+        for answer in getattr(poll, "answers", []) or []:
+            if answer is None:
+                continue
+            text = getattr(answer, "text", "") or ""
+            emoji = getattr(answer, "emoji", None)
+            answers.append(
+                {
+                    "text": text,
+                    "emoji": str(emoji) if emoji is not None else "",
+                    "vote_count": int(getattr(answer, "vote_count", 0) or 0),
+                }
+            )
+
+        is_finalized = bool(getattr(poll, "is_finalized", lambda: False)())
+        return {
+            "question": question,
+            "answers": answers,
+            "total_votes": int(getattr(poll, "total_votes", 0) or 0),
+            "is_finalized": is_finalized,
+        }
+
+    @staticmethod
+    def _extract_forward_data(message: Any) -> dict[str, Any] | None:
+        reference = getattr(message, "reference", None)
+        if reference is None:
+            return None
+
+        ref_type = getattr(getattr(reference, "type", None), "value", None)
+        if ref_type not in {1, None}:
+            return None
+
+        resolved = getattr(reference, "resolved", None)
+        snapshot = None
+        snapshots = getattr(message, "message_snapshots", []) or []
+        if snapshots:
+            snapshot = snapshots[-1]
+
+        source = resolved or snapshot
+        if source is None:
+            return None
+
+        source_content = getattr(source, "content", "") or ""
+        source_author_name = (
+            getattr(getattr(source, "author", None), "display_name", None)
+            or getattr(getattr(source, "author", None), "name", None)
+            or "Unknown"
+        )
+        source_image_urls: list[str] = []
+        for attachment in getattr(source, "attachments", []) or []:
+            if MessageHTMLRenderer._is_supported_media(attachment):
+                source_image_urls.append(attachment.url)
+        for embed in getattr(source, "embeds", []) or []:
+            for field_name in ("image", "thumbnail"):
+                media = getattr(embed, field_name, None)
+                if media is None:
+                    continue
+                url = getattr(media, "url", None)
+                if url and MessageHTMLRenderer._is_supported_media_url(url):
+                    source_image_urls.append(url)
+
+        return {
+            "author_name": source_author_name,
+            "content": source_content,
+            "image_urls": list(dict.fromkeys(source_image_urls)),
+        }
+
+    @staticmethod
+    def _render_poll_block(poll: dict[str, Any] | None) -> str:
+        if not poll:
+            return ""
+
+        question = html.escape(str(poll.get("question") or "Poll"), quote=False)
+        answers = poll.get("answers") or []
+        rows: list[str] = []
+        for answer in answers:
+            if not isinstance(answer, dict):
+                continue
+            label = str(answer.get("text") or "Option").strip() or "Option"
+            emoji = str(answer.get("emoji") or "").strip()
+            vote_count = int(answer.get("vote_count") or 0)
+            label_html = html.escape(label, quote=False)
+            if emoji:
+                label_html = f"{html.escape(emoji, quote=False)} {label_html}"
+            rows.append(
+                f'<li class="poll-option"><span class="poll-option-label">{label_html}</span><span class="poll-votes">{vote_count}</span></li>'
+            )
+
+        status = "Final results" if poll.get("is_finalized") else "Poll"
+        total_votes = int(poll.get("total_votes") or 0)
+        rows_html = "".join(rows) if rows else "<li class=\"poll-option\"><span class=\"poll-option-label\">No answers available</span></li>"
+        return (
+            f'<div class="poll">'
+            f'<div class="poll-header">{html.escape(status, quote=False)}</div>'
+            f'<div class="poll-question">{question}</div>'
+            f'<ul class="poll-list">{rows_html}</ul>'
+            f'<div class="poll-total">{total_votes} votes</div>'
+            "</div>"
+        )
+
+    @staticmethod
+    def _render_forward_block(forward: dict[str, Any] | None) -> str:
+        if not forward:
+            return ""
+
+        author_name = html.escape(str(forward.get("author_name") or "Unknown"), quote=False)
+        content = str(forward.get("content") or "")
+        content_html = message_content_to_html(content)
+        images = "".join(
+            MessageHTMLRenderer._render_inline_media(url)
+            for url in list(dict.fromkeys(forward.get("image_urls") or []))
+        )
+        return (
+            f'<div class="forward-message">'
+            f'<div class="forward-label">Forwarded from {author_name}</div>'
+            f'<div class="forward-body">{content_html or "<em>Forwarded message</em>"}</div>'
+            f"{images}"
+            "</div>"
         )
 
     @classmethod
@@ -259,6 +398,8 @@ body { font-family: sans-serif; background: #fff; color: #1f1f1f; }
                 mentions=getattr(message, "mention_map", None),
                 exclude_urls=seen_media_urls,
             )
+            poll_html = cls._render_poll_block(getattr(message, "poll", None))
+            forward_html = cls._render_forward_block(getattr(message, "forward", None))
             images = "".join(cls._render_inline_media(url) for url in unique_media_urls)
             marker = " target-message" if getattr(message, "is_target", False) else ""
             message_blocks.append(
@@ -268,6 +409,8 @@ body { font-family: sans-serif; background: #fff; color: #1f1f1f; }
                 f'<div class="header"><span class="author">{html.escape(getattr(message, "author_name", ""))}</span>'
                 f'<span class="timestamp">{html.escape(cls._format_timestamp(getattr(message, "timestamp", "")))}</span></div>'
                 f'<div class="content">{text}</div>'
+                f"{poll_html}"
+                f"{forward_html}"
                 f"{images}"
                 "</div>"
                 "</article>"
