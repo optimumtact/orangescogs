@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime, timezone
 
 from print.print import PrintableMessage, message_content_to_html
@@ -72,6 +73,119 @@ def test_render_document_uses_username_handles_for_authors():
     assert "Alice Display" not in doc
 
 
+def test_render_document_renders_completed_poll_summary():
+    doc = __import__("print.print", fromlist=["PrintCog"]).PrintCog._render_document(
+        "general",
+        [
+            PrintableMessage(
+                id=1,
+                author_name="Alice",
+                author_avatar_url=None,
+                timestamp="2026-09-16-11-43",
+                content="",
+                image_urls=[],
+                poll={
+                    "question": "Favorite color?",
+                    "answers": [
+                        {"text": "Red", "vote_count": 2},
+                        {"text": "Blue", "vote_count": 1},
+                    ],
+                    "total_votes": 3,
+                    "is_finalized": True,
+                },
+                is_target=True,
+            )
+        ],
+    )
+    assert "Favorite color?" in doc
+    assert "Red" in doc
+    assert "Blue" in doc
+    assert "3 votes" in doc
+
+
+def test_render_document_renders_forwarded_message_summary():
+    doc = __import__("print.print", fromlist=["PrintCog"]).PrintCog._render_document(
+        "general",
+        [
+            PrintableMessage(
+                id=1,
+                author_name="Alice",
+                author_avatar_url=None,
+                timestamp="2026-09-16-11-43",
+                content="",
+                image_urls=[],
+                forward={
+                    "author_name": "Bob",
+                    "content": "Forwarded text",
+                },
+                is_target=True,
+            )
+        ],
+    )
+    assert "Forwarded" in doc
+    assert "Bob" in doc
+    assert "Forwarded text" in doc
+
+
+def test_render_document_includes_social_preview_embed_images():
+    class User:
+        name = "alice"
+        display_name = "Alice"
+        display_avatar = type("Avatar", (), {"url": None})()
+
+    class Embed:
+        image = type(
+            "Image", (), {"url": "https://i.ytimg.com/vi/abc123/maxresdefault.jpg"}
+        )()
+        thumbnail = type(
+            "Thumbnail", (), {"url": "https://pbs.twimg.com/media/test.jpg"}
+        )()
+
+    class Message:
+        id = 1
+        author = User()
+        created_at = datetime(2026, 9, 16, 11, 43, 0)
+        content = "https://youtube.com/watch?v=abc123"
+        attachments = []
+        embeds = [Embed()]
+        mentions = []
+
+    printable = __import__(
+        "print.messages", fromlist=["MessageHTMLRenderer"]
+    ).MessageHTMLRenderer._normalise_message(Message(), is_target=True)
+    doc = __import__("print.print", fromlist=["PrintCog"]).PrintCog._render_document(
+        "general",
+        [printable],
+    )
+    assert "i.ytimg.com" in doc
+    assert "pbs.twimg.com" in doc
+
+
+def test_render_document_deduplicates_forward_media_from_parent_message():
+    shared_url = "https://example.com/shared.jpg"
+
+    doc = __import__("print.print", fromlist=["PrintCog"]).PrintCog._render_document(
+        "general",
+        [
+            PrintableMessage(
+                id=1,
+                author_name="Alice",
+                author_avatar_url=None,
+                timestamp="2026-09-16-11-43",
+                content="",
+                image_urls=[shared_url],
+                forward={
+                    "author_name": "Bob",
+                    "content": "Forwarded text",
+                    "image_urls": [shared_url],
+                },
+                is_target=True,
+            )
+        ],
+    )
+    assert doc.count(shared_url) == 1
+
+
 def test_print_threshold_scales_then_resets_after_inactivity():
     now = datetime(2026, 9, 16, 12, 0, 0)
     assert (
@@ -140,6 +254,42 @@ def test_print_rate_limit_blocks_after_two_jobs_within_five_minutes():
     assert allowed is True
 
 
+def test_print_threshold_step_increments_by_configured_amount():
+    assert (
+        __import__(
+            "print.print", fromlist=["PrintCog"]
+        ).PrintCog._calculate_next_threshold(
+            5,
+            5,
+            100,
+            5,
+        )
+        == 10
+    )
+    assert (
+        __import__(
+            "print.print", fromlist=["PrintCog"]
+        ).PrintCog._calculate_next_threshold(
+            5,
+            10,
+            100,
+            5,
+        )
+        == 15
+    )
+    assert (
+        __import__(
+            "print.print", fromlist=["PrintCog"]
+        ).PrintCog._calculate_next_threshold(
+            5,
+            20,
+            100,
+            10,
+        )
+        == 30
+    )
+
+
 def test_print_rate_limit_can_be_configured_higher_than_two():
     now = datetime(2026, 9, 16, 12, 0, 0, tzinfo=timezone.utc)
     allowed, _ = __import__(
@@ -166,6 +316,53 @@ def test_print_rate_limit_can_be_configured_higher_than_two():
         max_jobs=3,
     )
     assert allowed is True
+
+
+def test_print_rate_limit_notice_is_debounced_every_two_minutes():
+    now = datetime(2026, 9, 16, 12, 0, 0, tzinfo=timezone.utc)
+    assert (
+        __import__(
+            "print.print", fromlist=["PrintCog"]
+        ).PrintCog._should_warn_rate_limit(
+            "2026-09-16T11:58:30+00:00",
+            now,
+            interval_seconds=120,
+        )
+        is False
+    )
+    assert (
+        __import__(
+            "print.print", fromlist=["PrintCog"]
+        ).PrintCog._should_warn_rate_limit(
+            "2026-09-16T11:58:30+00:00",
+            datetime(2026, 9, 16, 12, 2, 1, tzinfo=timezone.utc),
+            interval_seconds=120,
+        )
+        is True
+    )
+
+
+def test_notify_can_reply_to_the_target_message():
+    class FakeMessage:
+        pass
+
+    class FakeChannel:
+        def __init__(self):
+            self.calls = []
+
+        async def send(self, message, **kwargs):
+            self.calls.append((message, kwargs))
+
+    fake_message = FakeMessage()
+    fake_channel = FakeChannel()
+    cog = __import__("print.print", fromlist=["PrintCog"]).PrintCog.__new__(
+        __import__("print.print", fromlist=["PrintCog"]).PrintCog
+    )
+
+    asyncio.run(cog._notify(fake_channel, "hello", fake_message))
+
+    assert fake_channel.calls[0][0] == "hello"
+    assert fake_channel.calls[0][1]["reference"] is fake_message
 
 
 def test_print_api_client_uses_print_route_when_given_base_url():

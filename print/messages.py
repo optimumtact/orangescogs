@@ -330,7 +330,11 @@ body { font-family: sans-serif; background: #fff; color: #1f1f1f; }
 
         status = "Final results" if poll.get("is_finalized") else "Poll"
         total_votes = int(poll.get("total_votes") or 0)
-        rows_html = "".join(rows) if rows else "<li class=\"poll-option\"><span class=\"poll-option-label\">No answers available</span></li>"
+        rows_html = (
+            "".join(rows)
+            if rows
+            else '<li class="poll-option"><span class="poll-option-label">No answers available</span></li>'
+        )
         return (
             f'<div class="poll">'
             f'<div class="poll-header">{html.escape(status, quote=False)}</div>'
@@ -345,7 +349,9 @@ body { font-family: sans-serif; background: #fff; color: #1f1f1f; }
         if not forward:
             return ""
 
-        author_name = html.escape(str(forward.get("author_name") or "Unknown"), quote=False)
+        author_name = html.escape(
+            str(forward.get("author_name") or "Unknown"), quote=False
+        )
         content = str(forward.get("content") or "")
         content_html = message_content_to_html(content)
         images = "".join(
@@ -405,9 +411,7 @@ body { font-family: sans-serif; background: #fff; color: #1f1f1f; }
             filtered_forward = forward.copy()
             if forward_image_urls:
                 filtered_forward["image_urls"] = [
-                    url
-                    for url in forward_image_urls
-                    if url not in parent_image_urls
+                    url for url in forward_image_urls if url not in parent_image_urls
                 ]
             forward_html = cls._render_forward_block(filtered_forward or None)
             images = "".join(cls._render_inline_media(url) for url in unique_media_urls)
