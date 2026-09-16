@@ -402,8 +402,14 @@ body { font-family: sans-serif; background: #fff; color: #1f1f1f; }
                 dict.fromkeys(parent_image_urls + forward_image_urls)
             )
             seen_media_urls = {_normalise_media_url(url) for url in unique_media_urls}
+            content_text = getattr(message, "content", "") or ""
+            if content_text and unique_media_urls:
+                seen_media_urls.update(
+                    _normalise_media_url(url)
+                    for url in re.findall(r"https?://[^\s]+", content_text)
+                )
             text = message_content_to_html(
-                getattr(message, "content", ""),
+                content_text,
                 mentions=getattr(message, "mention_map", None),
                 exclude_urls=seen_media_urls,
             )
