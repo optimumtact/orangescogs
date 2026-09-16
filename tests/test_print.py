@@ -140,6 +140,34 @@ def test_print_rate_limit_blocks_after_two_jobs_within_five_minutes():
     assert allowed is True
 
 
+def test_print_rate_limit_can_be_configured_higher_than_two():
+    now = datetime(2026, 9, 16, 12, 0, 0, tzinfo=timezone.utc)
+    allowed, _ = __import__(
+        "print.print", fromlist=["PrintCog"]
+    ).PrintCog._is_print_allowed(
+        [
+            "2026-09-16T11:58:00+00:00",
+            "2026-09-16T11:59:00+00:00",
+            "2026-09-16T11:59:30+00:00",
+        ],
+        now,
+        max_jobs=3,
+    )
+    assert allowed is False
+
+    allowed, _ = __import__(
+        "print.print", fromlist=["PrintCog"]
+    ).PrintCog._is_print_allowed(
+        [
+            "2026-09-16T11:58:00+00:00",
+            "2026-09-16T11:59:00+00:00",
+        ],
+        now,
+        max_jobs=3,
+    )
+    assert allowed is True
+
+
 def test_print_api_client_uses_print_route_when_given_base_url():
     client = PrintApiClient("http://printapi:8000", "secret")
     assert client.print_url == "http://printapi:8000/print"

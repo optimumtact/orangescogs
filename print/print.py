@@ -38,6 +38,8 @@ class PrintCog(BaseCog):
             escalation_window=900,
             reset_after=3600,
             max_threshold=100,
+            max_print_jobs=2,
+            rate_limit_window_seconds=300,
             context_before=5,
             context_after=5,
             reaction="🖨️",
@@ -311,7 +313,14 @@ class PrintCog(BaseCog):
 
             now = discord.utils.utcnow()
             recent_jobs = await guild_cfg.recent_print_jobs()
-            allowed, cooldown_until = self._is_print_allowed(recent_jobs, now)
+            max_print_jobs = await guild_cfg.max_print_jobs() or 2
+            rate_limit_window = await guild_cfg.rate_limit_window_seconds() or 300
+            allowed, cooldown_until = self._is_print_allowed(
+                recent_jobs,
+                now,
+                max_jobs=max_print_jobs,
+                window=timedelta(seconds=rate_limit_window),
+            )
             if not allowed:
                 wait_seconds = max(0, int((cooldown_until - now).total_seconds()))
                 log.info(
@@ -397,7 +406,6 @@ class PrintCog(BaseCog):
         before_limit = await guild_cfg.context_before()
         after_limit = await guild_cfg.context_after()
 
-        printable_messages: list[PrintableMessage] = []
         before_messages = [
             msg
             async for msg in channel.history(
@@ -530,6 +538,25 @@ class PrintCog(BaseCog):
         )
 
     @commands.guild_only()
+    @print.command(name="limit")
+    @checks.mod_or_permissions(administrator=True)
+    async def print_limit(self, ctx, max_jobs: int, window_seconds: int = 300):
+        if max_jobs < 1:
+            await ctx.send("Maximum print jobs must be at least 1.")
+            return
+        if window_seconds < 1:
+            await ctx.send("Rate-limit window must be at least 1 second.")
+            return
+        guild_cfg = self.config.guild(ctx.guild)
+        await guild_cfg.max_print_jobs.set(max_jobs)
+        await guild_cfg.rate_limit_window_seconds.set(window_seconds)
+        await ctx.send(
+            "Print rate limit configured:\n"
+            f"Max jobs per window: {max_jobs}\n"
+            f"Window: {window_seconds}s"
+        )
+
+    @commands.guild_only()
     @print.command(name="context")
     @checks.mod_or_permissions(administrator=True)
     async def print_context(self, ctx, before: int, after: int):
@@ -560,6 +587,8 @@ class PrintCog(BaseCog):
         before = await guild_cfg.context_before()
         after = await guild_cfg.context_after()
         reaction = await guild_cfg.reaction()
+        max_print_jobs = await guild_cfg.max_print_jobs() or 2
+        rate_limit_window = await guild_cfg.rate_limit_window_seconds() or 300
         service_status = "not configured"
         if endpoint_url:
             ok, message = await validate_print_service(endpoint_url)
@@ -573,6 +602,7 @@ class PrintCog(BaseCog):
             f"Token: {'configured' if token else 'not configured'}\n"
             f"Base threshold: {threshold}\n"
             f"Current threshold: {effective_threshold}\n"
+            f"Max print jobs / {rate_limit_window}s window: {max_print_jobs}\n"
             f"Context: {before} before / {after} after\n"
             f"Reaction: {reaction}\n"
             f"Print API: {service_status}"
