@@ -286,9 +286,17 @@ class PrintCog(BaseCog):
             return set(users)
         return set()
 
-    async def _notify(self, channel: discord.TextChannel, message: str):
+    async def _notify(
+        self,
+        channel: discord.TextChannel,
+        message: str,
+        reply_target: discord.Message | None = None,
+    ):
         try:
-            await channel.send(message)
+            kwargs = {}
+            if reply_target is not None:
+                kwargs["reference"] = reply_target
+            await channel.send(message, **kwargs)
         except (discord.Forbidden, discord.HTTPException):
             log.warning(
                 "Could not send status update for print event in %s", channel.id
@@ -313,6 +321,11 @@ class PrintCog(BaseCog):
         base_threshold = await guild_cfg.threshold() or 5
         if not base_threshold:
             base_threshold = 1
+
+        try:
+            target_message = await channel.fetch_message(message_id)
+        except discord.NotFound:
+            target_message = None
 
         lock = await self._get_lock(f"{guild_id}:{channel_id}:{message_id}")
         async with lock:
@@ -376,6 +389,7 @@ class PrintCog(BaseCog):
                             channel,
                             "🖨️ Print votes are currently above the guild threshold, but the print rate limit is active. "
                             f"This will resume automatically in about {wait_seconds} seconds.",
+                            reply_target=target_message,
                         )
                         await guild_cfg.last_rate_limit_warning.set(now.isoformat())
                 return PrintResult(
@@ -393,6 +407,7 @@ class PrintCog(BaseCog):
                 await self._notify(
                     channel,
                     f"🖨️ {len(unique_users)}/{threshold} print votes reached. Preparing print...",
+                    reply_target=target_message,
                 )
                 result = await self._print_message_bundle(guild, channel, message_id)
                 if result.success:
@@ -426,12 +441,15 @@ class PrintCog(BaseCog):
                     await self._notify(
                         channel,
                         f"🖨️ Print job submitted to print service (job {result.job_id}). Required votes are now {next_threshold}.",
+                        reply_target=target_message,
                     )
                 else:
                     data.pop(key, None)
                     await guild_cfg.printed_messages.set(data)
                     await self._notify(
-                        channel, "🖨️ Print failed: print service returned an error."
+                        channel,
+                        "🖨️ Print failed: print service returned an error.",
+                        reply_target=target_message,
                     )
                 return result
             except Exception as exc:  # pragma: no cover - runtime safety guard
@@ -443,7 +461,11 @@ class PrintCog(BaseCog):
                 )
                 data.pop(key, None)
                 await guild_cfg.printed_messages.set(data)
-                await self._notify(channel, "🖨️ Print failed: unexpected error.")
+                await self._notify(
+                    channel,
+                    "🖨️ Print failed: unexpected error.",
+                    reply_target=target_message,
+                )
                 return PrintResult(success=False, error=str(exc))
 
     async def _build_print_html_document(
