@@ -18,6 +18,7 @@ dev = [
 	"requests>=2.31.0,<3",
 	"fuzzywuzzy>=0.18.0,<0.19",
 	"tomlkit>=0.13.2,<0.14",
+	"pytest>=9.1.1",
 ]
 
 [tool.uv]

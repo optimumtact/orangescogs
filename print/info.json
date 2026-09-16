@@ -1,0 +1,17 @@
+{
+    "author": ["oranges"],
+    "install_msg": "Configure the print service URL and bearer token before using the print cog.",
+    "name": "Discord Print",
+    "short": "Send Discord messages to a print service",
+    "description": "Collects print reactions, renders a Discord message bundle as HTML, and submits it to a configured print API endpoint for rendering and printing.",
+    "tags": [
+        "Utility",
+        "Printing",
+        "Discord",
+        "HTML",
+        "API"
+    ],
+    "requirements": [
+        "aiohttp"
+    ]
+}

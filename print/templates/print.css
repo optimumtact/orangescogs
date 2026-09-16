@@ -1,0 +1,48 @@
+@page {
+    size: A4;
+    margin: 15mm;
+}
+
+body {
+    font-family: sans-serif;
+    background: #fff;
+    color: #1f1f1f;
+}
+
+.message {
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr);
+    gap: 12px;
+    padding: 12px;
+    border: 1px solid #d0d0d0;
+    margin-bottom: 16px;
+    page-break-inside: avoid;
+}
+
+.message.target-message {
+    border-left: 5px solid #444;
+    background: #f9f9f9;
+}
+
+.avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.timestamp {
+    color: #666;
+    font-size: 0.8rem;
+}
+
+.content {
+    white-space: pre-wrap;
+    line-height: 1.5;
+}
+
+.inline-image {
+    max-width: 100%;
+    max-height: 480px;
+    margin-top: 12px;
+}
