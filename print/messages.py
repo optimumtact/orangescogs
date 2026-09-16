@@ -389,8 +389,11 @@ body { font-family: sans-serif; background: #fff; color: #1f1f1f; }
                     'alt="avatar">'
                 )
 
+            forward = getattr(message, "forward", None) or {}
+            parent_image_urls = list(getattr(message, "image_urls", []) or [])
+            forward_image_urls = list(dict.fromkeys(forward.get("image_urls") or []))
             unique_media_urls = list(
-                dict.fromkeys(getattr(message, "image_urls", []) or [])
+                dict.fromkeys(parent_image_urls + forward_image_urls)
             )
             seen_media_urls = {_normalise_media_url(url) for url in unique_media_urls}
             text = message_content_to_html(
@@ -399,7 +402,14 @@ body { font-family: sans-serif; background: #fff; color: #1f1f1f; }
                 exclude_urls=seen_media_urls,
             )
             poll_html = cls._render_poll_block(getattr(message, "poll", None))
-            forward_html = cls._render_forward_block(getattr(message, "forward", None))
+            filtered_forward = forward.copy()
+            if forward_image_urls:
+                filtered_forward["image_urls"] = [
+                    url
+                    for url in forward_image_urls
+                    if url not in parent_image_urls
+                ]
+            forward_html = cls._render_forward_block(filtered_forward or None)
             images = "".join(cls._render_inline_media(url) for url in unique_media_urls)
             marker = " target-message" if getattr(message, "is_target", False) else ""
             message_blocks.append(
