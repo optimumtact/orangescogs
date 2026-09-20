@@ -1,0 +1,14 @@
+{
+    "author": ["oranges"],
+    "install_msg": "Configure a GitHub API token with the setup command, then use the slash commands to manage the resources.ini list.",
+    "name": "CoderBusFYI",
+    "short": "GitHub-backed resource management for the CoderBusFYI list",
+    "description": "Allows users to queue add/remove requests and lets admins approve or immediately apply them to the upstream resources.ini file.",
+    "permissions": ["Send Messages"],
+    "tags": [
+        "Utility",
+        "GitHub",
+        "Resources",
+        "Management"
+    ]
+}

@@ -186,6 +186,29 @@ def test_render_document_deduplicates_forward_media_from_parent_message():
     assert doc.count(shared_url) == 1
 
 
+def test_render_document_does_not_reembed_social_preview_urls_when_embed_image_exists():
+    preview_url = "https://klipy.com/p/abc123.jpg"
+    embed_url = "https://images.example.com/preview.jpg"
+
+    doc = __import__("print.print", fromlist=["PrintCog"]).PrintCog._render_document(
+        "general",
+        [
+            PrintableMessage(
+                id=1,
+                author_name="Alice",
+                author_avatar_url=None,
+                timestamp="2026-09-16-11-43",
+                content=f"Check {preview_url}",
+                image_urls=[embed_url],
+                is_target=True,
+            )
+        ],
+    )
+    assert preview_url in doc
+    assert f'<img class="inline-image" src="{preview_url}"' not in doc
+    assert f'<img class="inline-image" src="{embed_url}"' in doc
+
+
 def test_print_threshold_scales_then_resets_after_inactivity():
     now = datetime(2026, 9, 16, 12, 0, 0)
     assert (

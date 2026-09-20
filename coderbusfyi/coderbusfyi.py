@@ -1,0 +1,793 @@
+import base64
+import re
+from collections import OrderedDict
+
+import aiohttp
+import discord
+from redbot.core import Config, commands
+
+BaseCog = getattr(commands, "Cog", object)
+
+
+class CoderBusFYI(BaseCog):
+    DEFAULT_REPO_OWNER = "optimumtact"
+    DEFAULT_REPO_NAME = "coderbusfyi"
+    DEFAULT_BRANCH = "main"
+    DEFAULT_RESOURCE_PATH = "resources.ini"
+
+    def __init__(self, bot):
+        self.bot = bot
+        self.config = Config.get_conf(
+            self,
+            identifier=571982634075330107,
+            force_registration=True,
+        )
+        self.config.register_global(
+            github_token=None,
+            repo_owner=self.DEFAULT_REPO_OWNER,
+            repo_name=self.DEFAULT_REPO_NAME,
+            default_branch=self.DEFAULT_BRANCH,
+            resource_path=self.DEFAULT_RESOURCE_PATH,
+            pending_requests=[],
+        )
+
+    @staticmethod
+    def parse_ini_entries(raw: str):
+        entries = []
+        current_section = "General"
+        current_entry = None
+
+        for raw_line in raw.splitlines():
+            line = raw_line.strip()
+            if not line or line.startswith("#") or line.startswith(";"):
+                continue
+
+            if line.startswith("[") and line.endswith("]"):
+                current_section = line[1:-1].strip()
+                current_entry = None
+                continue
+
+            if "=" in line:
+                key, value = [part.strip() for part in line.split("=", 1)]
+                current_entry = {
+                    "section": current_section,
+                    "title": key,
+                    "url": "",
+                    "description": "",
+                }
+                if " | " in value:
+                    url, description = [part.strip() for part in value.split("|", 1)]
+                    current_entry["url"] = url
+                    current_entry["description"] = re.sub(r"\s+", " ", description)
+                else:
+                    current_entry["url"] = value
+                entries.append(current_entry)
+                continue
+
+            if current_entry is not None:
+                current_entry["description"] = re.sub(
+                    r"\s+",
+                    " ",
+                    f"{current_entry['description']} {line}".strip(),
+                )
+
+        for entry in entries:
+            entry["description"] = entry["description"].strip()
+
+        return entries
+
+    @staticmethod
+    def entries_to_ini(entries):
+        ordered_sections = OrderedDict()
+        for item in entries:
+            section_name = item.get("section", "General").strip() or "General"
+            ordered_sections.setdefault(section_name, []).append(item)
+
+        lines = []
+        for section_name, section_items in ordered_sections.items():
+            lines.append(f"[{section_name}]")
+            for item in section_items:
+                title = str(item.get("title", "")).strip()
+                url = str(item.get("url", "")).strip()
+                description = str(item.get("description", "")).strip()
+                if title and url:
+                    if description:
+                        lines.append(f"{title} = {url} | {description}")
+                    else:
+                        lines.append(f"{title} = {url}")
+            lines.append("")
+
+        return "\n".join(lines).rstrip() + "\n"
+
+    @staticmethod
+    def normalize_line(title: str, url: str, description: str) -> str:
+        cleaned_description = re.sub(r"\s+", " ", str(description).strip())
+        return f"{str(title).strip()} = {str(url).strip()} | {cleaned_description}"
+
+    @staticmethod
+    def find_entry_by_url(entries, url):
+        target_url = str(url).strip()
+        for item in entries:
+            if str(item.get("url", "")).strip() == target_url:
+                return item
+        return None
+
+    @staticmethod
+    def find_entry_by_title(entries, title):
+        target_title = str(title).strip()
+        for item in entries:
+            if str(item.get("title", "")).strip() == target_title:
+                return item
+        return None
+
+    @staticmethod
+    def find_pending_request_by_url(pending_requests, url):
+        target_url = str(url).strip()
+        for item in pending_requests:
+            if str(item.get("url", "")).strip() == target_url:
+                return item
+        return None
+
+    @staticmethod
+    def collect_sections(raw_ini):
+        sections = []
+        for raw_line in str(raw_ini or "").splitlines():
+            line = raw_line.strip()
+            if not line or line.startswith("#") or line.startswith(";"):
+                continue
+            if line.startswith("[") and line.endswith("]"):
+                section_name = line[1:-1].strip()
+                if section_name:
+                    sections.append(section_name)
+        return sections
+
+    @staticmethod
+    def build_resource_choices(raw_ini):
+        entries = CoderBusFYI.parse_ini_entries(str(raw_ini or ""))
+        choices = []
+        for entry in entries:
+            title = str(entry.get("title", "")).strip()
+            url = str(entry.get("url", "")).strip()
+            if not title or not url:
+                continue
+            choices.append(
+                discord.app_commands.Choice(
+                    name=f"{title} - {url}",
+                    value=url,
+                )
+            )
+        return choices
+
+    @staticmethod
+    def build_pending_request_choices(pending_requests):
+        choices = []
+        for request in pending_requests:
+            title = str(request.get("title", "")).strip()
+            url = str(request.get("url", "")).strip()
+            if not title or not url:
+                continue
+            choices.append(
+                discord.app_commands.Choice(
+                    name=f"{title} - {url}",
+                    value=url,
+                )
+            )
+        return choices
+
+    @staticmethod
+    def build_pending_request_notice(request):
+        request_type = str(request.get("type", "add")).strip().lower()
+        title = str(request.get("title", "")).strip()
+        url = str(request.get("url", "")).strip()
+        section = str(request.get("section", "")).strip()
+        requested_by = str(request.get("requested_by", "")).strip() or "a user"
+
+        if request_type == "remove":
+            return f"🔔 Pending removal request from {requested_by}:\n" f"URL: {url}"
+
+        if section:
+            return (
+                f"🔔 Pending add request from {requested_by}:\n"
+                f"Title: {title}\n"
+                f"URL: {url}\n"
+                f"Section: {section}"
+            )
+
+        return (
+            f"🔔 Pending add request from {requested_by}:\n"
+            f"Title: {title}\n"
+            f"URL: {url}"
+        )
+
+    async def _notify_admins_pending_request(self, guild, request):
+        if guild is None:
+            return
+
+        recipients = []
+        owner_ids = set()
+        owner_id = getattr(self.bot, "owner_id", None)
+        if owner_id is not None:
+            owner_ids.add(owner_id)
+        for bot_owner_id in getattr(self.bot, "owner_ids", set()) or set():
+            owner_ids.add(bot_owner_id)
+
+        for owner_id in owner_ids:
+            owner = self.bot.get_user(owner_id)
+            if owner is None:
+                try:
+                    owner = await self.bot.fetch_user(owner_id)
+                except Exception:
+                    continue
+            if owner is not None:
+                recipients.append(owner)
+
+        for member in guild.members:
+            if member.bot:
+                continue
+            permissions = member.guild_permissions
+            if permissions.administrator or permissions.manage_guild:
+                recipients.append(member)
+
+        seen = set()
+        for recipient in recipients:
+            if recipient.id in seen:
+                continue
+            seen.add(recipient.id)
+            try:
+                await recipient.send(self.build_pending_request_notice(request))
+            except Exception:
+                continue
+
+    async def _get_section_choices(
+        self, current: str = ""
+    ) -> list[discord.app_commands.Choice[str]]:
+        try:
+            content = await self._load_resources()
+        except Exception:
+            return []
+
+        sections = self.collect_sections(content)
+        if not sections:
+            return []
+
+        needle = (current or "").strip().lower()
+        if needle:
+            sections = [section for section in sections if needle in section.lower()]
+
+        return [
+            discord.app_commands.Choice(name=section, value=section)
+            for section in sections[:25]
+        ]
+
+    async def _get_resource_choices(
+        self, current: str = ""
+    ) -> list[discord.app_commands.Choice[str]]:
+        try:
+            content = await self._load_resources()
+        except Exception:
+            return []
+
+        choices = self.build_resource_choices(content)
+        if not choices:
+            return []
+
+        needle = (current or "").strip().lower()
+        if needle:
+            choices = [
+                choice
+                for choice in choices
+                if needle in choice.name.lower() or needle in choice.value.lower()
+            ]
+        return choices[:25]
+
+    async def _get_pending_request_choices(
+        self, current: str = ""
+    ) -> list[discord.app_commands.Choice[str]]:
+        pending = await self._get_pending_requests()
+        choices = self.build_pending_request_choices(pending)
+        if not choices:
+            return []
+
+        needle = (current or "").strip().lower()
+        if needle:
+            choices = [
+                choice
+                for choice in choices
+                if needle in choice.name.lower() or needle in choice.value.lower()
+            ]
+        return choices[:25]
+
+    async def _get_token(self):
+        return await self.config.github_token()
+
+    async def _get_repo_details(self):
+        owner = await self.config.repo_owner() or self.DEFAULT_REPO_OWNER
+        name = await self.config.repo_name() or self.DEFAULT_REPO_NAME
+        branch = await self.config.default_branch() or self.DEFAULT_BRANCH
+        path = await self.config.resource_path() or self.DEFAULT_RESOURCE_PATH
+        return owner, name, branch, path
+
+    async def _require_github_token(self, interaction):
+        token = await self._get_token()
+        if not token:
+            await interaction.response.send_message(
+                "GitHub API token is not configured. Use /setgithubkey first.",
+                ephemeral=True,
+            )
+            return None
+        return token
+
+    async def _fetch_remote_resources(self):
+        token = await self._get_token()
+        if token is None:
+            return None, None, None
+
+        owner, name, branch, path = await self._get_repo_details()
+        url = (
+            f"https://api.github.com/repos/{owner}/{name}/contents/{path}?ref={branch}"
+        )
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Accept": "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28",
+        }
+
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, headers=headers) as response:
+                if response.status != 200:
+                    text = await response.text()
+                    raise RuntimeError(
+                        f"GitHub request failed: {response.status} {text}"
+                    )
+                data = await response.json()
+                content = data.get("content", "")
+                content = base64.b64decode(content).decode("utf-8")
+                return content, data.get("sha"), path
+
+    async def _write_remote_resources(self, new_contents):
+        token = await self._get_token()
+        if not token:
+            raise RuntimeError("No GitHub API token is configured.")
+
+        owner, name, branch, path = await self._get_repo_details()
+        url = f"https://api.github.com/repos/{owner}/{name}/contents/{path}"
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Accept": "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28",
+        }
+
+        current_content, sha, _ = await self._fetch_remote_resources()
+        payload = {
+            "message": "Update CoderBusFYI resources.ini",
+            "branch": branch,
+            "content": base64.b64encode(new_contents.encode("utf-8")).decode("utf-8"),
+            "sha": sha,
+        }
+
+        async with aiohttp.ClientSession() as session:
+            async with session.put(url, json=payload, headers=headers) as response:
+                if response.status not in (200, 201):
+                    text = await response.text()
+                    raise RuntimeError(f"GitHub write failed: {response.status} {text}")
+                return await response.json()
+
+    async def _load_resources(self):
+        content, _, _ = await self._fetch_remote_resources()
+        if content is None:
+            return ""
+        return content
+
+    async def _save_resources(self, text):
+        return await self._write_remote_resources(text)
+
+    async def _get_pending_requests(self):
+        return await self.config.pending_requests() or []
+
+    async def _set_pending_requests(self, pending):
+        await self.config.pending_requests.set(pending)
+
+    async def _pending_request_by_title(self, title):
+        pending = await self._get_pending_requests()
+        for item in pending:
+            if str(item.get("title", "")).strip() == title.strip():
+                return item
+        return None
+
+    async def _pending_request_by_url(self, url):
+        pending = await self._get_pending_requests()
+        for item in pending:
+            if str(item.get("url", "")).strip() == str(url).strip():
+                return item
+        return None
+
+    async def _append_pending_request(self, request):
+        pending = await self._get_pending_requests()
+        normalized = {
+            "title": str(request["title"]).strip(),
+            "url": str(request["url"]).strip(),
+            "description": str(request.get("description", "")).strip(),
+            "type": str(request.get("type", "add")).strip(),
+            "section": str(request.get("section", "Toolbox")).strip(),
+            "requested_by": str(request.get("requested_by", "")).strip(),
+        }
+        pending.append(normalized)
+        await self._set_pending_requests(pending)
+        return normalized
+
+    async def _remove_pending_request(self, title=None, url=None):
+        pending = await self._get_pending_requests()
+        if title is not None and url is not None:
+            pending = [
+                item
+                for item in pending
+                if str(item.get("title", "")).strip() != str(title).strip()
+                and str(item.get("url", "")).strip() != str(url).strip()
+            ]
+        elif title is not None:
+            pending = [
+                item
+                for item in pending
+                if str(item.get("title", "")).strip() != str(title).strip()
+            ]
+        elif url is not None:
+            pending = [
+                item
+                for item in pending
+                if str(item.get("url", "")).strip() != str(url).strip()
+            ]
+        await self._set_pending_requests(pending)
+
+    async def _apply_add(self, title, url, description, section="Toolbox"):
+        content = await self._load_resources()
+        entries = self.parse_ini_entries(content)
+        available_sections = self.collect_sections(content)
+
+        if (
+            self.find_entry_by_title(entries, title) is not None
+            or self.find_entry_by_url(entries, url) is not None
+        ):
+            raise ValueError(
+                f"A resource with title '{title}' or URL '{url}' already exists."
+            )
+
+        section_name = section.strip() or "Toolbox"
+        if available_sections and section_name not in available_sections:
+            raise ValueError(
+                f"Section '{section_name}' does not exist. Pick one of: {', '.join(available_sections)}"
+            )
+
+        entries.append(
+            {
+                "section": section_name,
+                "title": title.strip(),
+                "url": url.strip(),
+                "description": re.sub(r"\s+", " ", description.strip()),
+            }
+        )
+
+        updated = self.entries_to_ini(entries)
+        await self._save_resources(updated)
+        return updated
+
+    async def _apply_remove(self, url):
+        content = await self._load_resources()
+        entries = self.parse_ini_entries(content)
+        match = self.find_entry_by_url(entries, url)
+        if match is None:
+            raise ValueError(f"No resource exists with URL '{url}'.")
+
+        filtered = [
+            item
+            for item in entries
+            if str(item.get("url", "")).strip() != str(url).strip()
+        ]
+        updated = self.entries_to_ini(filtered)
+        await self._save_resources(updated)
+        return updated
+
+    async def _apply_section_add(self, section_name):
+        content = await self._load_resources()
+        entries = self.parse_ini_entries(content)
+        existing_sections = {str(item.get("section", "")).strip() for item in entries}
+        normalized = section_name.strip()
+        if not normalized:
+            raise ValueError("Section name cannot be blank.")
+        if normalized in existing_sections:
+            raise ValueError(f"Section '{normalized}' already exists.")
+        entries.append(
+            {"section": normalized, "title": "", "url": "", "description": ""}
+        )
+        updated = self.entries_to_ini(entries)
+        await self._save_resources(updated)
+        return updated
+
+    async def _apply_section_remove(self, section_name):
+        content = await self._load_resources()
+        entries = self.parse_ini_entries(content)
+        target = section_name.strip()
+        filtered = [
+            item for item in entries if str(item.get("section", "")).strip() != target
+        ]
+        if len(filtered) == len(entries):
+            raise ValueError(f"Section '{target}' does not exist.")
+        updated = self.entries_to_ini(filtered)
+        await self._save_resources(updated)
+        return updated
+
+    @commands.command(name="setgithubkey")
+    @commands.is_owner()
+    async def setgithubkey(self, ctx, token: str):
+        """Set the GitHub API token used to modify resources.ini."""
+        await self.config.github_token.set(token.strip())
+        await ctx.send("✅ GitHub API token saved.")
+
+    @discord.app_commands.command(name="setgithubkey")
+    @discord.app_commands.describe(
+        token="GitHub personal access token used to access the coderbusfyi repo"
+    )
+    async def slash_setgithubkey(self, interaction: discord.Interaction, token: str):
+        await self.config.github_token.set(token.strip())
+        await interaction.response.send_message(
+            "✅ GitHub API token saved.", ephemeral=True
+        )
+
+    @discord.app_commands.guild_only()
+    @discord.app_commands.command(name="addrequest")
+    @discord.app_commands.describe(
+        title="The title to add to coderbus.fyi",
+        url="The coderbus.fyi URL",
+        description="A short note about the coderbus.fyi entry",
+        section="Existing section to add this item to on coderbus.fyi",
+    )
+    async def addrequest(
+        self,
+        interaction: discord.Interaction,
+        title: str,
+        url: str,
+        description: str,
+        section: str,
+    ):
+        token = await self._require_github_token(interaction)
+        if token is None:
+            return
+
+        content = await self._load_resources()
+        available_sections = self.collect_sections(content)
+        if not available_sections:
+            await interaction.response.send_message(
+                "No resource sections are available yet. Ask an admin to create one first.",
+                ephemeral=True,
+            )
+            return
+
+        normalized = section.strip()
+        if normalized not in available_sections:
+            await interaction.response.send_message(
+                f"Section '{normalized}' is not valid. Choose one of: {', '.join(available_sections)}",
+                ephemeral=True,
+            )
+            return
+
+        pending = await self._get_pending_requests()
+        existing = next(
+            (
+                item
+                for item in pending
+                if str(item.get("title", "")).strip() == title.strip()
+            ),
+            None,
+        )
+        if existing is not None:
+            await interaction.response.send_message(
+                f"A pending request for '{title}' already exists.", ephemeral=True
+            )
+            return
+
+        request = {
+            "title": title,
+            "url": url,
+            "description": description,
+            "type": "add",
+            "section": normalized,
+            "requested_by": interaction.user.mention,
+        }
+        await self._append_pending_request(request)
+        await self._notify_admins_pending_request(interaction.guild, request)
+        await interaction.response.send_message(
+            f"✅ Add request queued for '{title}'. Admin approval will add it to the '{normalized}' section.",
+            ephemeral=True,
+        )
+
+    @addrequest.autocomplete("section")
+    async def addrequest_section_autocomplete(
+        self, interaction: discord.Interaction, current: str
+    ):
+        return await self._get_section_choices(current)
+
+    @discord.app_commands.guild_only()
+    @discord.app_commands.command(name="removerequest")
+    @discord.app_commands.describe(url="The coderbus.fyi item to remove")
+    async def removerequest(self, interaction: discord.Interaction, url: str):
+        token = await self._require_github_token(interaction)
+        if token is None:
+            return
+
+        pending = await self._get_pending_requests()
+        existing = next(
+            (
+                item
+                for item in pending
+                if str(item.get("url", "")).strip() == url.strip()
+                and str(item.get("type", "")).strip() == "remove"
+            ),
+            None,
+        )
+        if existing is not None:
+            await interaction.response.send_message(
+                f"A pending remove request for '{url}' already exists.", ephemeral=True
+            )
+            return
+
+        request = {
+            "title": url,
+            "url": url,
+            "description": "",
+            "type": "remove",
+            "section": "Toolbox",
+            "requested_by": interaction.user.mention,
+        }
+        await self._append_pending_request(request)
+        await self._notify_admins_pending_request(interaction.guild, request)
+        await interaction.response.send_message(
+            f"✅ Remove request queued for '{url}'.", ephemeral=True
+        )
+
+    @removerequest.autocomplete("url")
+    async def removerequest_url_autocomplete(
+        self, interaction: discord.Interaction, current: str
+    ):
+        return await self._get_resource_choices(current)
+
+    @discord.app_commands.command(name="approverequest")
+    @discord.app_commands.default_permissions(administrator=True)
+    @discord.app_commands.describe(url="The pending request to approve")
+    async def approverequest(self, interaction: discord.Interaction, url: str):
+        token = await self._require_github_token(interaction)
+        if token is None:
+            return
+
+        pending = await self._get_pending_requests()
+        request = self.find_pending_request_by_url(pending, url)
+        if request is None:
+            await interaction.response.send_message(
+                f"No pending request for URL '{url}' was found.", ephemeral=True
+            )
+            return
+
+        try:
+            if str(request.get("type", "add")).strip() == "remove":
+                await self._apply_remove(str(request.get("url", "")).strip())
+                message = f"✅ Removed resource '{request.get('url')}' from the repo."
+            else:
+                await self._apply_add(
+                    str(request.get("title", "")).strip(),
+                    str(request.get("url", "")).strip(),
+                    str(request.get("description", "")).strip(),
+                    str(request.get("section", "Toolbox")).strip() or "Toolbox",
+                )
+                message = f"✅ Approved add request for '{request.get('title')}'."
+            await self._remove_pending_request(
+                title=str(request.get("title", "")).strip(),
+                url=str(request.get("url", "")).strip(),
+            )
+            await interaction.response.send_message(message, ephemeral=True)
+        except Exception as exc:
+            await interaction.response.send_message(
+                f"Approval failed: {exc}", ephemeral=True
+            )
+
+    @approverequest.autocomplete("url")
+    async def approverequest_url_autocomplete(
+        self, interaction: discord.Interaction, current: str
+    ):
+        return await self._get_pending_request_choices(current)
+
+    @discord.app_commands.command(name="add")
+    @discord.app_commands.default_permissions(administrator=True)
+    @discord.app_commands.describe(
+        title="Name to add to coderbus.fyi",
+        url="coderbus.fyi URL",
+        description="Description for the coderbus.fyi entry",
+        section="Section to place it in on coderbus.fyi",
+    )
+    async def direct_add(
+        self,
+        interaction: discord.Interaction,
+        title: str,
+        url: str,
+        description: str,
+        section: str = "Toolbox",
+    ):
+        token = await self._require_github_token(interaction)
+        if token is None:
+            return
+
+        try:
+            await self._apply_add(title, url, description, section)
+            await interaction.response.send_message(
+                f"✅ Added '{title}' to the '{section}' section.", ephemeral=True
+            )
+        except Exception as exc:
+            await interaction.response.send_message(
+                f"Add failed: {exc}", ephemeral=True
+            )
+
+    @direct_add.autocomplete("section")
+    async def direct_add_section_autocomplete(
+        self, interaction: discord.Interaction, current: str
+    ):
+        return await self._get_section_choices(current)
+
+    @discord.app_commands.command(name="remove")
+    @discord.app_commands.default_permissions(administrator=True)
+    @discord.app_commands.describe(url="The coderbus.fyi URL to remove")
+    async def direct_remove(self, interaction: discord.Interaction, url: str):
+        token = await self._require_github_token(interaction)
+        if token is None:
+            return
+
+        try:
+            await self._apply_remove(url)
+            await interaction.response.send_message(
+                f"✅ Removed resource '{url}'.", ephemeral=True
+            )
+        except Exception as exc:
+            await interaction.response.send_message(
+                f"Remove failed: {exc}", ephemeral=True
+            )
+
+    @discord.app_commands.command(name="addsection")
+    @discord.app_commands.default_permissions(administrator=True)
+    @discord.app_commands.describe(name="The new section name, e.g. Toolbox or Tools")
+    async def addsection(self, interaction: discord.Interaction, name: str):
+        token = await self._require_github_token(interaction)
+        if token is None:
+            return
+
+        try:
+            await self._apply_section_add(name)
+            await interaction.response.send_message(
+                f"✅ Added section '{name}'.", ephemeral=True
+            )
+        except Exception as exc:
+            await interaction.response.send_message(
+                f"Add section failed: {exc}", ephemeral=True
+            )
+
+    @discord.app_commands.command(name="removesection")
+    @discord.app_commands.default_permissions(administrator=True)
+    @discord.app_commands.describe(name="The section to remove")
+    async def removesection(self, interaction: discord.Interaction, name: str):
+        token = await self._require_github_token(interaction)
+        if token is None:
+            return
+
+        try:
+            await self._apply_section_remove(name)
+            await interaction.response.send_message(
+                f"✅ Removed section '{name}'.", ephemeral=True
+            )
+        except Exception as exc:
+            await interaction.response.send_message(
+                f"Remove section failed: {exc}", ephemeral=True
+            )
+
+    @removesection.autocomplete("name")
+    async def removesection_autocomplete(
+        self, interaction: discord.Interaction, current: str
+    ):
+        return await self._get_section_choices(current)
+
+    async def red_delete_data_for_user(self, **kwargs):
+        return
