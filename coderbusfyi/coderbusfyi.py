@@ -382,15 +382,11 @@ class CoderBusFYI(BaseCog):
                     ),
                     view=None,
                 )
-            await interaction.response.send_message(
-                f"✅ Denied pending request for '{url}'.",
-                ephemeral=True,
-            )
+            await interaction.response.defer()
             return
 
         if str(request_to_update.get("type", "add")).strip() == "remove":
             await self._apply_remove(url)
-            message = f"✅ Removed resource '{url}' from the repo."
         else:
             await self._apply_add(
                 str(request_to_update.get("title", "")).strip(),
@@ -398,7 +394,6 @@ class CoderBusFYI(BaseCog):
                 str(request_to_update.get("description", "")).strip(),
                 str(request_to_update.get("section", "Toolbox")).strip() or "Toolbox",
             )
-            message = f"✅ Approved add request for '{request_to_update.get('title')}'."
 
         await self._remove_pending_request(
             title=str(request_to_update.get("title", "")).strip(),
@@ -413,7 +408,7 @@ class CoderBusFYI(BaseCog):
                 ),
                 view=None,
             )
-        await interaction.response.send_message(message, ephemeral=True)
+        await interaction.response.defer()
 
     @discord.app_commands.command(name="setnotificationchannel")
     @discord.app_commands.default_permissions(administrator=True)
