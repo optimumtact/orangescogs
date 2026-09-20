@@ -131,6 +131,71 @@ def test_pending_request_notice_mentions_removal_requests():
     assert "@alice" in notice
 
 
+def test_pending_request_action_custom_id_includes_user_and_url():
+    request = {"requested_by_id": 12345, "url": "https://example.com/tool"}
+    custom_id = CoderBusFYI.build_pending_request_action_custom_id(request, "approve")
+
+    assert custom_id.startswith("approve:12345:")
+    action, requester_id, url = CoderBusFYI.parse_pending_request_action_custom_id(
+        custom_id
+    )
+    assert action == "approve"
+    assert requester_id == "12345"
+    assert url == "https://example.com/tool"
+
+
+def test_pending_request_resolution_notice_mentions_actor():
+    request = {
+        "title": "Example Tool",
+        "url": "https://example.com/tool",
+        "description": "Helpful",
+        "type": "add",
+        "section": "Toolbox",
+        "requested_by": "@alice",
+    }
+
+    notice = CoderBusFYI.build_pending_request_resolution_notice(
+        request,
+        "approve",
+        type("Actor", (), {"mention": "<@123>"})(),
+    )
+
+    assert "Pending add request" in notice
+    assert "accepted by <@123>" in notice.lower()
+
+
+def test_get_notification_channel_uses_guild_object_not_id():
+    class DummyConfig:
+        def __init__(self):
+            self.guild_calls = []
+
+        def guild(self, guild):
+            self.guild_calls.append(guild)
+            return type(
+                "GuildGroup",
+                (),
+                {
+                    "notification_channel_id": lambda self: __import__("asyncio").sleep(0, result=987)
+                },
+            )()
+
+    class DummyGuild:
+        id = 123
+
+        def get_channel(self, channel_id):
+            assert channel_id == 987
+            return "channel"
+
+    cog = CoderBusFYI.__new__(CoderBusFYI)
+    cog.config = DummyConfig()
+    cog.bot = type("Bot", (), {"get_guild": lambda self, guild_id: None})()
+
+    result = __import__("asyncio").run(cog._get_notification_channel(DummyGuild()))
+    assert result == "channel"
+    assert len(cog.config.guild_calls) == 1
+    assert cog.config.guild_calls[0].id == 123
+
+
 def test_request_commands_are_guild_only_but_admin_commands_stay_global():
     assert CoderBusFYI.addrequest.guild_only is True
     assert CoderBusFYI.removerequest.guild_only is True
@@ -188,7 +253,7 @@ def test_notify_admins_uses_owner_ids_not_get_owner():
             self.id = user_id
             self.sent = sent
 
-        async def send(self, message):
+        async def send(self, message, *args, **kwargs):
             self.sent.append(message)
 
     class DummyBot:
@@ -215,6 +280,7 @@ def test_notify_admins_uses_owner_ids_not_get_owner():
         )()
 
     class DummyGuild:
+        id = 123
         members = [DummyMember()]
 
     bot = DummyBot()

@@ -1,12 +1,30 @@
 import base64
 import re
 from collections import OrderedDict
+from urllib.parse import quote, unquote
 
 import aiohttp
 import discord
 from redbot.core import Config, commands
 
 BaseCog = getattr(commands, "Cog", object)
+
+
+class PendingRequestActionButton(discord.ui.Button):
+    def __init__(self, cog, action, request, label, style):
+        self.cog = cog
+        self.action = action
+        self.request = request
+        super().__init__(
+            label=label,
+            style=style,
+            custom_id=cog.build_pending_request_action_custom_id(request, action),
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        await self.cog._handle_pending_request_action(
+            interaction, self.action, self.request
+        )
 
 
 class CoderBusFYI(BaseCog):
@@ -30,6 +48,7 @@ class CoderBusFYI(BaseCog):
             resource_path=self.DEFAULT_RESOURCE_PATH,
             pending_requests=[],
         )
+        self.config.register_guild(notification_channel_id=None)
 
     @staticmethod
     def parse_ini_entries(raw: str):
@@ -199,11 +218,57 @@ class CoderBusFYI(BaseCog):
             f"URL: {url}"
         )
 
-    async def _notify_admins_pending_request(self, guild, request):
-        if guild is None:
-            return
+    @staticmethod
+    def build_pending_request_action_custom_id(request, action: str):
+        action_name = str(action).strip().lower()
+        requested_by_id = str(
+            request.get("requested_by_id") or request.get("requested_by_id", "0")
+        ).strip()
+        if requested_by_id in ("", "None", "0"):
+            requested_by_id = "0"
+        url = str(request.get("url", "")).strip()
+        return f"{action_name}:{requested_by_id}:{quote(url, safe='')}"
 
-        recipients = []
+    @staticmethod
+    def build_pending_request_resolution_notice(request, action: str, actor):
+        action_name = str(action).strip().lower()
+        status = "accepted" if action_name == "approve" else "denied"
+        actor_label = (
+            getattr(actor, "mention", str(actor)) if actor is not None else "an admin"
+        )
+        base = CoderBusFYI.build_pending_request_notice(request)
+        return f"{base}\n\n✅ Request {status} by {actor_label}."
+
+    @staticmethod
+    def parse_pending_request_action_custom_id(custom_id):
+        if not custom_id:
+            return None, None, None
+        parts = str(custom_id).split(":", 2)
+        if len(parts) != 3:
+            return None, None, None
+        action, requester_id, encoded_url = parts
+        return action, requester_id, unquote(encoded_url)
+
+    async def _get_notification_channel(self, guild):
+        if guild is None:
+            return None
+
+        config = getattr(self, "config", None)
+        if config is None:
+            return None
+
+        guild_obj = guild if hasattr(guild, "id") else self.bot.get_guild(guild)
+        if guild_obj is None:
+            return None
+
+        channel_id = await config.guild(guild_obj).notification_channel_id()
+        if channel_id:
+            channel = guild_obj.get_channel(channel_id)
+            if channel is not None:
+                return channel
+        return None
+
+    async def _get_owner_notification_target(self):
         owner_ids = set()
         owner_id = getattr(self.bot, "owner_id", None)
         if owner_id is not None:
@@ -219,24 +284,161 @@ class CoderBusFYI(BaseCog):
                 except Exception:
                     continue
             if owner is not None:
-                recipients.append(owner)
+                return owner
+        return None
 
-        for member in guild.members:
-            if member.bot:
-                continue
-            permissions = member.guild_permissions
-            if permissions.administrator or permissions.manage_guild:
-                recipients.append(member)
-
-        seen = set()
-        for recipient in recipients:
-            if recipient.id in seen:
-                continue
-            seen.add(recipient.id)
+    async def _notify_admins_pending_request(self, guild, request):
+        channel = await self._get_notification_channel(guild)
+        if channel is not None:
             try:
-                await recipient.send(self.build_pending_request_notice(request))
+                message = await channel.send(
+                    self.build_pending_request_notice(request),
+                    view=self._build_pending_request_action_view(request),
+                )
+                request["message_id"] = message.id
+                return
             except Exception:
-                continue
+                pass
+
+        owner = await self._get_owner_notification_target()
+        if owner is None:
+            return
+
+        try:
+            await owner.send(
+                self.build_pending_request_notice(request),
+                view=self._build_pending_request_action_view(request),
+            )
+        except Exception:
+            return
+
+    def _build_pending_request_action_view(self, request):
+        view = discord.ui.View(timeout=1800)
+        view.add_item(
+            PendingRequestActionButton(
+                cog=self,
+                action="approve",
+                request=request,
+                label="Approve",
+                style=discord.ButtonStyle.green,
+            )
+        )
+        view.add_item(
+            PendingRequestActionButton(
+                cog=self,
+                action="deny",
+                request=request,
+                label="Deny",
+                style=discord.ButtonStyle.red,
+            )
+        )
+        return view
+
+    async def _handle_pending_request_action(self, interaction, action, request):
+        action_name = str(action).strip().lower()
+        guild = interaction.guild
+        requester_id = str(request.get("requested_by_id") or "").strip()
+        url = str(request.get("url", "")).strip()
+
+        if requester_id and str(interaction.user.id) != requester_id:
+            can_manage = False
+            if guild is not None:
+                # Assume if user can see channel it's enough
+                can_manage = True
+            else:
+                owner_ids = set()
+                owner_id = getattr(self.bot, "owner_id", None)
+                if owner_id is not None:
+                    owner_ids.add(owner_id)
+                for bot_owner_id in getattr(self.bot, "owner_ids", set()) or set():
+                    owner_ids.add(bot_owner_id)
+                can_manage = interaction.user.id in owner_ids
+            if not can_manage:
+                await interaction.response.send_message(
+                    "Only the bot owner or a guild moderator can act on this request.",
+                    ephemeral=True,
+                )
+                return
+
+        pending = await self._get_pending_requests()
+        request_to_update = self.find_pending_request_by_url(pending, url)
+        if request_to_update is None:
+            await interaction.response.send_message(
+                "This request has already been handled or is no longer pending.",
+                ephemeral=True,
+            )
+            return
+
+        if action_name == "deny":
+            await self._remove_pending_request(
+                title=request_to_update.get("title"), url=url
+            )
+            if interaction.message is not None:
+                await interaction.message.edit(
+                    content=self.build_pending_request_resolution_notice(
+                        request_to_update,
+                        "deny",
+                        interaction.user,
+                    ),
+                    view=None,
+                )
+            await interaction.response.send_message(
+                f"✅ Denied pending request for '{url}'.",
+                ephemeral=True,
+            )
+            return
+
+        if str(request_to_update.get("type", "add")).strip() == "remove":
+            await self._apply_remove(url)
+            message = f"✅ Removed resource '{url}' from the repo."
+        else:
+            await self._apply_add(
+                str(request_to_update.get("title", "")).strip(),
+                url,
+                str(request_to_update.get("description", "")).strip(),
+                str(request_to_update.get("section", "Toolbox")).strip() or "Toolbox",
+            )
+            message = f"✅ Approved add request for '{request_to_update.get('title')}'."
+
+        await self._remove_pending_request(
+            title=str(request_to_update.get("title", "")).strip(),
+            url=url,
+        )
+        if interaction.message is not None:
+            await interaction.message.edit(
+                content=self.build_pending_request_resolution_notice(
+                    request_to_update,
+                    "approve",
+                    interaction.user,
+                ),
+                view=None,
+            )
+        await interaction.response.send_message(message, ephemeral=True)
+
+    @discord.app_commands.command(name="setnotificationchannel")
+    @discord.app_commands.default_permissions(administrator=True)
+    @discord.app_commands.describe(
+        channel="Channel where pending request notifications should be sent"
+    )
+    async def setnotificationchannel(
+        self, interaction: discord.Interaction, channel: discord.TextChannel
+    ):
+        await self.config.guild(interaction.guild).notification_channel_id.set(
+            channel.id
+        )
+        await interaction.response.send_message(
+            f"✅ Pending request notifications will be sent to {channel.mention}.",
+            ephemeral=True,
+        )
+
+    @discord.app_commands.command(name="clearnotificationchannel")
+    @discord.app_commands.default_permissions(administrator=True)
+    async def clearnotificationchannel(self, interaction: discord.Interaction):
+        await self.config.guild(interaction.guild).notification_channel_id.set(None)
+        await interaction.response.send_message(
+            "✅ Pending request notifications will fall back to the bot owner when no channel is configured.",
+            ephemeral=True,
+        )
 
     async def _get_section_choices(
         self, current: str = ""
@@ -591,6 +793,7 @@ class CoderBusFYI(BaseCog):
             "type": "add",
             "section": normalized,
             "requested_by": interaction.user.mention,
+            "requested_by_id": interaction.user.id,
         }
         await self._append_pending_request(request)
         await self._notify_admins_pending_request(interaction.guild, request)
@@ -636,6 +839,7 @@ class CoderBusFYI(BaseCog):
             "type": "remove",
             "section": "Toolbox",
             "requested_by": interaction.user.mention,
+            "requested_by_id": interaction.user.id,
         }
         await self._append_pending_request(request)
         await self._notify_admins_pending_request(interaction.guild, request)
