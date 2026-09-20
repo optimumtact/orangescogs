@@ -161,6 +161,15 @@ class CoderBusFYI(BaseCog):
         return sections
 
     @staticmethod
+    def _choice_name(title, url):
+        raw = f"{str(title).strip()} - {str(url).strip()}".strip(" -")
+        if not raw:
+            return "(unnamed request)"
+        if len(raw) <= 100:
+            return raw
+        return raw[:97] + "..."
+
+    @staticmethod
     def build_resource_choices(raw_ini):
         entries = CoderBusFYI.parse_ini_entries(str(raw_ini or ""))
         choices = []
@@ -171,7 +180,7 @@ class CoderBusFYI(BaseCog):
                 continue
             choices.append(
                 discord.app_commands.Choice(
-                    name=f"{title} - {url}",
+                    name=CoderBusFYI._choice_name(title, url),
                     value=url,
                 )
             )
@@ -187,7 +196,7 @@ class CoderBusFYI(BaseCog):
                 continue
             choices.append(
                 discord.app_commands.Choice(
-                    name=f"{title} - {url}",
+                    name=CoderBusFYI._choice_name(title, url),
                     value=url,
                 )
             )
@@ -811,6 +820,8 @@ class CoderBusFYI(BaseCog):
         if token is None:
             return
 
+        await interaction.response.defer(ephemeral=True)
+
         pending = await self._get_pending_requests()
         existing = next(
             (
@@ -822,7 +833,7 @@ class CoderBusFYI(BaseCog):
             None,
         )
         if existing is not None:
-            await interaction.response.send_message(
+            await interaction.followup.send(
                 f"A pending remove request for '{url}' already exists.", ephemeral=True
             )
             return
@@ -838,7 +849,7 @@ class CoderBusFYI(BaseCog):
         }
         await self._append_pending_request(request)
         await self._notify_admins_pending_request(interaction.guild, request)
-        await interaction.response.send_message(
+        await interaction.followup.send(
             f"✅ Remove request queued for '{url}'.", ephemeral=True
         )
 
