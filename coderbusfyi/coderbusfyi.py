@@ -207,25 +207,38 @@ class CoderBusFYI(BaseCog):
         request_type = str(request.get("type", "add")).strip().lower()
         title = str(request.get("title", "")).strip()
         url = str(request.get("url", "")).strip()
+        description = str(request.get("description", "")).strip()
         section = str(request.get("section", "")).strip()
         requested_by = str(request.get("requested_by", "")).strip() or "a user"
 
         if request_type == "remove":
+            if description:
+                return (
+                    f"🔔 Pending removal request from {requested_by}:\n"
+                    f"URL: {url}\n"
+                    f"Reason: {description}"
+                )
             return f"🔔 Pending removal request from {requested_by}:\n" f"URL: {url}"
 
         if section:
-            return (
+            base = (
                 f"🔔 Pending add request from {requested_by}:\n"
                 f"Title: {title}\n"
                 f"URL: {url}\n"
                 f"Section: {section}"
             )
+            if description:
+                return f"{base}\nDescription: {description}"
+            return base
 
-        return (
+        base = (
             f"🔔 Pending add request from {requested_by}:\n"
             f"Title: {title}\n"
             f"URL: {url}"
         )
+        if description:
+            return f"{base}\nDescription: {description}"
+        return base
 
     @staticmethod
     def build_pending_request_action_custom_id(request, action: str):
@@ -247,6 +260,26 @@ class CoderBusFYI(BaseCog):
         )
         base = CoderBusFYI.build_pending_request_notice(request)
         return f"{base}\n\n✅ Request {status} by {actor_label}."
+
+    @staticmethod
+    def build_requester_resolution_notice(request, action: str, actor):
+        action_name = str(action).strip().lower()
+        status = "approved" if action_name == "approve" else "denied"
+        actor_label = (
+            getattr(actor, "mention", str(actor)) if actor is not None else "an admin"
+        )
+        request_type = str(request.get("type", "add")).strip().lower()
+        title = str(request.get("title", "")).strip()
+        url = str(request.get("url", "")).strip()
+
+        if request_type == "remove":
+            return (
+                f"Your remove request for {url} was {status} by {actor_label}."
+            )
+
+        return (
+            f"Your add request for '{title}' ({url}) was {status} by {actor_label}."
+        )
 
     @staticmethod
     def parse_pending_request_action_custom_id(custom_id):
@@ -321,6 +354,30 @@ class CoderBusFYI(BaseCog):
         except Exception:
             return
 
+    async def _notify_requester_resolution(self, request, action, actor):
+        requester_id = request.get("requested_by_id")
+        if requester_id is None:
+            return
+
+        try:
+            requester_id = int(str(requester_id).strip())
+        except (TypeError, ValueError):
+            return
+
+        requester = self.bot.get_user(requester_id)
+        if requester is None:
+            try:
+                requester = await self.bot.fetch_user(requester_id)
+            except Exception:
+                return
+
+        try:
+            await requester.send(
+                self.build_requester_resolution_notice(request, action, actor)
+            )
+        except Exception:
+            return
+
     def _build_pending_request_action_view(self, request):
         view = discord.ui.View(timeout=1800)
         view.add_item(
@@ -391,6 +448,9 @@ class CoderBusFYI(BaseCog):
                     ),
                     view=None,
                 )
+            await self._notify_requester_resolution(
+                request_to_update, "deny", interaction.user
+            )
             await interaction.response.defer()
             return
 
@@ -417,6 +477,9 @@ class CoderBusFYI(BaseCog):
                 ),
                 view=None,
             )
+        await self._notify_requester_resolution(
+            request_to_update, "approve", interaction.user
+        )
         await interaction.response.defer()
 
     @discord.app_commands.command(name="setnotificationchannel")
@@ -616,6 +679,7 @@ class CoderBusFYI(BaseCog):
             "type": str(request.get("type", "add")).strip(),
             "section": str(request.get("section", "Toolbox")).strip(),
             "requested_by": str(request.get("requested_by", "")).strip(),
+            "requested_by_id": str(request.get("requested_by_id", "")).strip(),
         }
         pending.append(normalized)
         await self._set_pending_requests(pending)
@@ -814,13 +878,23 @@ class CoderBusFYI(BaseCog):
 
     @discord.app_commands.guild_only()
     @discord.app_commands.command(name="removerequest")
-    @discord.app_commands.describe(url="The coderbus.fyi item to remove")
-    async def removerequest(self, interaction: discord.Interaction, url: str):
+    @discord.app_commands.describe(
+        url="The coderbus.fyi item to remove",
+        reason="Why this resource should be removed",
+    )
+    async def removerequest(self, interaction: discord.Interaction, url: str, reason: str):
         token = await self._require_github_token(interaction)
         if token is None:
             return
 
         await interaction.response.defer(ephemeral=True)
+
+        normalized_reason = reason.strip()
+        if not normalized_reason:
+            await interaction.followup.send(
+                "A removal reason is required.", ephemeral=True
+            )
+            return
 
         pending = await self._get_pending_requests()
         existing = next(
@@ -841,7 +915,7 @@ class CoderBusFYI(BaseCog):
         request = {
             "title": url,
             "url": url,
-            "description": "",
+            "description": normalized_reason,
             "type": "remove",
             "section": "Toolbox",
             "requested_by": interaction.user.mention,
@@ -891,6 +965,7 @@ class CoderBusFYI(BaseCog):
                 title=str(request.get("title", "")).strip(),
                 url=str(request.get("url", "")).strip(),
             )
+            await self._notify_requester_resolution(request, "approve", interaction.user)
             await interaction.response.send_message(message, ephemeral=True)
         except Exception as exc:
             await interaction.response.send_message(

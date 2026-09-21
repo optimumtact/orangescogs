@@ -111,6 +111,7 @@ def test_pending_request_notice_mentions_request_type_and_section():
     assert "Pending add request" in notice
     assert "Example Tool" in notice
     assert "Toolbox" in notice
+    assert "Description: Helpful" in notice
     assert "@alice" in notice
 
 
@@ -118,7 +119,7 @@ def test_pending_request_notice_mentions_removal_requests():
     request = {
         "title": "https://example.com/tool",
         "url": "https://example.com/tool",
-        "description": "",
+        "description": "Outdated and broken",
         "type": "remove",
         "section": "Toolbox",
         "requested_by": "@alice",
@@ -128,7 +129,28 @@ def test_pending_request_notice_mentions_removal_requests():
 
     assert "Pending removal request" in notice
     assert "https://example.com/tool" in notice
+    assert "Reason: Outdated and broken" in notice
     assert "@alice" in notice
+
+
+def test_requester_resolution_notice_mentions_actor_and_status():
+    request = {
+        "title": "Example Tool",
+        "url": "https://example.com/tool",
+        "description": "Helpful",
+        "type": "add",
+        "section": "Toolbox",
+        "requested_by": "@alice",
+    }
+
+    notice = CoderBusFYI.build_requester_resolution_notice(
+        request,
+        "approve",
+        type("Actor", (), {"mention": "<@123>"})(),
+    )
+
+    assert "approved by <@123>" in notice.lower()
+    assert "example tool" in notice.lower()
 
 
 def test_pending_request_action_custom_id_includes_user_and_url():
@@ -201,6 +223,11 @@ def test_request_commands_are_guild_only_but_admin_commands_stay_global():
     assert CoderBusFYI.removerequest.guild_only is True
     assert CoderBusFYI.approverequest.guild_only is False
     assert CoderBusFYI.direct_add.guild_only is False
+
+
+def test_removerequest_requires_reason_parameter():
+    param_names = [param.name for param in CoderBusFYI.removerequest.parameters]
+    assert "reason" in param_names
 
 
 def test_admin_section_commands_match_ui_intent():
