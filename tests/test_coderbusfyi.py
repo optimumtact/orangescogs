@@ -112,6 +112,7 @@ def test_pending_request_notice_mentions_request_type_and_section():
     assert "Pending add request" in notice
     assert "Example Tool" in notice
     assert "Toolbox" in notice
+    assert "<https://example.com/tool>" in notice
     assert "Description: Helpful" in notice
     assert "@alice" in notice
 
@@ -129,7 +130,7 @@ def test_pending_request_notice_mentions_removal_requests():
     notice = CoderBusFYI.build_pending_request_notice(request)
 
     assert "Pending removal request" in notice
-    assert "https://example.com/tool" in notice
+    assert "<https://example.com/tool>" in notice
     assert "Reason: Outdated and broken" in notice
     assert "@alice" in notice
 
@@ -185,6 +186,25 @@ def test_pending_request_resolution_notice_mentions_actor():
 
     assert "Pending add request" in notice
     assert "accepted by <@123>" in notice.lower()
+
+
+def test_pending_request_resolution_notice_uses_bee_for_denied_actions():
+    request = {
+        "title": "Example Tool",
+        "url": "https://example.com/tool",
+        "description": "Helpful",
+        "type": "add",
+        "section": "Toolbox",
+        "requested_by": "@alice",
+    }
+
+    notice = CoderBusFYI.build_pending_request_resolution_notice(
+        request,
+        "deny",
+        type("Actor", (), {"mention": "<@123>"})(),
+    )
+
+    assert "🐝 request denied by <@123>" in notice.lower()
 
 
 def test_get_notification_channel_uses_guild_object_not_id():

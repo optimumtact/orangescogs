@@ -1,3 +1,4 @@
+import logging
 import re
 from collections import OrderedDict
 from urllib.parse import quote, unquote
@@ -9,6 +10,7 @@ from .github_client import GitHubResourcesClient
 from .views import PendingRequestViewManager
 
 BaseCog = getattr(commands, "Cog", object)
+log = logging.getLogger("red.oranges_coderbusfyi")
 
 
 class CoderBusFYI(BaseCog):
@@ -213,16 +215,16 @@ class CoderBusFYI(BaseCog):
             if description:
                 return (
                     f"🔔 Pending removal request from {requested_by}:\n"
-                    f"URL: {url}\n"
+                    f"URL: <{url}>\n"
                     f"Reason: {description}"
                 )
-            return f"🔔 Pending removal request from {requested_by}:\n" f"URL: {url}"
+            return f"🔔 Pending removal request from {requested_by}:\n" f"URL: <{url}>"
 
         if section:
             base = (
                 f"🔔 Pending add request from {requested_by}:\n"
                 f"Title: {title}\n"
-                f"URL: {url}\n"
+                f"URL: <{url}>\n"
                 f"Section: {section}"
             )
             if description:
@@ -232,7 +234,7 @@ class CoderBusFYI(BaseCog):
         base = (
             f"🔔 Pending add request from {requested_by}:\n"
             f"Title: {title}\n"
-            f"URL: {url}"
+            f"URL: <{url}>"
         )
         if description:
             return f"{base}\nDescription: {description}"
@@ -253,11 +255,12 @@ class CoderBusFYI(BaseCog):
     def build_pending_request_resolution_notice(request, action: str, actor):
         action_name = str(action).strip().lower()
         status = "accepted" if action_name == "approve" else "denied"
+        status_icon = "✅" if action_name == "approve" else "🐝"
         actor_label = (
             getattr(actor, "mention", str(actor)) if actor is not None else "an admin"
         )
         base = CoderBusFYI.build_pending_request_notice(request)
-        return f"{base}\n\n✅ Request {status} by {actor_label}."
+        return f"{base}\n\n{status_icon} Request {status} by {actor_label}."
 
     @staticmethod
     def build_requester_resolution_notice(request, action: str, actor):
@@ -274,6 +277,106 @@ class CoderBusFYI(BaseCog):
             return f"Your remove request for {url} was {status} by {actor_label}."
 
         return f"Your add request for '{title}' ({url}) was {status} by {actor_label}."
+
+    @staticmethod
+    def _log_text(value):
+        return re.sub(r"\s+", " ", str(value).strip())
+
+    @staticmethod
+    def _actor_label(actor):
+        if actor is None:
+            return "an admin"
+
+        mention = getattr(actor, "mention", None)
+        if mention:
+            return str(mention)
+
+        display_name = getattr(actor, "display_name", None) or getattr(
+            actor, "name", None
+        )
+        actor_id = getattr(actor, "id", None)
+        if display_name and actor_id is not None:
+            return f"{display_name} ({actor_id})"
+        if display_name:
+            return str(display_name)
+        if actor_id is not None:
+            return str(actor_id)
+        return str(actor)
+
+    def _log_pending_request_created(self, request):
+        request_type = str(request.get("type", "add")).strip().lower()
+        requester = self._log_text(request.get("requested_by", "a user"))
+        requester_id = self._log_text(request.get("requested_by_id", "unknown"))
+        title = self._log_text(request.get("title", ""))
+        url = self._log_text(request.get("url", ""))
+        description = self._log_text(request.get("description", ""))
+        section = self._log_text(request.get("section", ""))
+
+        if request_type == "remove":
+            log.info(
+                "Pending remove request created by %s (user_id=%s): url=%s reason=%s",
+                requester,
+                requester_id,
+                url,
+                description or "(none)",
+            )
+            return
+
+        log.info(
+            "Pending add request created by %s (user_id=%s): title=%s url=%s section=%s description=%s",
+            requester,
+            requester_id,
+            title,
+            url,
+            section or "(none)",
+            description or "(none)",
+        )
+
+    def _log_pending_request_resolution(self, request, action, actor, source):
+        action_name = str(action).strip().lower()
+        status = "approved" if action_name == "approve" else "denied"
+        request_type = str(request.get("type", "add")).strip().lower()
+        requester = self._log_text(request.get("requested_by", "a user"))
+        requester_id = self._log_text(request.get("requested_by_id", "unknown"))
+        title = self._log_text(request.get("title", ""))
+        url = self._log_text(request.get("url", ""))
+        description = self._log_text(request.get("description", ""))
+        section = self._log_text(request.get("section", ""))
+
+        if request_type == "remove":
+            log.info(
+                "Pending remove request %s via %s by %s: url=%s reason=%s requested_by=%s (user_id=%s)",
+                status,
+                source,
+                self._actor_label(actor),
+                url,
+                description or "(none)",
+                requester,
+                requester_id,
+            )
+            return
+
+        log.info(
+            "Pending add request %s via %s by %s: title=%s url=%s section=%s description=%s requested_by=%s (user_id=%s)",
+            status,
+            source,
+            self._actor_label(actor),
+            title,
+            url,
+            section or "(none)",
+            description or "(none)",
+            requester,
+            requester_id,
+        )
+
+    def _log_direct_admin_action(self, action, actor, **details):
+        fields = []
+        for key, value in details.items():
+            if value is None:
+                continue
+            fields.append(f"{key}={self._log_text(value)}")
+        payload = ", ".join(fields) if fields else "no details"
+        log.info("Admin %s by %s: %s", action, self._actor_label(actor), payload)
 
     @staticmethod
     def parse_pending_request_action_custom_id(custom_id):
