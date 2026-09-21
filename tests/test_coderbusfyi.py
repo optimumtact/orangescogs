@@ -437,3 +437,128 @@ def test_pending_request_view_manager_rehydrates_views_with_message_ids():
     assert isinstance(view, PendingRequestActionView)
     assert view.timeout is None
     assert message_id == 987654321
+
+
+def test_pending_request_logging_helpers_emit_request_details(caplog):
+    cog = CoderBusFYI.__new__(CoderBusFYI)
+
+    with caplog.at_level("INFO", logger="red.oranges_coderbusfyi"):
+        cog._log_pending_request_created(
+            {
+                "type": "add",
+                "requested_by": "@alice",
+                "requested_by_id": 123,
+                "title": "Example Tool",
+                "url": "https://example.com/tool",
+                "description": "Helpful",
+                "section": "Toolbox",
+            }
+        )
+        cog._log_pending_request_created(
+            {
+                "type": "remove",
+                "requested_by": "@alice",
+                "requested_by_id": 123,
+                "title": "https://example.com/tool",
+                "url": "https://example.com/tool",
+                "description": "Outdated and broken",
+                "section": "Toolbox",
+            }
+        )
+
+    messages = [record.getMessage() for record in caplog.records]
+    assert any(
+        "Pending add request created by @alice (user_id=123)" in message
+        and "title=Example Tool" in message
+        and "url=https://example.com/tool" in message
+        and "description=Helpful" in message
+        for message in messages
+    )
+    assert any(
+        "Pending remove request created by @alice (user_id=123)" in message
+        and "url=https://example.com/tool" in message
+        and "reason=Outdated and broken" in message
+        for message in messages
+    )
+
+
+def test_pending_request_resolution_logging_helpers_emit_actor_and_source(caplog):
+    cog = CoderBusFYI.__new__(CoderBusFYI)
+
+    with caplog.at_level("INFO", logger="red.oranges_coderbusfyi"):
+        cog._log_pending_request_resolution(
+            {
+                "type": "add",
+                "requested_by": "@alice",
+                "requested_by_id": 123,
+                "title": "Example Tool",
+                "url": "https://example.com/tool",
+                "description": "Helpful",
+                "section": "Toolbox",
+            },
+            "approve",
+            type("Actor", (), {"mention": "<@123>"})(),
+            "command",
+        )
+        cog._log_pending_request_resolution(
+            {
+                "type": "remove",
+                "requested_by": "@alice",
+                "requested_by_id": 123,
+                "title": "https://example.com/tool",
+                "url": "https://example.com/tool",
+                "description": "Outdated and broken",
+                "section": "Toolbox",
+            },
+            "deny",
+            type("Actor", (), {"mention": "<@456>"})(),
+            "button",
+        )
+
+    messages = [record.getMessage() for record in caplog.records]
+    assert any(
+        "Pending add request approved via command by <@123>" in message
+        and "title=Example Tool" in message
+        and "url=https://example.com/tool" in message
+        for message in messages
+    )
+    assert any(
+        "Pending remove request denied via button by <@456>" in message
+        and "url=https://example.com/tool" in message
+        and "reason=Outdated and broken" in message
+        for message in messages
+    )
+
+
+def test_direct_admin_logging_helper_records_action_details(caplog):
+    cog = CoderBusFYI.__new__(CoderBusFYI)
+
+    with caplog.at_level("INFO", logger="red.oranges_coderbusfyi"):
+        cog._log_direct_admin_action(
+            "add item",
+            type("Actor", (), {"mention": "<@789>"})(),
+            title="Example Tool",
+            url="https://example.com/tool",
+            description="Helpful",
+            section="Toolbox",
+        )
+        cog._log_direct_admin_action(
+            "remove section",
+            type("Actor", (), {"mention": "<@789>"})(),
+            section="Toolbox",
+        )
+
+    messages = [record.getMessage() for record in caplog.records]
+    assert any(
+        "Admin add item by <@789>" in message
+        and "title=Example Tool" in message
+        and "url=https://example.com/tool" in message
+        and "description=Helpful" in message
+        and "section=Toolbox" in message
+        for message in messages
+    )
+    assert any(
+        "Admin remove section by <@789>" in message
+        and "section=Toolbox" in message
+        for message in messages
+    )

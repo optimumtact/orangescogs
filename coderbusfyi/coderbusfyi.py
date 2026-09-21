@@ -313,24 +313,24 @@ class CoderBusFYI(BaseCog):
         section = self._log_text(request.get("section", ""))
 
         if request_type == "remove":
-            log.info(
-                "Pending remove request created by %s (user_id=%s): url=%s reason=%s",
+            message = (
+                "Pending remove request created by %s (user_id=%s): url=%s reason=%s"
+            )
+            values = (requester, requester_id, url, description or "(none)")
+        else:
+            message = (
+                "Pending add request created by %s (user_id=%s): title=%s url=%s section=%s description=%s"
+            )
+            values = (
                 requester,
                 requester_id,
+                title,
                 url,
+                section or "(none)",
                 description or "(none)",
             )
-            return
 
-        log.info(
-            "Pending add request created by %s (user_id=%s): title=%s url=%s section=%s description=%s",
-            requester,
-            requester_id,
-            title,
-            url,
-            section or "(none)",
-            description or "(none)",
-        )
+        log.info(message, *values)
 
     def _log_pending_request_resolution(self, request, action, actor, source):
         action_name = str(action).strip().lower()
@@ -344,8 +344,10 @@ class CoderBusFYI(BaseCog):
         section = self._log_text(request.get("section", ""))
 
         if request_type == "remove":
-            log.info(
-                "Pending remove request %s via %s by %s: url=%s reason=%s requested_by=%s (user_id=%s)",
+            message = (
+                "Pending remove request %s via %s by %s: url=%s reason=%s requested_by=%s (user_id=%s)"
+            )
+            values = (
                 status,
                 source,
                 self._actor_label(actor),
@@ -354,20 +356,23 @@ class CoderBusFYI(BaseCog):
                 requester,
                 requester_id,
             )
-            return
+        else:
+            message = (
+                "Pending add request %s via %s by %s: title=%s url=%s section=%s description=%s requested_by=%s (user_id=%s)"
+            )
+            values = (
+                status,
+                source,
+                self._actor_label(actor),
+                title,
+                url,
+                section or "(none)",
+                description or "(none)",
+                requester,
+                requester_id,
+            )
 
-        log.info(
-            "Pending add request %s via %s by %s: title=%s url=%s section=%s description=%s requested_by=%s (user_id=%s)",
-            status,
-            source,
-            self._actor_label(actor),
-            title,
-            url,
-            section or "(none)",
-            description or "(none)",
-            requester,
-            requester_id,
-        )
+        log.info(message, *values)
 
     def _log_direct_admin_action(self, action, actor, **details):
         fields = []
@@ -502,27 +507,6 @@ class CoderBusFYI(BaseCog):
         if updated:
             await self._set_pending_requests(pending)
 
-    async def _get_token(self):
-        return await self.github.get_token()
-
-    async def _get_repo_details(self):
-        return await self.github.get_repo_details()
-
-    async def _require_github_token(self, interaction):
-        return await self.github.require_token(interaction)
-
-    async def _fetch_remote_resources(self):
-        return await self.github.fetch_remote_resources()
-
-    async def _write_remote_resources(self, new_contents):
-        return await self.github.write_remote_resources(new_contents)
-
-    async def _load_resources(self):
-        return await self.github.load_resources()
-
-    async def _save_resources(self, text):
-        return await self.github.save_resources(text)
-
     async def _handle_pending_request_action(self, interaction, action, request):
         action_name = str(action).strip().lower()
         guild = interaction.guild
@@ -557,6 +541,10 @@ class CoderBusFYI(BaseCog):
                 ephemeral=True,
             )
             return
+
+        self._log_pending_request_resolution(
+            request_to_update, action_name, interaction.user, "button"
+        )
 
         if action_name == "deny":
             await self._remove_pending_request(
@@ -634,7 +622,7 @@ class CoderBusFYI(BaseCog):
         self, current: str = ""
     ) -> list[discord.app_commands.Choice[str]]:
         try:
-            content = await self._load_resources()
+            content = await self.github.load_resources()
         except Exception:
             return []
 
@@ -655,7 +643,7 @@ class CoderBusFYI(BaseCog):
         self, current: str = ""
     ) -> list[discord.app_commands.Choice[str]]:
         try:
-            content = await self._load_resources()
+            content = await self.github.load_resources()
         except Exception:
             return []
 
@@ -748,7 +736,7 @@ class CoderBusFYI(BaseCog):
         await self._set_pending_requests(pending)
 
     async def _apply_add(self, title, url, description, section="Toolbox"):
-        content = await self._load_resources()
+        content = await self.github.load_resources()
         entries = self.parse_ini_entries(content)
         available_sections = self.collect_sections(content)
 
@@ -776,11 +764,11 @@ class CoderBusFYI(BaseCog):
         )
 
         updated = self.entries_to_ini(entries)
-        await self._save_resources(updated)
+        await self.github.save_resources(updated)
         return updated
 
     async def _apply_remove(self, url):
-        content = await self._load_resources()
+        content = await self.github.load_resources()
         entries = self.parse_ini_entries(content)
         match = self.find_entry_by_url(entries, url)
         if match is None:
@@ -792,11 +780,11 @@ class CoderBusFYI(BaseCog):
             if str(item.get("url", "")).strip() != str(url).strip()
         ]
         updated = self.entries_to_ini(filtered)
-        await self._save_resources(updated)
+        await self.github.save_resources(updated)
         return updated
 
     async def _apply_section_add(self, section_name):
-        content = await self._load_resources()
+        content = await self.github.load_resources()
         entries = self.parse_ini_entries(content)
         existing_sections = {str(item.get("section", "")).strip() for item in entries}
         normalized = section_name.strip()
@@ -808,11 +796,11 @@ class CoderBusFYI(BaseCog):
             {"section": normalized, "title": "", "url": "", "description": ""}
         )
         updated = self.entries_to_ini(entries)
-        await self._save_resources(updated)
+        await self.github.save_resources(updated)
         return updated
 
     async def _apply_section_remove(self, section_name):
-        content = await self._load_resources()
+        content = await self.github.load_resources()
         entries = self.parse_ini_entries(content)
         target = section_name.strip()
         filtered = [
@@ -821,7 +809,7 @@ class CoderBusFYI(BaseCog):
         if len(filtered) == len(entries):
             raise ValueError(f"Section '{target}' does not exist.")
         updated = self.entries_to_ini(filtered)
-        await self._save_resources(updated)
+        await self.github.save_resources(updated)
         return updated
 
     @commands.command(name="setgithubkey")
@@ -857,11 +845,11 @@ class CoderBusFYI(BaseCog):
         description: str,
         section: str,
     ):
-        token = await self._require_github_token(interaction)
+        token = await self.github.require_token(interaction)
         if token is None:
             return
 
-        content = await self._load_resources()
+        content = await self.github.load_resources()
         available_sections = self.collect_sections(content)
         if not available_sections:
             await interaction.response.send_message(
@@ -902,6 +890,7 @@ class CoderBusFYI(BaseCog):
             "requested_by": interaction.user.mention,
             "requested_by_id": interaction.user.id,
         }
+        self._log_pending_request_created(request)
         await self._append_pending_request(request)
         await self._notify_admins_pending_request(interaction.guild, request)
         await interaction.response.send_message(
@@ -924,7 +913,7 @@ class CoderBusFYI(BaseCog):
     async def removerequest(
         self, interaction: discord.Interaction, url: str, reason: str
     ):
-        token = await self._require_github_token(interaction)
+        token = await self.github.require_token(interaction)
         if token is None:
             return
 
@@ -962,6 +951,7 @@ class CoderBusFYI(BaseCog):
             "requested_by": interaction.user.mention,
             "requested_by_id": interaction.user.id,
         }
+        self._log_pending_request_created(request)
         await self._append_pending_request(request)
         await self._notify_admins_pending_request(interaction.guild, request)
         await interaction.followup.send(
@@ -978,7 +968,7 @@ class CoderBusFYI(BaseCog):
     @discord.app_commands.default_permissions(administrator=True)
     @discord.app_commands.describe(url="The pending request to approve")
     async def approverequest(self, interaction: discord.Interaction, url: str):
-        token = await self._require_github_token(interaction)
+        token = await self.github.require_token(interaction)
         if token is None:
             return
 
@@ -989,6 +979,8 @@ class CoderBusFYI(BaseCog):
                 f"No pending request for URL '{url}' was found.", ephemeral=True
             )
             return
+
+        self._log_pending_request_resolution(request, "approve", interaction.user, "command")
 
         try:
             if str(request.get("type", "add")).strip() == "remove":
@@ -1037,12 +1029,20 @@ class CoderBusFYI(BaseCog):
         description: str,
         section: str = "Toolbox",
     ):
-        token = await self._require_github_token(interaction)
+        token = await self.github.require_token(interaction)
         if token is None:
             return
 
         try:
             await self._apply_add(title, url, description, section)
+            self._log_direct_admin_action(
+                "add item",
+                interaction.user,
+                title=title,
+                url=url,
+                description=description,
+                section=section,
+            )
             await interaction.response.send_message(
                 f"✅ Added '{title}' to the '{section}' section.", ephemeral=True
             )
@@ -1061,12 +1061,17 @@ class CoderBusFYI(BaseCog):
     @discord.app_commands.default_permissions(administrator=True)
     @discord.app_commands.describe(url="The coderbus.fyi URL to remove")
     async def direct_remove(self, interaction: discord.Interaction, url: str):
-        token = await self._require_github_token(interaction)
+        token = await self.github.require_token(interaction)
         if token is None:
             return
 
         try:
             await self._apply_remove(url)
+            self._log_direct_admin_action(
+                "remove item",
+                interaction.user,
+                url=url,
+            )
             await interaction.response.send_message(
                 f"✅ Removed resource '{url}'.", ephemeral=True
             )
@@ -1079,12 +1084,17 @@ class CoderBusFYI(BaseCog):
     @discord.app_commands.default_permissions(administrator=True)
     @discord.app_commands.describe(name="The new section name, e.g. Toolbox or Tools")
     async def addsection(self, interaction: discord.Interaction, name: str):
-        token = await self._require_github_token(interaction)
+        token = await self.github.require_token(interaction)
         if token is None:
             return
 
         try:
             await self._apply_section_add(name)
+            self._log_direct_admin_action(
+                "add section",
+                interaction.user,
+                section=name,
+            )
             await interaction.response.send_message(
                 f"✅ Added section '{name}'.", ephemeral=True
             )
@@ -1097,12 +1107,17 @@ class CoderBusFYI(BaseCog):
     @discord.app_commands.default_permissions(administrator=True)
     @discord.app_commands.describe(name="The section to remove")
     async def removesection(self, interaction: discord.Interaction, name: str):
-        token = await self._require_github_token(interaction)
+        token = await self.github.require_token(interaction)
         if token is None:
             return
 
         try:
             await self._apply_section_remove(name)
+            self._log_direct_admin_action(
+                "remove section",
+                interaction.user,
+                section=name,
+            )
             await interaction.response.send_message(
                 f"✅ Removed section '{name}'.", ephemeral=True
             )
