@@ -299,8 +299,14 @@ class CoderBusFYI(BaseCog):
         if config is None:
             return None
 
-        guild_obj = guild if hasattr(guild, "id") else self.bot.get_guild(guild)
-        if guild_obj is None:
+        if isinstance(guild, int):
+            guild_obj = self.bot.get_guild(guild)
+        elif hasattr(guild, "id"):
+            guild_obj = guild
+        else:
+            guild_obj = None
+
+        if guild_obj is None or not hasattr(guild_obj, "id"):
             return None
 
         channel_id = await config.guild(guild_obj).notification_channel_id()

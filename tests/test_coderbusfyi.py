@@ -218,6 +218,43 @@ def test_get_notification_channel_uses_guild_object_not_id():
     assert cog.config.guild_calls[0].id == 123
 
 
+def test_get_notification_channel_accepts_guild_id_and_coerces_to_object():
+    class DummyConfig:
+        def __init__(self):
+            self.guild_calls = []
+
+        def guild(self, guild):
+            self.guild_calls.append(guild)
+            return type(
+                "GuildGroup",
+                (),
+                {
+                    "notification_channel_id": lambda self: __import__("asyncio").sleep(0, result=111)
+                },
+            )()
+
+    class DummyGuild:
+        id = 456
+
+        def get_channel(self, channel_id):
+            assert channel_id == 111
+            return "channel-from-id"
+
+    dummy_guild = DummyGuild()
+    cog = CoderBusFYI.__new__(CoderBusFYI)
+    cog.config = DummyConfig()
+    cog.bot = type(
+        "Bot",
+        (),
+        {"get_guild": lambda self, guild_id: dummy_guild if guild_id == 456 else None},
+    )()
+
+    result = __import__("asyncio").run(cog._get_notification_channel(456))
+    assert result == "channel-from-id"
+    assert len(cog.config.guild_calls) == 1
+    assert cog.config.guild_calls[0].id == 456
+
+
 def test_request_commands_are_guild_only_but_admin_commands_stay_global():
     assert CoderBusFYI.addrequest.guild_only is True
     assert CoderBusFYI.removerequest.guild_only is True
