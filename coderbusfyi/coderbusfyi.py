@@ -1,30 +1,14 @@
-import base64
 import re
 from collections import OrderedDict
 from urllib.parse import quote, unquote
 
-import aiohttp
 import discord
 from redbot.core import Config, commands
 
+from .github_client import GitHubResourcesClient
+from .views import PendingRequestViewManager
+
 BaseCog = getattr(commands, "Cog", object)
-
-
-class PendingRequestActionButton(discord.ui.Button):
-    def __init__(self, cog, action, request, label, style):
-        self.cog = cog
-        self.action = action
-        self.request = request
-        super().__init__(
-            label=label,
-            style=style,
-            custom_id=cog.build_pending_request_action_custom_id(request, action),
-        )
-
-    async def callback(self, interaction: discord.Interaction):
-        await self.cog._handle_pending_request_action(
-            interaction, self.action, self.request
-        )
 
 
 class CoderBusFYI(BaseCog):
@@ -49,6 +33,20 @@ class CoderBusFYI(BaseCog):
             pending_requests=[],
         )
         self.config.register_guild(notification_channel_id=None)
+        self.github = GitHubResourcesClient(
+            bot=bot,
+            config=self.config,
+            default_repo_owner=self.DEFAULT_REPO_OWNER,
+            default_repo_name=self.DEFAULT_REPO_NAME,
+            default_branch=self.DEFAULT_BRANCH,
+            default_resource_path=self.DEFAULT_RESOURCE_PATH,
+        )
+        self.view_manager = PendingRequestViewManager(bot, self)
+
+    async def initialize(self):
+        await self.view_manager.rehydrate_pending_request_views(
+            await self._get_pending_requests()
+        )
 
     @staticmethod
     def parse_ini_entries(raw: str):
@@ -273,13 +271,9 @@ class CoderBusFYI(BaseCog):
         url = str(request.get("url", "")).strip()
 
         if request_type == "remove":
-            return (
-                f"Your remove request for {url} was {status} by {actor_label}."
-            )
+            return f"Your remove request for {url} was {status} by {actor_label}."
 
-        return (
-            f"Your add request for '{title}' ({url}) was {status} by {actor_label}."
-        )
+        return f"Your add request for '{title}' ({url}) was {status} by {actor_label}."
 
     @staticmethod
     def parse_pending_request_action_custom_id(custom_id):
@@ -343,7 +337,7 @@ class CoderBusFYI(BaseCog):
                     self.build_pending_request_notice(request),
                     view=self._build_pending_request_action_view(request),
                 )
-                request["message_id"] = message.id
+                await self._set_pending_request_message_id(request, message.id)
                 return
             except Exception:
                 pass
@@ -385,26 +379,46 @@ class CoderBusFYI(BaseCog):
             return
 
     def _build_pending_request_action_view(self, request):
-        view = discord.ui.View(timeout=1800)
-        view.add_item(
-            PendingRequestActionButton(
-                cog=self,
-                action="approve",
-                request=request,
-                label="Approve",
-                style=discord.ButtonStyle.green,
-            )
-        )
-        view.add_item(
-            PendingRequestActionButton(
-                cog=self,
-                action="deny",
-                request=request,
-                label="Deny",
-                style=discord.ButtonStyle.red,
-            )
-        )
-        return view
+        return self.view_manager.build_pending_request_action_view(request)
+
+    async def _set_pending_request_message_id(self, request, message_id):
+        target_url = str(request.get("url", "")).strip()
+        target_title = str(request.get("title", "")).strip()
+        target_type = str(request.get("type", "add")).strip().lower()
+        pending = await self._get_pending_requests()
+        updated = False
+        for item in pending:
+            if (
+                str(item.get("url", "")).strip() == target_url
+                and str(item.get("title", "")).strip() == target_title
+                and str(item.get("type", "add")).strip().lower() == target_type
+            ):
+                item["message_id"] = int(message_id)
+                updated = True
+                break
+        if updated:
+            await self._set_pending_requests(pending)
+
+    async def _get_token(self):
+        return await self.github.get_token()
+
+    async def _get_repo_details(self):
+        return await self.github.get_repo_details()
+
+    async def _require_github_token(self, interaction):
+        return await self.github.require_token(interaction)
+
+    async def _fetch_remote_resources(self):
+        return await self.github.fetch_remote_resources()
+
+    async def _write_remote_resources(self, new_contents):
+        return await self.github.write_remote_resources(new_contents)
+
+    async def _load_resources(self):
+        return await self.github.load_resources()
+
+    async def _save_resources(self, text):
+        return await self.github.save_resources(text)
 
     async def _handle_pending_request_action(self, interaction, action, request):
         action_name = str(action).strip().lower()
@@ -571,90 +585,6 @@ class CoderBusFYI(BaseCog):
                 if needle in choice.name.lower() or needle in choice.value.lower()
             ]
         return choices[:25]
-
-    async def _get_token(self):
-        return await self.config.github_token()
-
-    async def _get_repo_details(self):
-        owner = await self.config.repo_owner() or self.DEFAULT_REPO_OWNER
-        name = await self.config.repo_name() or self.DEFAULT_REPO_NAME
-        branch = await self.config.default_branch() or self.DEFAULT_BRANCH
-        path = await self.config.resource_path() or self.DEFAULT_RESOURCE_PATH
-        return owner, name, branch, path
-
-    async def _require_github_token(self, interaction):
-        token = await self._get_token()
-        if not token:
-            await interaction.response.send_message(
-                "GitHub API token is not configured. Use /setgithubkey first.",
-                ephemeral=True,
-            )
-            return None
-        return token
-
-    async def _fetch_remote_resources(self):
-        token = await self._get_token()
-        if token is None:
-            return None, None, None
-
-        owner, name, branch, path = await self._get_repo_details()
-        url = (
-            f"https://api.github.com/repos/{owner}/{name}/contents/{path}?ref={branch}"
-        )
-        headers = {
-            "Authorization": f"Bearer {token}",
-            "Accept": "application/vnd.github+json",
-            "X-GitHub-Api-Version": "2022-11-28",
-        }
-
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url, headers=headers) as response:
-                if response.status != 200:
-                    text = await response.text()
-                    raise RuntimeError(
-                        f"GitHub request failed: {response.status} {text}"
-                    )
-                data = await response.json()
-                content = data.get("content", "")
-                content = base64.b64decode(content).decode("utf-8")
-                return content, data.get("sha"), path
-
-    async def _write_remote_resources(self, new_contents):
-        token = await self._get_token()
-        if not token:
-            raise RuntimeError("No GitHub API token is configured.")
-
-        owner, name, branch, path = await self._get_repo_details()
-        url = f"https://api.github.com/repos/{owner}/{name}/contents/{path}"
-        headers = {
-            "Authorization": f"Bearer {token}",
-            "Accept": "application/vnd.github+json",
-            "X-GitHub-Api-Version": "2022-11-28",
-        }
-
-        current_content, sha, _ = await self._fetch_remote_resources()
-        payload = {
-            "message": "Update CoderBusFYI resources.ini",
-            "branch": branch,
-            "content": base64.b64encode(new_contents.encode("utf-8")).decode("utf-8"),
-            "sha": sha,
-        }
-
-        async with aiohttp.ClientSession() as session:
-            async with session.put(url, json=payload, headers=headers) as response:
-                if response.status not in (200, 201):
-                    text = await response.text()
-                    raise RuntimeError(f"GitHub write failed: {response.status} {text}")
-                return await response.json()
-
-    async def _load_resources(self):
-        content, _, _ = await self._fetch_remote_resources()
-        if content is None:
-            return ""
-        return content
-
-    async def _save_resources(self, text):
-        return await self._write_remote_resources(text)
 
     async def _get_pending_requests(self):
         return await self.config.pending_requests() or []
@@ -888,7 +818,9 @@ class CoderBusFYI(BaseCog):
         url="The coderbus.fyi item to remove",
         reason="Why this resource should be removed",
     )
-    async def removerequest(self, interaction: discord.Interaction, url: str, reason: str):
+    async def removerequest(
+        self, interaction: discord.Interaction, url: str, reason: str
+    ):
         token = await self._require_github_token(interaction)
         if token is None:
             return
@@ -971,7 +903,9 @@ class CoderBusFYI(BaseCog):
                 title=str(request.get("title", "")).strip(),
                 url=str(request.get("url", "")).strip(),
             )
-            await self._notify_requester_resolution(request, "approve", interaction.user)
+            await self._notify_requester_resolution(
+                request, "approve", interaction.user
+            )
             await interaction.response.send_message(message, ephemeral=True)
         except Exception as exc:
             await interaction.response.send_message(

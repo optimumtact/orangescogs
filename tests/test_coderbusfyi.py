@@ -1,4 +1,5 @@
 from coderbusfyi.coderbusfyi import CoderBusFYI
+from coderbusfyi.views import PendingRequestActionView, PendingRequestViewManager
 
 
 def test_parse_ini_entries_handles_sections_and_values():
@@ -197,7 +198,9 @@ def test_get_notification_channel_uses_guild_object_not_id():
                 "GuildGroup",
                 (),
                 {
-                    "notification_channel_id": lambda self: __import__("asyncio").sleep(0, result=987)
+                    "notification_channel_id": lambda self: __import__("asyncio").sleep(
+                        0, result=987
+                    )
                 },
             )()
 
@@ -229,7 +232,9 @@ def test_get_notification_channel_accepts_guild_id_and_coerces_to_object():
                 "GuildGroup",
                 (),
                 {
-                    "notification_channel_id": lambda self: __import__("asyncio").sleep(0, result=111)
+                    "notification_channel_id": lambda self: __import__("asyncio").sleep(
+                        0, result=111
+                    )
                 },
             )()
 
@@ -350,6 +355,7 @@ def test_notify_admins_uses_owner_ids_not_get_owner():
     bot = DummyBot()
     cog = CoderBusFYI.__new__(CoderBusFYI)
     cog.bot = bot
+    cog.view_manager = PendingRequestViewManager(bot, cog)
 
     async def runner():
         await cog._notify_admins_pending_request(
@@ -362,3 +368,52 @@ def test_notify_admins_uses_owner_ids_not_get_owner():
     import asyncio
 
     asyncio.run(runner())
+
+
+def test_pending_request_action_view_is_persistent():
+    cog = CoderBusFYI.__new__(CoderBusFYI)
+    view = PendingRequestActionView(
+        cog,
+        {
+            "title": "Example Tool",
+            "url": "https://example.com/tool",
+            "requested_by_id": 123,
+        },
+    )
+
+    assert view.timeout is None
+    assert len(view.children) == 2
+
+
+def test_pending_request_view_manager_rehydrates_views_with_message_ids():
+    class DummyBot:
+        def __init__(self):
+            self.calls = []
+
+        def add_view(self, view, message_id=None):
+            self.calls.append((view, message_id))
+
+    cog = CoderBusFYI.__new__(CoderBusFYI)
+    bot = DummyBot()
+    manager = PendingRequestViewManager(bot, cog)
+
+    import asyncio
+
+    asyncio.run(
+        manager.rehydrate_pending_request_views(
+            [
+                {
+                    "title": "Example Tool",
+                    "url": "https://example.com/tool",
+                    "requested_by_id": 123,
+                    "message_id": 987654321,
+                }
+            ]
+        )
+    )
+
+    assert len(bot.calls) == 1
+    view, message_id = bot.calls[0]
+    assert isinstance(view, PendingRequestActionView)
+    assert view.timeout is None
+    assert message_id == 987654321
