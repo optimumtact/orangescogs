@@ -318,9 +318,7 @@ class CoderBusFYI(BaseCog):
             )
             values = (requester, requester_id, url, description or "(none)")
         else:
-            message = (
-                "Pending add request created by %s (user_id=%s): title=%s url=%s section=%s description=%s"
-            )
+            message = "Pending add request created by %s (user_id=%s): title=%s url=%s section=%s description=%s"
             values = (
                 requester,
                 requester_id,
@@ -344,9 +342,7 @@ class CoderBusFYI(BaseCog):
         section = self._log_text(request.get("section", ""))
 
         if request_type == "remove":
-            message = (
-                "Pending remove request %s via %s by %s: url=%s reason=%s requested_by=%s (user_id=%s)"
-            )
+            message = "Pending remove request %s via %s by %s: url=%s reason=%s requested_by=%s (user_id=%s)"
             values = (
                 status,
                 source,
@@ -357,9 +353,7 @@ class CoderBusFYI(BaseCog):
                 requester_id,
             )
         else:
-            message = (
-                "Pending add request %s via %s by %s: title=%s url=%s section=%s description=%s requested_by=%s (user_id=%s)"
-            )
+            message = "Pending add request %s via %s by %s: title=%s url=%s section=%s description=%s requested_by=%s (user_id=%s)"
             values = (
                 status,
                 source,
@@ -980,7 +974,9 @@ class CoderBusFYI(BaseCog):
             )
             return
 
-        self._log_pending_request_resolution(request, "approve", interaction.user, "command")
+        self._log_pending_request_resolution(
+            request, "approve", interaction.user, "command"
+        )
 
         try:
             if str(request.get("type", "add")).strip() == "remove":

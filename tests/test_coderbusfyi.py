@@ -558,7 +558,6 @@ def test_direct_admin_logging_helper_records_action_details(caplog):
         for message in messages
     )
     assert any(
-        "Admin remove section by <@789>" in message
-        and "section=Toolbox" in message
+        "Admin remove section by <@789>" in message and "section=Toolbox" in message
         for message in messages
     )
