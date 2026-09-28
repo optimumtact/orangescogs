@@ -1,3 +1,4 @@
+import json
 import logging
 import re
 from collections import OrderedDict
@@ -17,7 +18,7 @@ class CoderBusFYI(BaseCog):
     DEFAULT_REPO_OWNER = "optimumtact"
     DEFAULT_REPO_NAME = "coderbusfyi"
     DEFAULT_BRANCH = "main"
-    DEFAULT_RESOURCE_PATH = "resources.ini"
+    DEFAULT_RESOURCE_PATH = "resources.json"
 
     def __init__(self, bot):
         self.bot = bot
@@ -119,6 +120,83 @@ class CoderBusFYI(BaseCog):
         return "\n".join(lines).rstrip() + "\n"
 
     @staticmethod
+    def parse_json_entries(raw):
+        if raw is None:
+            return []
+
+        payload = raw
+        if isinstance(payload, str):
+            text = payload.strip()
+            if not text:
+                return []
+            try:
+                payload = json.loads(text)
+            except json.JSONDecodeError:
+                return []
+
+        if not isinstance(payload, dict):
+            return []
+
+        categories = payload.get("categories") or []
+        if not isinstance(categories, list):
+            return []
+
+        entries = []
+        for category in categories:
+            if not isinstance(category, dict):
+                continue
+            section_name = str(category.get("title", "")).strip() or "General"
+            links = category.get("links") or []
+            if not isinstance(links, list):
+                continue
+            for link in links:
+                if not isinstance(link, dict):
+                    continue
+                title = str(link.get("title", "")).strip()
+                url = str(link.get("url", "")).strip()
+                description = str(link.get("description", "")).strip()
+                if not title and not url and not description:
+                    continue
+                entries.append(
+                    {
+                        "section": section_name,
+                        "title": title,
+                        "url": url,
+                        "description": description,
+                    }
+                )
+
+        return entries
+
+    @staticmethod
+    def entries_to_json(entries):
+        ordered_sections = OrderedDict()
+        for item in entries:
+            section_name = str(item.get("section", "General")).strip() or "General"
+            ordered_sections.setdefault(section_name, []).append(item)
+
+        categories = []
+        for section_name, section_items in ordered_sections.items():
+            links = []
+            for item in section_items:
+                title = str(item.get("title", "")).strip()
+                url = str(item.get("url", "")).strip()
+                description = str(item.get("description", "")).strip()
+                if not title and not url and not description:
+                    continue
+                links.append(
+                    {
+                        "title": title,
+                        "url": url,
+                        "description": description,
+                    }
+                )
+            categories.append({"title": section_name, "links": links})
+
+        payload = {"categories": categories}
+        return json.dumps(payload, ensure_ascii=False, indent=2) + "\n"
+
+    @staticmethod
     def normalize_line(title: str, url: str, description: str) -> str:
         cleaned_description = re.sub(r"\s+", " ", str(description).strip())
         return f"{str(title).strip()} = {str(url).strip()} | {cleaned_description}"
@@ -149,6 +227,26 @@ class CoderBusFYI(BaseCog):
 
     @staticmethod
     def collect_sections(raw_ini):
+        if not raw_ini:
+            return []
+
+        try:
+            parsed = json.loads(str(raw_ini or ""))
+        except json.JSONDecodeError:
+            parsed = None
+
+        if isinstance(parsed, dict):
+            categories = parsed.get("categories") or []
+            if isinstance(categories, list):
+                sections = []
+                for category in categories:
+                    if not isinstance(category, dict):
+                        continue
+                    section_name = str(category.get("title", "")).strip()
+                    if section_name:
+                        sections.append(section_name)
+                return sections
+
         sections = []
         for raw_line in str(raw_ini or "").splitlines():
             line = raw_line.strip()
@@ -171,7 +269,7 @@ class CoderBusFYI(BaseCog):
 
     @staticmethod
     def build_resource_choices(raw_ini):
-        entries = CoderBusFYI.parse_ini_entries(str(raw_ini or ""))
+        entries = CoderBusFYI.parse_json_entries(str(raw_ini or "")) or CoderBusFYI.parse_ini_entries(str(raw_ini or ""))
         choices = []
         for entry in entries:
             title = str(entry.get("title", "")).strip()
@@ -731,7 +829,9 @@ class CoderBusFYI(BaseCog):
 
     async def _apply_add(self, title, url, description, section="Toolbox"):
         content = await self.github.load_resources()
-        entries = self.parse_ini_entries(content)
+        entries = self.parse_json_entries(content)
+        if not entries:
+            entries = self.parse_ini_entries(content)
         available_sections = self.collect_sections(content)
 
         if (
@@ -757,13 +857,15 @@ class CoderBusFYI(BaseCog):
             }
         )
 
-        updated = self.entries_to_ini(entries)
+        updated = self.entries_to_json(entries)
         await self.github.save_resources(updated)
         return updated
 
     async def _apply_remove(self, url):
         content = await self.github.load_resources()
-        entries = self.parse_ini_entries(content)
+        entries = self.parse_json_entries(content)
+        if not entries:
+            entries = self.parse_ini_entries(content)
         match = self.find_entry_by_url(entries, url)
         if match is None:
             raise ValueError(f"No resource exists with URL '{url}'.")
@@ -773,13 +875,15 @@ class CoderBusFYI(BaseCog):
             for item in entries
             if str(item.get("url", "")).strip() != str(url).strip()
         ]
-        updated = self.entries_to_ini(filtered)
+        updated = self.entries_to_json(filtered)
         await self.github.save_resources(updated)
         return updated
 
     async def _apply_section_add(self, section_name):
         content = await self.github.load_resources()
-        entries = self.parse_ini_entries(content)
+        entries = self.parse_json_entries(content)
+        if not entries:
+            entries = self.parse_ini_entries(content)
         existing_sections = {str(item.get("section", "")).strip() for item in entries}
         normalized = section_name.strip()
         if not normalized:
@@ -789,27 +893,29 @@ class CoderBusFYI(BaseCog):
         entries.append(
             {"section": normalized, "title": "", "url": "", "description": ""}
         )
-        updated = self.entries_to_ini(entries)
+        updated = self.entries_to_json(entries)
         await self.github.save_resources(updated)
         return updated
 
     async def _apply_section_remove(self, section_name):
         content = await self.github.load_resources()
-        entries = self.parse_ini_entries(content)
+        entries = self.parse_json_entries(content)
+        if not entries:
+            entries = self.parse_ini_entries(content)
         target = section_name.strip()
         filtered = [
             item for item in entries if str(item.get("section", "")).strip() != target
         ]
         if len(filtered) == len(entries):
             raise ValueError(f"Section '{target}' does not exist.")
-        updated = self.entries_to_ini(filtered)
+        updated = self.entries_to_json(filtered)
         await self.github.save_resources(updated)
         return updated
 
     @commands.command(name="setgithubkey")
     @commands.is_owner()
     async def setgithubkey(self, ctx, token: str):
-        """Set the GitHub API token used to modify resources.ini."""
+        """Set the GitHub API token used to modify resources.json."""
         await self.config.github_token.set(token.strip())
         await ctx.send("✅ GitHub API token saved.")
 

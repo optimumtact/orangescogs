@@ -2,6 +2,74 @@ from coderbusfyi.coderbusfyi import CoderBusFYI
 from coderbusfyi.views import PendingRequestActionView, PendingRequestViewManager
 
 
+def test_parse_json_entries_handles_categories_and_links():
+    source = '''
+{
+  "categories": [
+    {
+      "title": "Core references",
+      "links": [
+        {
+          "title": "DM Reference",
+          "url": "https://ref.dm-lang.org/",
+          "description": "Unofficial DM reference that is easy to use."
+        }
+      ]
+    },
+    {
+      "title": "Toolbox",
+      "links": [
+        {
+          "title": "Map Diff Bot",
+          "url": "https://github.com/apps/mapdiffbot-2",
+          "description": "Github App that shows map changes"
+        }
+      ]
+    }
+  ]
+}
+'''
+
+    entries = CoderBusFYI.parse_json_entries(source)
+
+    assert entries[0]["section"] == "Core references"
+    assert entries[0]["title"] == "DM Reference"
+    assert entries[0]["url"] == "https://ref.dm-lang.org/"
+    assert entries[0]["description"] == "Unofficial DM reference that is easy to use."
+
+    assert entries[1]["section"] == "Toolbox"
+    assert entries[1]["title"] == "Map Diff Bot"
+    assert entries[1]["url"] == "https://github.com/apps/mapdiffbot-2"
+    assert entries[1]["description"] == "Github App that shows map changes"
+
+
+def test_build_json_from_entries_round_trips_sections():
+    entries = [
+        {
+            "section": "Toolbox",
+            "title": "Example Tool",
+            "url": "https://example.com",
+            "description": "Helpful",
+        },
+        {
+            "section": "Learning paths",
+            "title": "Example Course",
+            "url": "https://example.com/course",
+            "description": "Course",
+        },
+    ]
+
+    text = CoderBusFYI.entries_to_json(entries)
+    payload = CoderBusFYI.parse_json_entries(text)
+
+    assert payload[0]["section"] == "Toolbox"
+    assert payload[0]["title"] == "Example Tool"
+    assert payload[0]["url"] == "https://example.com"
+    assert payload[1]["section"] == "Learning paths"
+    assert payload[1]["title"] == "Example Course"
+    assert payload[1]["url"] == "https://example.com/course"
+
+
 def test_parse_ini_entries_handles_sections_and_values():
     source = """
 [Core references]

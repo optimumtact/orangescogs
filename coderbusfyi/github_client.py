@@ -84,7 +84,7 @@ class GitHubResourcesClient:
 
         _, sha, _ = await self.fetch_remote_resources()
         payload = {
-            "message": "Update CoderBusFYI resources.ini",
+            "message": "Update CoderBusFYI resources.json",
             "branch": branch,
             "content": base64.b64encode(new_contents.encode("utf-8")).decode("utf-8"),
             "sha": sha,
