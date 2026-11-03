@@ -269,7 +269,9 @@ class CoderBusFYI(BaseCog):
 
     @staticmethod
     def build_resource_choices(raw_ini):
-        entries = CoderBusFYI.parse_json_entries(str(raw_ini or "")) or CoderBusFYI.parse_ini_entries(str(raw_ini or ""))
+        entries = CoderBusFYI.parse_json_entries(
+            str(raw_ini or "")
+        ) or CoderBusFYI.parse_ini_entries(str(raw_ini or ""))
         choices = []
         for entry in entries:
             title = str(entry.get("title", "")).strip()
@@ -912,14 +914,8 @@ class CoderBusFYI(BaseCog):
         await self.github.save_resources(updated)
         return updated
 
-    @commands.command(name="setgithubkey")
-    @commands.is_owner()
-    async def setgithubkey(self, ctx, token: str):
-        """Set the GitHub API token used to modify resources.json."""
-        await self.config.github_token.set(token.strip())
-        await ctx.send("✅ GitHub API token saved.")
-
     @discord.app_commands.command(name="setgithubkey")
+    @discord.app_commands.default_permissions(administrator=True)
     @discord.app_commands.describe(
         token="GitHub personal access token used to access the coderbusfyi repo"
     )
