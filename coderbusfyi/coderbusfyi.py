@@ -1127,7 +1127,9 @@ class CoderBusFYI(BaseCog):
             )
             return
 
-        self._log_pending_request_resolution(request, "deny", interaction.user, "command")
+        self._log_pending_request_resolution(
+            request, "deny", interaction.user, "command"
+        )
 
         try:
             await self._remove_pending_request(
