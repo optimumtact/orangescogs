@@ -1111,6 +1111,45 @@ class CoderBusFYI(BaseCog):
     ):
         return await self._get_pending_request_choices(current)
 
+    @discord.app_commands.command(name="denyrequest")
+    @discord.app_commands.default_permissions(administrator=True)
+    @discord.app_commands.describe(url="The pending request to deny")
+    async def denyrequest(self, interaction: discord.Interaction, url: str):
+        token = await self.github.require_token(interaction)
+        if token is None:
+            return
+
+        pending = await self._get_pending_requests()
+        request = self.find_pending_request_by_url(pending, url)
+        if request is None:
+            await interaction.response.send_message(
+                f"No pending request for URL '{url}' was found.", ephemeral=True
+            )
+            return
+
+        self._log_pending_request_resolution(request, "deny", interaction.user, "command")
+
+        try:
+            await self._remove_pending_request(
+                title=str(request.get("title", "")).strip(),
+                url=str(request.get("url", "")).strip(),
+            )
+            await self._notify_requester_resolution(request, "deny", interaction.user)
+            await interaction.response.send_message(
+                f"✅ Denied pending request for '{request.get('url')}'.",
+                ephemeral=True,
+            )
+        except Exception as exc:
+            await interaction.response.send_message(
+                f"Deny request failed: {exc}", ephemeral=True
+            )
+
+    @denyrequest.autocomplete("url")
+    async def denyrequest_url_autocomplete(
+        self, interaction: discord.Interaction, current: str
+    ):
+        return await self._get_pending_request_choices(current)
+
     @discord.app_commands.command(name="add")
     @discord.app_commands.default_permissions(administrator=True)
     @discord.app_commands.describe(
